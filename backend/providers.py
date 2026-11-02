@@ -16,6 +16,7 @@ from urllib.parse import urlsplit
 
 
 _PROVIDER_NAMES = {
+    "api.openai.com": "OpenAI",
     "generativelanguage.googleapis.com": "Google Gemini",
     "api.elevenlabs.io": "ElevenLabs",
 }

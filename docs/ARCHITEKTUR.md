@@ -48,3 +48,5 @@ HTTP-Fehler enthalten `{"error":"verständliche Meldung"}`. Schlüssel/Anbieter-
 Mac-Aktionsnamen: `open_app`, `open_url`; Dateiaktionen: `list_files`, `read_text`, `create_folder`, `create_text`. Dateiparameter `path` sind relativ; `create_text` verwendet zusätzlich `content`. Die KI hat absichtlich keinen Shell- oder Netzwerk-Werkzeugzugriff. Vorgeschlagene Parameter werden unabhängig vom Modell nochmals geprüft.
 
 Nach einem bestätigten Dateilesen erscheint der Inhalt nur in der Oberfläche. Eine Übertragung an Gemini muss separat durch den Nutzer erfolgen. Kein automatischer Datei-/Mail-Zugriff als Gesprächskontext. Nicht unterstützte Integrationen sind in `capabilities` mit `false` gekennzeichnet.
+
+OpenAI: `backend/openai_client.py` verwendet die offizielle Chat-Completions-API mit verifiziertem HTTPS. `ai_provider` wählt `gemini` oder `openai`; Schlüsselziel ist `OPENAI_API_KEY` beziehungsweise `com.jarvis.openai` im macOS-Schlüsselbund. `openai_model` und `openai_daily_limit` sind eigene Einstellungen. Der Zähler `openai_requests` ist getrennt; keine automatische kostenpflichtige Ausweichanfrage.

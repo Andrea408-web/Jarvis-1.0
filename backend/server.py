@@ -21,6 +21,7 @@ from urllib.parse import urlsplit
 
 from .ai import GeminiClient, ProviderError, provider_status
 from .voice import VoiceClient
+from .openai_client import OpenAIClient
 from .storage import Store
 from .mac_control import PendingActions
 from .system_info import snapshot
@@ -37,6 +38,7 @@ class Application:
         self.store = Store(data_dir)
         self.actions = PendingActions(self.store)
         self.ai = GeminiClient(self.store)
+        self.openai = OpenAIClient(self.store)
         self.voice = VoiceClient(self.store)
         self.token = secrets.token_urlsafe(32)
         self.chat_lock = threading.Lock()
@@ -46,12 +48,14 @@ class Application:
         providers = provider_status()
         providers = {
             'gemini_configured': providers.get('gemini_key_configured', False),
+            'openai_configured': bool(os.environ.get('OPENAI_API_KEY')),
             'elevenlabs_configured': providers.get('elevenlabs_key_configured', False),
         }
         usage = self.store.usage()
         return {'settings': values, 'providers': providers,
                 'credentials': {'persistent_available': platform.system() == 'Darwin'}, 'usage': {
             'date': usage['date'],
+            'openai': {'used': usage['openai_requests'], 'limit': values['openai_daily_limit']},
             'gemini': {'used': usage['gemini_requests'], 'limit': values['gemini_daily_limit']},
             'elevenlabs': {'used': usage['elevenlabs_characters'], 'limit': values['elevenlabs_daily_char_limit']},
         }}
@@ -100,7 +104,8 @@ class Application:
                 self.store.append('user', text)
                 self.store.append('assistant', reply)
                 return {'reply': reply, 'proposals': []}
-            result = self.ai.chat(text)
+            client = self.openai if self.store.settings()["ai_provider"] == "openai" else self.ai
+            result = client.chat(text)
             proposals = []
             for proposal in result.get('proposed_actions', []):
                 try:
@@ -295,7 +300,7 @@ class Handler(BaseHTTPRequestHandler):
             if method == 'POST' and path == '/api/connections':
                 if set(body) != {'provider'}:
                     raise ValueError('Bitte ausschließlich den Anbieter für die Verbindungsprüfung angeben.')
-                if not isinstance(body['provider'], str) or body['provider'] not in {'gemini', 'elevenlabs'}:
+                if not isinstance(body['provider'], str) or body['provider'] not in {'gemini', 'elevenlabs', 'openai'}:
                     raise ValueError('Bitte Gemini oder ElevenLabs als Anbieter wählen.')
                 return self._json(check_connection(body['provider']))
             if method == 'POST' and path == '/api/credentials':
@@ -315,7 +320,8 @@ class Handler(BaseHTTPRequestHandler):
                 if not app.chat_lock.acquire(blocking=False):
                     raise ProviderError('Eine Anfrage läuft bereits. Bitte kurz warten.', 409)
                 try:
-                    result = app.ai.analyze_image(body.get('text', ''), image, body.get('mime', 'image/jpeg'))
+                    client = app.openai if app.store.settings()['ai_provider'] == 'openai' else app.ai
+                    result = client.analyze_image(body.get('text', ''), image, body.get('mime', 'image/jpeg'))
                 finally:
                     app.chat_lock.release()
                 return self._json({'reply': result['reply'], 'proposals': []})
@@ -368,7 +374,7 @@ def main(argv=None):
     parser.add_argument('--ask-keys', action='store_true', help='API-Schlüssel verdeckt für diese Sitzung eingeben')
     parser.add_argument('--open-browser', action='store_true', help='Nach dem Start die lokale Oberfläche im Browser öffnen')
     parser.add_argument('--diagnose', action='store_true', help='Tatsächliche Hardware und Software anzeigen, ohne Serverstart')
-    parser.add_argument('--check-connection', choices=['gemini', 'elevenlabs'], help='HTTPS-Verbindung ohne API-Schlüssel und ohne Generierung prüfen')
+    parser.add_argument('--check-connection', choices=['gemini', 'elevenlabs', 'openai'], help='HTTPS-Verbindung ohne API-Schlüssel und ohne Generierung prüfen')
     parser.add_argument('--repair-certificates', action='store_true', help='Auf ausdrücklichen Auftrag das offizielle python.org-Zertifikatsskript auf macOS ausführen')
     args = parser.parse_args(argv)
     if args.diagnose:

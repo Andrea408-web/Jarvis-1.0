@@ -136,3 +136,11 @@ python3 -m backend --data-dir /tmp/jarvis-dev
 Tests prüfen Datenpersistenz, konkurrierende Budgets, echte Dateivorgänge in temporären Ordnern, Bestätigungen, Pfadgrenzen, API-Verträge und Fehler. Cloud-Dienste werden in automatisierten Tests durch kontrollierte HTTP-Antworten ersetzt; das ist keine Behauptung eines Live-API-Erfolgs. Eine echte Cloud-Anfrage wird nur nach bewusster Aktivierung im eigenen Konto ausgeführt. Mac-Startbefehle werden unter Linux mit festen Argumenten geprüft; der echte Mac bleibt ein eigener Gerätetest.
 
 Architektur und HTTP-Schnittstellen: [docs/ARCHITEKTUR.md](docs/ARCHITEKTUR.md).
+
+## OpenAI verwenden
+
+In Einstellungen den **KI-Anbieter OpenAI** wählen. Unter **OpenAI** den API-Schlüssel verdeckt eingeben und **Schlüssel hinterlegen** anklicken. Auf macOS ist die Speicherung im Schlüsselbund möglich, sonst nur für die Serversitzung. Anschließend **Cloud-KI aktivieren** und **Einstellungen speichern**. Es gibt keine automatische Anfrage beim Hinterlegen oder Anbieterwechsel.
+
+Standardmodell: `gpt-4o-mini`, separates lokales Tageslimit: 10 Anfragen, maximal 1536 Ausgabetokens pro Anfrage. Die OpenAI-API wird separat von ChatGPT bezahlt. Anfragelimits sind keine Geldobergrenze; Anbieterbudget und tatsächliche Abrechnung im OpenAI-Konto prüfen. Chat, Gesprächskontext, Bildanalyse und bestätigte Aktionsvorschläge verwenden den gewählten Anbieter. Bei einem Fehler wird nicht automatisch zu einem anderen kostenpflichtigen Anbieter gewechselt. Der vorhandene Python-Zertifikatsfehler muss auch für OpenAI behoben sein.
+
+Der Verbindungstest für OpenAI ruft ausschließlich den Modellkatalog ohne API-Schlüssel ab. Ein HTTP401-Ergebnis bestätigt eine HTTPS-Antwort, keine gültige Anmeldung. Schlüssel werden nie in Git, SQLite, API-Antworten oder Browserspeichern abgelegt.

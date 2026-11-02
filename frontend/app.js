@@ -40,17 +40,21 @@
   function usageItem(service) { const item = state.usage[service]; return typeof item === 'number' ? item : item?.used ?? item?.count ?? 0; }
   function updateConfigView() {
     const settings = state.settings, providers = state.providers;
-    $('gemini-status').textContent = settings.cloud_enabled ? (providers.gemini_configured ? 'Konfiguriert · Cloud aktiv' : 'API-Schlüssel fehlt') : providers.gemini_configured ? 'Konfiguriert · deaktiviert' : 'Nicht konfiguriert';
+    const active = settings.ai_provider === 'openai' ? 'openai' : 'gemini';
+    const providerName = active === 'openai' ? 'OpenAI' : 'Google Gemini';
+    $('openai-status').textContent = providers.openai_configured ? 'Schlüssel hinterlegt (nicht live geprüft)' : 'Kein Schlüssel hinterlegt';
+    $('openai-config-hint').textContent = 'Schlüssel verdeckt hinterlegen; auf dem Mac optional im Schlüsselbund speichern.';
+    $('gemini-status').textContent = settings.cloud_enabled && active === 'gemini' ? (providers.gemini_configured ? 'Konfiguriert · Cloud aktiv' : 'API-Schlüssel fehlt') : providers.gemini_configured ? 'Konfiguriert · deaktiviert' : 'Nicht konfiguriert';
     $('elevenlabs-status').textContent = settings.elevenlabs_enabled ? (providers.elevenlabs_configured && settings.elevenlabs_voice_id ? 'Konfiguriert · aktiv' : 'Konfiguration fehlt') : providers.elevenlabs_configured ? 'Konfiguriert · deaktiviert' : 'Lokale Stimme verfügbar¹';
-    $('gemini-dot').classList.toggle('online', !!(settings.cloud_enabled && providers.gemini_configured)); $('elevenlabs-dot').classList.toggle('online', !!(settings.elevenlabs_enabled && providers.elevenlabs_configured && settings.elevenlabs_voice_id));
+    $('gemini-dot').classList.toggle('online', !!(settings.cloud_enabled && active === 'gemini' && providers.gemini_configured)); $('elevenlabs-dot').classList.toggle('online', !!(settings.elevenlabs_enabled && providers.elevenlabs_configured && settings.elevenlabs_voice_id));
     if (!settings.elevenlabs_enabled) $('elevenlabs-status').textContent = localGermanVoices().length ? 'Lokale deutsche Stimme bereit' : 'Lokale deutsche Stimme prüfen';
-    $('chat-mode').textContent = settings.cloud_enabled && providers.gemini_configured ? 'GEMINI · CLOUD-KI AKTIV' : 'LOKALER MODUS';
-    $('chat-footnote').textContent = settings.cloud_enabled ? 'Nachrichten und Verlauf werden an Google Gemini gesendet.' : 'Lokale Befehle · KI lässt sich in Einstellungen aktivieren.';
+    $('chat-mode').textContent = settings.cloud_enabled && providers[active + '_configured'] ? providerName.toUpperCase() + ' · CLOUD-KI AKTIV' : 'LOKALER MODUS';
+    $('chat-footnote').textContent = settings.cloud_enabled ? `Nachrichten und Verlauf werden an ${providerName} gesendet.` : 'Lokale Befehle · KI lässt sich in Einstellungen aktivieren.';
     if (!document.activeElement || document.activeElement.id !== 'voice-enabled') $('voice-enabled').checked = !!settings.voice_enabled;
     $('gemini-config-hint').textContent = providers.gemini_configured ? 'API-Schlüssel im Backend vorhanden. Aktivität und Kontingent bitte im Google-Konto prüfen.' : 'Noch kein API-Schlüssel hinterlegt. Gib ihn unten verdeckt ein oder verwende eine Umgebungsvariable beim Serverstart.';
     $('voice-config-hint').textContent = providers.elevenlabs_configured ? 'API-Schlüssel im Backend vorhanden. Trage deine Voice ID oben ein.' : 'Noch kein API-Schlüssel hinterlegt. Gib ihn unten verdeckt ein oder verwende eine Umgebungsvariable beim Serverstart.';
     const persistentAvailable = state.credentials.persistent_available === true;
-    for (const provider of ['gemini','elevenlabs']) {
+    for (const provider of ['gemini','elevenlabs','openai']) {
       const checkbox = $(`${provider}-persist-key`);
       checkbox.disabled = !persistentAvailable;
       if (state.persistentCapability !== persistentAvailable) checkbox.checked = persistentAvailable;
@@ -59,7 +63,7 @@
     }
     state.persistentCapability = persistentAvailable;
     refreshLocalVoiceOptions();
-    $('usage-summary').textContent = `Heute: ${usageItem('gemini')} / ${settings.gemini_daily_limit ?? 20} KI-Anfragen · ${usageItem('elevenlabs')} / ${settings.elevenlabs_daily_char_limit ?? 1500} Sprachzeichen`;
+    $('usage-summary').textContent = `Heute: OpenAI ${usageItem('openai')} / ${settings.openai_daily_limit ?? 10} · Gemini ${usageItem('gemini')} / ${settings.gemini_daily_limit ?? 20} KI-Anfragen · ${usageItem('elevenlabs')} / ${settings.elevenlabs_daily_char_limit ?? 1500} Sprachzeichen`;
   }
   function renderSystem(system = {}) {
     const isMac = system.is_macos ?? (system.platform === 'Darwin' || system.os === 'Darwin'); const osName = isMac ? 'macOS' : String(system.platform || system.os || '').startsWith('Linux') ? 'Linux' : system.os || system.platform || 'Local';
@@ -95,10 +99,10 @@
   $('action-status').addEventListener('click', () => { refreshStatus(false).then(() => { if (state.connected) toast('Systemdaten aktualisiert. Die Anzeigen stammen vom laufenden Server.'); }); });
   function focusChat() { $('conversation-panel').scrollIntoView({ behavior: 'smooth', block: 'center' }); $('chat-input').focus({ preventScroll:true }); }
   $('nav-chat').addEventListener('click', focusChat); $('nav-overview').addEventListener('click', () => { $('main').scrollIntoView({ behavior:'smooth' }); });
-  function openSettings() { const form = $('settings-form'); for (const key of ['cloud_enabled','gemini_model','gemini_daily_limit','elevenlabs_enabled','elevenlabs_voice_id','elevenlabs_daily_char_limit','local_voice_uri']) { const input = form.elements.namedItem(key); if (input.type === 'checkbox') input.checked = !!state.settings[key]; else input.value = state.settings[key] ?? input.defaultValue; } $('settings-error').textContent = ''; refreshLocalVoiceOptions(true); updateConfigView(); showDialog('settings-dialog'); }
+  function openSettings() { const form = $('settings-form'); for (const key of ['cloud_enabled','gemini_model','gemini_daily_limit','elevenlabs_enabled','elevenlabs_voice_id','elevenlabs_daily_char_limit','local_voice_uri','ai_provider','openai_model','openai_daily_limit']) { const input = form.elements.namedItem(key); if (input.type === 'checkbox') input.checked = !!state.settings[key]; else input.value = state.settings[key] ?? input.defaultValue; } $('settings-error').textContent = ''; refreshLocalVoiceOptions(true); updateConfigView(); showDialog('settings-dialog'); }
   for (const id of ['settings-top','nav-settings','connect-services']) $(id).addEventListener('click', openSettings);
-  $('settings-form').addEventListener('submit', async event => { event.preventDefault(); const form = event.currentTarget; const settings = {}; for(const key of ['cloud_enabled','gemini_model','gemini_daily_limit','elevenlabs_enabled','elevenlabs_voice_id','elevenlabs_daily_char_limit','local_voice_uri']) { const input = form.elements.namedItem(key); settings[key] = input.type === 'checkbox' ? input.checked : input.type === 'number' ? Number(input.value) : key === 'local_voice_uri' ? input.value : input.value.trim(); } const submit = form.querySelector('[type=submit]'); submit.disabled = true; try { const result = await api('/api/settings', { method:'PUT', body:JSON.stringify(settings) }); state.settings = result.settings || { ...state.settings, ...settings }; updateConfigView(); closeDialog('settings-dialog'); toast('Einstellungen lokal gespeichert.'); refreshStatus(); } catch(error) { $('settings-error').textContent = error.message; } finally { submit.disabled = false; } });
-  for (const provider of ['gemini','elevenlabs']) {
+  $('settings-form').addEventListener('submit', async event => { event.preventDefault(); const form = event.currentTarget; const settings = {}; for(const key of ['cloud_enabled','gemini_model','gemini_daily_limit','elevenlabs_enabled','elevenlabs_voice_id','elevenlabs_daily_char_limit','local_voice_uri','ai_provider','openai_model','openai_daily_limit']) { const input = form.elements.namedItem(key); settings[key] = input.type === 'checkbox' ? input.checked : input.type === 'number' ? Number(input.value) : key === 'local_voice_uri' ? input.value : input.value.trim(); } const submit = form.querySelector('[type=submit]'); submit.disabled = true; try { const result = await api('/api/settings', { method:'PUT', body:JSON.stringify(settings) }); state.settings = result.settings || { ...state.settings, ...settings }; updateConfigView(); closeDialog('settings-dialog'); toast('Einstellungen lokal gespeichert.'); refreshStatus(); } catch(error) { $('settings-error').textContent = error.message; } finally { submit.disabled = false; } });
+  for (const provider of ['gemini','elevenlabs','openai']) {
     $(`save-${provider}-key`).addEventListener('click', async () => {
       const input = $(`${provider}-api-key`), button = $(`save-${provider}-key`), feedback = $(`${provider}-key-result`);
       const key = input.value.trim();
@@ -114,7 +118,7 @@
       finally { input.value = ''; button.disabled = false; }
     });
   }
-  for (const provider of ['gemini','elevenlabs']) {
+  for (const provider of ['gemini','elevenlabs','openai']) {
     $(`test-${provider}-connection`).addEventListener('click', async () => {
       const button = $(`test-${provider}-connection`), feedback = $(`${provider}-connection-result`);
       button.disabled = true; feedback.classList.remove('error'); feedback.textContent = 'HTTPS-Verbindung wird geprüft …';
@@ -126,7 +130,7 @@
       finally { button.disabled = false; }
     });
   }
-  $('settings-dialog').addEventListener('close', () => { for (const provider of ['gemini','elevenlabs']) $(`${provider}-api-key`).value = ''; });
+  $('settings-dialog').addEventListener('close', () => { for (const provider of ['gemini','elevenlabs','openai']) $(`${provider}-api-key`).value = ''; });
   $('clear-chat').addEventListener('click', async () => { if (!window.confirm('Den lokal gespeicherten Gesprächsverlauf endgültig löschen?')) return; try { await api('/api/history', { method:'DELETE' }); $('messages').replaceChildren(); message('notice','Gesprächsverlauf gelöscht. Neue Nachrichten beginnen ohne bisherigen Kontext.'); } catch(error) { showError(error); } });
   function localVoices() { if (!window.speechSynthesis) return []; try { return speechSynthesis.getVoices().filter(voice => voice.localService === true); } catch (_) { return []; } }
   function localGermanVoices() { return localVoices().filter(voice => /^de(?:[-_]|$)/i.test(voice.lang)); }
@@ -263,7 +267,7 @@
   function openReminders() { $('reminder-error').textContent=''; const future = new Date(Date.now()+3600000); const pad = n => String(n).padStart(2,'0'); $('reminder-time').value=`${future.getFullYear()}-${pad(future.getMonth()+1)}-${pad(future.getDate())}T${pad(future.getHours())}:${pad(future.getMinutes())}`; showDialog('reminders-dialog'); refreshReminders(); }
   $('nav-reminders').addEventListener('click',openReminders); $('action-reminder').addEventListener('click',openReminders);
   $('reminder-form').addEventListener('submit',async event=>{event.preventDefault();const text=$('reminder-text').value.trim();const due=new Date($('reminder-time').value);if(!text || Number.isNaN(due.getTime()) || due.getTime()<=Date.now()){ $('reminder-error').textContent='Bitte gib einen Text und einen Zeitpunkt in der Zukunft an.';return;} const button=event.currentTarget.querySelector('[type=submit]');button.disabled=true;try{await api('/api/reminders',{method:'POST',body:JSON.stringify({text,due_at:due.toISOString()})});$('reminder-text').value='';$('reminder-error').textContent='';toast('Erinnerung lokal gespeichert.');await refreshReminders();}catch(error){$('reminder-error').textContent=error.message;}finally{button.disabled=false;}});
-  $('image-button').addEventListener('click',()=>{if(!state.settings.cloud_enabled || !state.providers.gemini_configured){toast('Aktiviere zuerst Gemini in den Einstellungen. Das ausgewählte Bild wird zur Analyse an Google gesendet.',true);openSettings();return;}if(!window.confirm('Das ausgewählte Bild wird zur Analyse an Google Gemini gesendet. Fortfahren?'))return;$('image-input').click();});
+  $('image-button').addEventListener('click',()=>{if(!state.settings.cloud_enabled || !state.providers[(state.settings.ai_provider === 'openai' ? 'openai' : 'gemini') + '_configured']){toast('Aktiviere zuerst den gewählten KI-Anbieter in den Einstellungen. Das Bild wird an diesen Anbieter gesendet.',true);openSettings();return;}if(!window.confirm('Das ausgewählte Bild wird zur Analyse an deinen ausgewählten KI-Anbieter gesendet. Fortfahren?'))return;$('image-input').click();});
   $('image-input').addEventListener('change',async event=>{const file=event.target.files[0];event.target.value='';if(!file)return;if(state.busy){toast('Bitte warte, bis die aktuelle Anfrage abgeschlossen ist.');return;}if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>4*1024*1024){toast('Bitte wähle ein PNG-, JPEG- oder WebP-Bild mit höchstens 4 MB.',true);return;}const text=$('chat-input').value.trim()||'Beschreibe dieses Bild auf Deutsch.';stopAudio();stopMicrophone();markBusy(true);message('user',`${text}\n[Ausgewähltes Bild: ${file.name}]`);try{const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(new Error('Das Bild konnte nicht gelesen werden.'));reader.readAsDataURL(file);});const result=await api('/api/image',{method:'POST',body:JSON.stringify({text,image:data,mime:file.type})});$('chat-input').value='';const item=message('assistant',result.reply);addProposals(item,result.proposals||[]);markBusy(false);if(state.settings.voice_enabled&&result.reply)speak(result.reply);refreshStatus();}catch(error){markBusy(false);showError(error);}});
   window.addEventListener('beforeunload',()=>{stopAudio();stopMicrophone();});
   async function initialize() { try { const session=await fetch('/api/session',{cache:'no-store'});if(!session.ok)throw new Error('Die lokale Sitzung konnte nicht gestartet werden.');const data=await session.json();state.token=data.token;await refreshStatus(false);const history=await api('/api/history');for(const entry of history.messages||[])message(entry.role,entry.text||entry.content,entry.created_at||entry.timestamp);await refreshReminders();if(!state.settings.cloud_enabled){$('core-subtitle').textContent='Lokaler Modus. Du bestimmst den nächsten Schritt.';} } catch(error) { setConnected(false); showError(error); } }

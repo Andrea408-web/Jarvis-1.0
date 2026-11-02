@@ -4,7 +4,7 @@ Datum: 2. November 2026. Ausführung in einer Linux-x86_64-Cloud mit Python 3.12
 
 ## Bestanden
 
-- `python3 -m unittest discover -s tests -v`: **90 Tests**, alle bestanden, kein Test übersprungen. Laufzeit rund 11 Sekunden. Für Loopback-Sockets wurde die vorgesehene Cloud-Sandboxfreigabe genutzt.
+- `python3 -m unittest discover -s tests -v`: **96 Tests**, alle bestanden, kein Test übersprungen. Laufzeit rund 12 Sekunden. Für Loopback-Sockets wurde die vorgesehene Cloud-Sandboxfreigabe genutzt.
 - Darunter echte HTTP-/HTTPS-Verbindungen, explizit vertrautes temporäres TLS-Zertifikat, Basic-Authentifizierung, Origin-/Host-Prüfungen und Prozess-Token.
 - Maximal 24 Handler gleichzeitig; langsame Header laufen aus; ein Client ohne TLS-Handshake blockiert andere Clients nicht.
 - Persistenz von Gesprächen, Einstellungen, Tageslimits und Erinnerungen; atomare Budgetgrenzen bei parallelen Anfragen.
@@ -37,3 +37,5 @@ Datum: 2. November 2026. Ausführung in einer Linux-x86_64-Cloud mit Python 3.12
 Entwurf speichern ist keine Veröffentlichung und wendet neue Schlüssel nicht automatisch an. In den Umgebungseinstellungen Änderungen prüfen und speichern, erneuerte Schlüssel sicher eintragen und die Umgebung bei Bedarf veröffentlichen. Eine Wiederherstellung in einer neuen Aufgabe wurde noch nicht geprüft.
 
 Der ursprüngliche GitHub-Remote war leer. Die Commit-Historie des Repositorys dokumentiert den auf GitHub verfügbaren Projektstand. API-Schlüssel und lokale Nutzungsdaten gehören nicht zum Projektcode.
+
+OpenAI-Erweiterung: separates Tageslimit, Kontext und bestätigte Aktionsvorschläge mit Testantworten geprüft; Bilder werden nicht gespeichert. Browserprüfung mit erfundenem Schlüssel und kontrollierter Chatantwort bestätigt Auswahl, verdecktes Hinterlegen, leere Browser-Speicher und bewusste Cloud-Freigabe. Keine echte OpenAI-Anfrage ausgeführt; Anbieterzugriff und Abrechnung bleiben kontospezifisch.

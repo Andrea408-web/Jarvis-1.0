@@ -6,6 +6,7 @@ from .providers import _open_request, safe_network_message
 
 
 _ENDPOINTS = {
+    "openai": ("OpenAI", "https://api.openai.com/v1/models"),
     'gemini': ('Google Gemini', 'https://generativelanguage.googleapis.com/v1beta/models'),
     'elevenlabs': ('ElevenLabs', 'https://api.elevenlabs.io/v1/voices'),
 }

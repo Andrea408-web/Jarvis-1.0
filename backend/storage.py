@@ -16,6 +16,9 @@ from pathlib import Path
 
 
 DEFAULT_SETTINGS = {
+    "ai_provider": "gemini",
+    "openai_model": "gpt-4o-mini",
+    "openai_daily_limit": 10,
     "cloud_enabled": False,
     "gemini_model": "gemini-2.5-flash",
     "gemini_daily_limit": 20,
@@ -103,6 +106,15 @@ class Store:
             if key in {"cloud_enabled", "elevenlabs_enabled", "voice_enabled"}:
                 if type(value) is not bool:
                     raise ValueError("Diese Einstellung muss ein Wahrheitswert sein.")
+            elif key == "ai_provider":
+                if value not in ("gemini", "openai"):
+                    raise ValueError("Bitte Gemini oder OpenAI auswählen.")
+            elif key == "openai_model":
+                if not isinstance(value, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,99}", value):
+                    raise ValueError("Ungültiger OpenAI-Modellname.")
+            elif key == "openai_daily_limit":
+                if type(value) is not int or not 0 <= value <= 1000:
+                    raise ValueError("Das OpenAI-Tageslimit muss zwischen 0 und 1000 liegen.")
             elif key == "gemini_daily_limit":
                 if type(value) is not int or not 0 <= value <= 1000:
                     raise ValueError("Das Gemini-Tageslimit muss zwischen 0 und 1000 liegen.")
@@ -165,7 +177,7 @@ class Store:
         This is a local safety ceiling, not a guarantee that an account has a
         free quota. Counters use UTC days and concurrent requests are atomic.
         """
-        if service not in {"gemini_requests", "elevenlabs_characters"}:
+        if service not in {"gemini_requests", "openai_requests", "elevenlabs_characters"}:
             raise ValueError("Unbekannter Nutzungszähler.")
         if type(amount) is not int or amount < 1 or type(limit) is not int or limit < 0:
             raise ValueError("Ungültiges Nutzungslimit.")
@@ -183,7 +195,7 @@ class Store:
 
     def usage(self) -> dict:
         day = datetime.now(timezone.utc).date().isoformat()
-        result = {"date": day, "gemini_requests": 0, "elevenlabs_characters": 0}
+        result = {"date": day, "gemini_requests": 0, "openai_requests": 0, "elevenlabs_characters": 0}
         with self._connect() as db:
             for row in db.execute("SELECT service, amount FROM usage WHERE day=?", (day,)):
                 result[row["service"]] = row["amount"]

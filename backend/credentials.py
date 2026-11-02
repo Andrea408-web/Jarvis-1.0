@@ -17,6 +17,7 @@ from .providers import provider_status
 
 
 _PROVIDERS = {
+    "openai": ("OPENAI_API_KEY", "com.jarvis.openai"),
     "gemini": ("GEMINI_API_KEY", "com.jarvis.gemini"),
     "elevenlabs": ("ELEVENLABS_API_KEY", "com.jarvis.elevenlabs"),
 }
@@ -26,7 +27,7 @@ _KEY_PATTERN = re.compile(r"[A-Za-z0-9_.-]{10,512}", re.ASCII)
 
 def _provider(provider):
     if not isinstance(provider, str) or provider not in _PROVIDERS:
-        raise ValueError("Bitte Gemini oder ElevenLabs als Anbieter wählen.")
+        raise ValueError("Bitte Gemini, OpenAI oder ElevenLabs als Anbieter wählen.")
     return _PROVIDERS[provider]
 
 

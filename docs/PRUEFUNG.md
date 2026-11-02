@@ -4,7 +4,7 @@ Datum: 2. November 2026. Ausführung in einer Linux-x86_64-Cloud mit Python 3.12
 
 ## Bestanden
 
-- `python3 -m unittest discover -s tests -v`: **102 Tests**, alle bestanden, kein Test übersprungen. Laufzeit rund 12 Sekunden. Für Loopback-Sockets wurde die vorgesehene Cloud-Sandboxfreigabe genutzt.
+- `python3 -m unittest discover -s tests -v`: **108 Tests**, alle bestanden, kein Test übersprungen. Laufzeit rund 12 Sekunden. Für Loopback-Sockets wurde die vorgesehene Cloud-Sandboxfreigabe genutzt.
 - Darunter echte HTTP-/HTTPS-Verbindungen, explizit vertrautes temporäres TLS-Zertifikat, Basic-Authentifizierung, Origin-/Host-Prüfungen und Prozess-Token.
 - Maximal 24 Handler gleichzeitig; langsame Header laufen aus; ein Client ohne TLS-Handshake blockiert andere Clients nicht.
 - Persistenz von Gesprächen, Einstellungen, Tageslimits und Erinnerungen; atomare Budgetgrenzen bei parallelen Anfragen.
@@ -41,3 +41,5 @@ Der ursprüngliche GitHub-Remote war leer. Die Commit-Historie des Repositorys d
 OpenAI-Erweiterung: separates Tageslimit, Kontext und bestätigte Aktionsvorschläge mit Testantworten geprüft; Bilder werden nicht gespeichert. Browserprüfung mit erfundenem Schlüssel und kontrollierter Chatantwort bestätigt Auswahl, verdecktes Hinterlegen, leere Browser-Speicher und bewusste Cloud-Freigabe. Keine echte OpenAI-Anfrage ausgeführt; Anbieterzugriff und Abrechnung bleiben kontospezifisch.
 
 Lokale KI: Anbindung mit kontrollierten Antworten und echtem Loopback-HTTP-Testserver geprüft. Keine API-Schlüssel oder Cloud-Aufrufe, keine Modell-Downloads und keine automatische Installation; Cloud-Modellnamen und Weiterleitungen abgewiesen. Browser bestätigt lokalen Modus, abgeschaltete Cloud-/ElevenLabs-Funktionen, klare Meldung bei fehlendem Ollama sowie Chat mit kontrollierter Testantwort. Ein echtes KI-Modell wurde in dieser Cloud nicht installiert oder ausgeführt. Bereitstellung von Ollama und Modell auf dem persönlichen Mac bleibt Voraussetzung; Offline-KI-Betrieb dort noch nicht verifiziert.
+
+Kleine KI ohne Ollama: llama.cpp-Protokoll, Anbieterauswahl, ehrlicher Fehlstatus, keine Cloud-/Ollama-Ausweichanfrage, fehlende Dateien, GGUF-Format und Obergrenze500MiB mit Testdateien geprüft. Browserprüfung bestätigt Auswahl und Chat mit kontrollierter llama.cpp-Antwort. Native Mac-Binärdatei und echtes Qwen-Modell wurden nicht heruntergeladen oder ausgeführt. Offizielle llama.cpp-Release-Seite war erreichbar; Modell-Metadaten von Hugging Face aus dieser Cloud nicht abrufbar. Die ungefähre Größe muss beim gewählten offiziellen Download geprüft werden.

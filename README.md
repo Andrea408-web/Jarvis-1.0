@@ -145,6 +145,12 @@ Standardmodell: `gpt-4o-mini`, separates lokales Tageslimit: 10 Anfragen, maxima
 
 Der Verbindungstest für OpenAI ruft ausschließlich den Modellkatalog ohne API-Schlüssel ab. Ein HTTP401-Ergebnis bestätigt eine HTTPS-Antwort, keine gültige Anmeldung. Schlüssel werden nie in Git, SQLite, API-Antworten oder Browserspeichern abgelegt.
 
+## Ohne Ollama: kleine lokale KI (ungefähr 400 MB)
+
+Die neue Variante verwendet llama.cpp und das kleine Qwen2.5-0.5B-Q4_K_M-Modell. Kein Ollama, keine API-Schlüssel oder Anbietergebühren. Einmaliger Download von Modell und passendem Startprogramm bleibt notwendig. Die Modellgröße ist ungefähr; aktuelle Dateigröße auf der offiziellen Downloadseite prüfen. Nichts wird automatisch heruntergeladen.
+
+Die vollständige deutsche Einrichtung steht in **[docs/KLEINE-KI.md](docs/KLEINE-KI.md)**. Der Starter heißt `Kleine-KI-starten.command`; danach JARVIS öffnen und **Einstellungen → Kleine KI verwenden** wählen. Echte Antworten dieses Modells auf deinem Mac sind noch nicht getestet; die Anbindung ist mit kontrollierten Antworten geprüft.
+
 ## Kostenlos ohne API-Schlüssel: lokale KI
 
 Die neue Anbindung verwendet **Ollama auf demselben Mac**. Es gibt keine Anbietergebühren und keine API-Schlüssel. Programm und Modell müssen aber **einmal heruntergeladen werden**; völlig ohne ein vorhandenes Modell und ohne Download kann JARVIS keine Offline-KI bereitstellen. Es wird nichts automatisch installiert.

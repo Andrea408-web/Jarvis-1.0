@@ -23,6 +23,8 @@ from .ai import GeminiClient, ProviderError, provider_status
 from .voice import VoiceClient
 from .openai_client import OpenAIClient
 from .local_ai import LocalClient, local_status
+from .llamacpp import LlamaCppClient, status as llama_status
+from .small_model import start as start_small_model
 from .storage import Store
 from .mac_control import PendingActions
 from .system_info import snapshot
@@ -41,6 +43,7 @@ class Application:
         self.ai = GeminiClient(self.store)
         self.openai = OpenAIClient(self.store)
         self.local_ai = LocalClient(self.store)
+        self.llamacpp = LlamaCppClient(self.store)
         self.voice = VoiceClient(self.store)
         self.token = secrets.token_urlsafe(32)
         self.chat_lock = threading.Lock()
@@ -64,7 +67,7 @@ class Application:
 
     def selected_client(self):
         provider = self.store.settings()["ai_provider"]
-        return self.local_ai if provider == "ollama" else self.openai if provider == "openai" else self.ai
+        return self.llamacpp if provider == "llamacpp" else self.local_ai if provider == "ollama" else self.openai if provider == "openai" else self.ai
 
     def status(self):
         result = self.settings()
@@ -303,6 +306,10 @@ class Handler(BaseHTTPRequestHandler):
             return self._json({'ok': True})
         elif method in {'POST', 'PUT', 'PATCH'}:
             body = self._body()
+            if method == 'POST' and path == '/api/llamacpp/status':
+                if body:
+                    raise ValueError('Die lokale Prüfung benötigt keine Parameter.')
+                return self._json(llama_status())
             if method == 'POST' and path == '/api/local/status':
                 if body:
                     raise ValueError('Die lokale Prüfung benötigt keine Parameter.')
@@ -386,7 +393,16 @@ def main(argv=None):
     parser.add_argument('--diagnose', action='store_true', help='Tatsächliche Hardware und Software anzeigen, ohne Serverstart')
     parser.add_argument('--check-connection', choices=['gemini', 'elevenlabs', 'openai'], help='HTTPS-Verbindung ohne API-Schlüssel und ohne Generierung prüfen')
     parser.add_argument('--repair-certificates', action='store_true', help='Auf ausdrücklichen Auftrag das offizielle python.org-Zertifikatsskript auf macOS ausführen')
+    parser.add_argument('--start-small-ai', action='store_true', help='Vorhandene kleine lokale KI ohne Download starten')
     args = parser.parse_args(argv)
+    if args.start_small_ai:
+        try:
+            start_small_model()
+        except ValueError as error:
+            parser.exit(1, str(error) + '\n')
+        except KeyboardInterrupt:
+            pass
+        return
     if args.diagnose:
         print(json.dumps(snapshot(), ensure_ascii=False, indent=2))
         return

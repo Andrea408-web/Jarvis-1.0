@@ -108,7 +108,7 @@ class Store:
                 if type(value) is not bool:
                     raise ValueError("Diese Einstellung muss ein Wahrheitswert sein.")
             elif key == "ai_provider":
-                if value not in ("gemini", "openai", "ollama"):
+                if value not in ("gemini", "openai", "ollama", "llamacpp"):
                     raise ValueError("Bitte Gemini oder OpenAI auswählen.")
             elif key == "local_model":
                 from .local_ai import validate_model

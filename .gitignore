@@ -11,3 +11,8 @@ __pycache__/
 *.pem
 *.key
 test-results/
+
+# Manually supplied local runtime/model artifacts
+runtime/
+models/
+*.gguf

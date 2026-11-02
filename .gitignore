@@ -1,0 +1,13 @@
+__pycache__/
+*.py[cod]
+.DS_Store
+.env
+.env.*
+!.env.example
+.venv/
+.jarvis/
+*.sqlite3*
+*.log
+*.pem
+*.key
+test-results/

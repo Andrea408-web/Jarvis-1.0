@@ -50,3 +50,5 @@ Mac-Aktionsnamen: `open_app`, `open_url`; Dateiaktionen: `list_files`, `read_tex
 Nach einem bestätigten Dateilesen erscheint der Inhalt nur in der Oberfläche. Eine Übertragung an Gemini muss separat durch den Nutzer erfolgen. Kein automatischer Datei-/Mail-Zugriff als Gesprächskontext. Nicht unterstützte Integrationen sind in `capabilities` mit `false` gekennzeichnet.
 
 OpenAI: `backend/openai_client.py` verwendet die offizielle Chat-Completions-API mit verifiziertem HTTPS. `ai_provider` wählt `gemini` oder `openai`; Schlüsselziel ist `OPENAI_API_KEY` beziehungsweise `com.jarvis.openai` im macOS-Schlüsselbund. `openai_model` und `openai_daily_limit` sind eigene Einstellungen. Der Zähler `openai_requests` ist getrennt; keine automatische kostenpflichtige Ausweichanfrage.
+
+Lokale KI: `backend/local_ai.py`, Anbieter `ollama`, Einstellung `local_model`, Standard `qwen2.5:1.5b`. Fester Loopback-Abruf `/api/chat` ohne Keys, Proxy oder Redirects; expliziter Status über `POST /api/local/status {}`. Keine Downloads, Bildanalyse, Tool Calls oder automatische Cloud-Ausweichroute. Native Ollama-API mit begrenztem Kontext und 512 Ausgabetokens.

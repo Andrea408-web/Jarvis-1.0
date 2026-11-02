@@ -144,3 +144,16 @@ In Einstellungen den **KI-Anbieter OpenAI** wählen. Unter **OpenAI** den API-Sc
 Standardmodell: `gpt-4o-mini`, separates lokales Tageslimit: 10 Anfragen, maximal 1536 Ausgabetokens pro Anfrage. Die OpenAI-API wird separat von ChatGPT bezahlt. Anfragelimits sind keine Geldobergrenze; Anbieterbudget und tatsächliche Abrechnung im OpenAI-Konto prüfen. Chat, Gesprächskontext, Bildanalyse und bestätigte Aktionsvorschläge verwenden den gewählten Anbieter. Bei einem Fehler wird nicht automatisch zu einem anderen kostenpflichtigen Anbieter gewechselt. Der vorhandene Python-Zertifikatsfehler muss auch für OpenAI behoben sein.
 
 Der Verbindungstest für OpenAI ruft ausschließlich den Modellkatalog ohne API-Schlüssel ab. Ein HTTP401-Ergebnis bestätigt eine HTTPS-Antwort, keine gültige Anmeldung. Schlüssel werden nie in Git, SQLite, API-Antworten oder Browserspeichern abgelegt.
+
+## Kostenlos ohne API-Schlüssel: lokale KI
+
+Die neue Anbindung verwendet **Ollama auf demselben Mac**. Es gibt keine Anbietergebühren und keine API-Schlüssel. Programm und Modell müssen aber **einmal heruntergeladen werden**; völlig ohne ein vorhandenes Modell und ohne Download kann JARVIS keine Offline-KI bereitstellen. Es wird nichts automatisch installiert.
+
+1. Falls du die lokale Installation möchtest: Ollama von **https://ollama.com/download/mac** herunterladen, installieren und öffnen. Die tatsächliche Mac-Kompatibilität anhand der dortigen Anforderungen und der JARVIS-Diagnose prüfen.
+2. Im Mac-Terminal einmal ausführen: `ollama pull qwen2.5:1.5b`. Das kleine Textmodell benötigt ungefähr einen Gigabyte Download und zusätzlichen Arbeitsspeicher; die konkrete Größe zeigt Ollama. Für einen Mac mit 8 GB RAM ist ein kleines Modell ein sinnvoller Einstieg, keine Leistungsgarantie. Für diesen Schritt ist Internet nötig.
+3. JARVIS starten. **Einstellungen → Lokale KI → Lokale KI verwenden → Ollama prüfen**. Diese Schaltfläche speichert lokalen Modus, schaltet Cloud-KI und ElevenLabs aus und aktiviert die Systemstimme.
+4. Danach kannst du bei laufendem Ollama Textgespräche ohne Internet führen.
+
+Die Verbindung geht ausschließlich an `127.0.0.1:11434`, ohne API-Schlüssel, Proxy oder Weiterleitungen. Es wird kein Modell durch JARVIS heruntergeladen. Cloud-Modellnamen werden abgewiesen. Es gibt keine kostenpflichtige Ausweichanfrage, keine Bildanalyse und keine modellgesteuerten Aktionen in diesem Modus. Direkte lokale Befehle wie „Rechner öffnen“ bleiben nach Bestätigung verfügbar. Kleine Modelle können deutlich schwächer antworten als Cloud-Modelle. Das gespeicherte Gespräch wird begrenzt als Kontext verwendet.
+
+Der echte Modellbetrieb auf deinem Mac ist noch nicht verifiziert; die Tests prüfen die Anbindung mit kontrollierten Antworten und einem lokalen HTTP-Testserver. Wenn Ollama oder das Modell fehlt, erscheint eine verständliche Fehlermeldung, keine simulierte KI-Antwort.

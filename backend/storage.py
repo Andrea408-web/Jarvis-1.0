@@ -17,6 +17,7 @@ from pathlib import Path
 
 DEFAULT_SETTINGS = {
     "ai_provider": "gemini",
+    "local_model": "qwen2.5:1.5b",
     "openai_model": "gpt-4o-mini",
     "openai_daily_limit": 10,
     "cloud_enabled": False,
@@ -107,8 +108,11 @@ class Store:
                 if type(value) is not bool:
                     raise ValueError("Diese Einstellung muss ein Wahrheitswert sein.")
             elif key == "ai_provider":
-                if value not in ("gemini", "openai"):
+                if value not in ("gemini", "openai", "ollama"):
                     raise ValueError("Bitte Gemini oder OpenAI auswählen.")
+            elif key == "local_model":
+                from .local_ai import validate_model
+                validate_model(value)
             elif key == "openai_model":
                 if not isinstance(value, str) or not re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._-]{0,99}", value):
                     raise ValueError("Ungültiger OpenAI-Modellname.")

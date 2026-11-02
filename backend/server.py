@@ -22,6 +22,7 @@ from urllib.parse import urlsplit
 from .ai import GeminiClient, ProviderError, provider_status
 from .voice import VoiceClient
 from .openai_client import OpenAIClient
+from .local_ai import LocalClient, local_status
 from .storage import Store
 from .mac_control import PendingActions
 from .system_info import snapshot
@@ -39,6 +40,7 @@ class Application:
         self.actions = PendingActions(self.store)
         self.ai = GeminiClient(self.store)
         self.openai = OpenAIClient(self.store)
+        self.local_ai = LocalClient(self.store)
         self.voice = VoiceClient(self.store)
         self.token = secrets.token_urlsafe(32)
         self.chat_lock = threading.Lock()
@@ -59,6 +61,10 @@ class Application:
             'gemini': {'used': usage['gemini_requests'], 'limit': values['gemini_daily_limit']},
             'elevenlabs': {'used': usage['elevenlabs_characters'], 'limit': values['elevenlabs_daily_char_limit']},
         }}
+
+    def selected_client(self):
+        provider = self.store.settings()["ai_provider"]
+        return self.local_ai if provider == "ollama" else self.openai if provider == "openai" else self.ai
 
     def status(self):
         result = self.settings()
@@ -94,7 +100,7 @@ class Application:
             if command in {'status', 'systemstatus', 'hilfe', 'help'}:
                 if command in {'hilfe', 'help'}:
                     reply = ('Sir, lokal können Sie „Rechner öffnen“ oder „Status“ eingeben und Erinnerungen speichern. '
-                             'Für freie Gespräche aktivieren Sie Gemini in den Einstellungen. '
+                             'Für freie Gespräche wählen Sie die lokale KI oder einen verfügbaren Cloud-Anbieter in den Einstellungen. '
                              'Mac-Aktionen benötigen Ihre Bestätigung; die Oberfläche führt sie auf dem Servergerät aus.')
                 else:
                     system = snapshot(self.store.data_dir)
@@ -104,7 +110,7 @@ class Application:
                 self.store.append('user', text)
                 self.store.append('assistant', reply)
                 return {'reply': reply, 'proposals': []}
-            client = self.openai if self.store.settings()["ai_provider"] == "openai" else self.ai
+            client = self.selected_client()
             result = client.chat(text)
             proposals = []
             for proposal in result.get('proposed_actions', []):
@@ -297,6 +303,10 @@ class Handler(BaseHTTPRequestHandler):
             return self._json({'ok': True})
         elif method in {'POST', 'PUT', 'PATCH'}:
             body = self._body()
+            if method == 'POST' and path == '/api/local/status':
+                if body:
+                    raise ValueError('Die lokale Prüfung benötigt keine Parameter.')
+                return self._json(local_status())
             if method == 'POST' and path == '/api/connections':
                 if set(body) != {'provider'}:
                     raise ValueError('Bitte ausschließlich den Anbieter für die Verbindungsprüfung angeben.')
@@ -320,7 +330,7 @@ class Handler(BaseHTTPRequestHandler):
                 if not app.chat_lock.acquire(blocking=False):
                     raise ProviderError('Eine Anfrage läuft bereits. Bitte kurz warten.', 409)
                 try:
-                    client = app.openai if app.store.settings()['ai_provider'] == 'openai' else app.ai
+                    client = app.selected_client()
                     result = client.analyze_image(body.get('text', ''), image, body.get('mime', 'image/jpeg'))
                 finally:
                     app.chat_lock.release()

@@ -10,6 +10,7 @@ import os
 import platform
 import re
 import sqlite3
+import unicodedata
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
@@ -22,6 +23,7 @@ DEFAULT_SETTINGS = {
     "elevenlabs_voice_id": "",
     "elevenlabs_daily_char_limit": 1500,
     "voice_enabled": False,
+    "local_voice_uri": "",
 }
 
 
@@ -113,6 +115,12 @@ class Store:
             elif key == "elevenlabs_voice_id":
                 if not isinstance(value, str) or (value and not re.fullmatch(r"[a-zA-Z0-9_-]{1,100}", value)):
                     raise ValueError("Ungültige ElevenLabs Voice ID.")
+            elif key == "local_voice_uri":
+                # Opaque browser voice identifier: never interpreted as a URL,
+                # fetched, or used as a shell argument by this backend.
+                if (not isinstance(value, str) or len(value) > 1024
+                        or any(unicodedata.category(char) in {"Cc", "Cs", "Zl", "Zp"} for char in value)):
+                    raise ValueError("Die Systemstimme benötigt eine Kennung mit höchstens 1024 Zeichen ohne Steuerzeichen.")
         with self._connect() as db:
             for key, value in values.items():
                 db.execute("INSERT INTO settings(name, value) VALUES (?, ?) "

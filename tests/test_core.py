@@ -43,6 +43,28 @@ class StorageTests(unittest.TestCase):
         self.assertEqual(self.store.history("one"), [])
         self.assertEqual(len(self.store.history("two")), 1)
 
+    def test_local_voice_selection_persists_without_migrating_voice_toggles(self):
+        self.assertEqual(self.store.settings()["local_voice_uri"], "")
+        self.store.update_settings({"cloud_enabled": True, "elevenlabs_enabled": True, "voice_enabled": False})
+        before = self.store.settings()
+        uri = "com.apple.voice.compact.de-DE.Anna : Deutsch (Deutschland)"
+        self.store.update_settings({"local_voice_uri": uri})
+        reopened = Store(self.temp.name).settings()
+        self.assertEqual(reopened, {**before, "local_voice_uri": uri})
+        self.store.update_settings({"local_voice_uri": ""})
+        self.assertEqual(Store(self.temp.name).settings()["local_voice_uri"], "")
+
+    def test_invalid_local_voice_selection_is_atomic(self):
+        self.store.update_settings({"elevenlabs_enabled": True, "voice_enabled": False})
+        before = self.store.settings()
+        for value in [None, False, 123, [], {}, "x" * 1025, "voice\nname", "voice\rname", "voice\x00name",
+                      "voice\tname", "voice\x7fname", "voice\x85name", "voice\u2028name", "voice\ud800name"]:
+            with self.subTest(value=repr(value)):
+                with self.assertRaises(ValueError):
+                    self.store.update_settings({"elevenlabs_enabled": False, "voice_enabled": True,
+                                                "local_voice_uri": value})
+                self.assertEqual(self.store.settings(), before)
+
     def test_budget_is_atomic_under_concurrency(self):
         def attempt(_):
             try:

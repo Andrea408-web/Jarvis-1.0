@@ -11,6 +11,7 @@
 | `backend/voice.py` | ElevenLabs REST mit festem maximalem Textumfang. |
 | `backend/providers.py` | Verifiziertes HTTPS, begrenzte Antwortgrößen, keine Redirects mit Schlüsseln. |
 | `backend/diagnostics.py` | Nur nach ausdrücklichem Aufruf: fester HTTPS-Katalogabruf ohne Schlüssel oder Generierung, sichere Fehlerdiagnose. |
+| `backend/certificates.py` | Ausschließlich durch explizites CLI-Flag gestarteter Helfer für das vorhandene offizielle python.org-Zertifikatsskript auf macOS. Kein automatischer Installationsschritt, keine Änderung der TLS-Prüfung. |
 | `backend/credentials.py` | Verdeckte Browserkonfiguration, auf ausdrücklichen Auftrag Speicherung im macOS-Schlüsselbund, sonst nur Sitzung. Kein Schlüsselwert in Prozessargumenten, Git, SQLite oder API-Antworten. |
 | `backend/mac_control.py` | Freigabeliste, kurzlebige Einmalbestätigungen, sichere native Öffnen-Aufträge und begrenzte Dateien. |
 | `backend/automations.py` | Fällige Erinnerungen und Timer als lokale Datensätze, kein Hintergrunddaemon. |

@@ -137,6 +137,43 @@ class LiveServerTests(unittest.TestCase):
         self.assertEqual(status, 400)
         self.assertEqual(self.app.store.history(), [])
 
+    def test_explicit_system_voice_selection_persists_without_changing_cloud_keys_or_budget(self):
+        self.app.store.update_settings({"cloud_enabled": True, "elevenlabs_enabled": True, "voice_enabled": False,
+                                        "gemini_daily_limit": 7, "elevenlabs_daily_char_limit": 1200})
+        self.app.store.reserve_usage("gemini_requests", 1, 7)
+        self.app.store.reserve_usage("elevenlabs_characters", 25, 1200)
+        before = self.app.store.settings()
+        usage_before = self.app.store.usage()
+        uri = "com.apple.voice.compact.de-DE.Anna : Deutsch (Deutschland)"
+        fake_keys = {"GEMINI_API_KEY": "fake-system-voice-gemini-key-123456",
+                     "ELEVENLABS_API_KEY": "fake-system-voice-elevenlabs-key-123456"}
+        with patch.dict(os.environ, fake_keys):
+            with patch("backend.providers._open_request") as upstream:
+                status, result, _ = self.request("PUT", "/api/settings", {
+                    "elevenlabs_enabled": False, "voice_enabled": True, "local_voice_uri": uri})
+                self.assertEqual(status, 200)
+                expected = {**before, "elevenlabs_enabled": False, "voice_enabled": True, "local_voice_uri": uri}
+                self.assertEqual(result["settings"], expected)
+                self.assertEqual(Store(self.temp.name).settings(), expected)
+                self.assertEqual(self.request("GET", "/api/settings")[1]["settings"], expected)
+                upstream.assert_not_called()
+            for name, key in fake_keys.items():
+                self.assertEqual(os.environ[name], key)
+                self.assertNotIn(key, json.dumps(result))
+        self.assertEqual(self.app.store.usage(), usage_before)
+        self.assertEqual(self.app.store.history(), [])
+
+    def test_invalid_system_voice_settings_fail_atomically_over_http(self):
+        self.app.store.update_settings({"elevenlabs_enabled": True, "voice_enabled": False,
+                                        "local_voice_uri": "existing:German Voice"})
+        before = self.app.store.settings()
+        for value in [None, False, 123, [], {}, "x" * 1025, "voice\nname", "voice\x00name", "voice\x7fname"]:
+            with self.subTest(value=repr(value)):
+                status, _, _ = self.request("PUT", "/api/settings", {
+                    "elevenlabs_enabled": False, "voice_enabled": True, "local_voice_uri": value})
+                self.assertEqual(status, 400)
+                self.assertEqual(Store(self.temp.name).settings(), before)
+
     def test_local_command_proposes_then_reports_actual_platform_failure(self):
         with patch.object(self.app.ai, "chat", side_effect=AssertionError("local command must stay local")):
             status, result, _ = self.request("POST", "/api/chat", {"text": "Rechner öffnen"})

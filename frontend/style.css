@@ -13,3 +13,5 @@
 .local-voice-actions{display:flex;flex-wrap:wrap;gap:9px;margin:16px 0 10px}.local-voice-actions button{font-size:11px}
 
 .connection-test{border-top:1px solid #394329;margin-top:17px;padding-top:16px}.connection-test button{font-size:10px}
+
+select#local_voice_uri{width:100%;padding:10px 11px;background:#0b1008;border:1px solid #3c472b;border-radius:3px;color:var(--text);font-size:12px;min-height:41px}select#local_voice_uri option{background:#10170b;color:var(--text)}

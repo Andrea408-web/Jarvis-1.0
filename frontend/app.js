@@ -58,6 +58,7 @@
       $(`${provider}-key-privacy`).textContent = persistentAvailable ? 'Der Schlüssel wird nur an deinen JARVIS-Server gesendet. Mit gewählter Option speichert der Mac ihn im Schlüsselbund, sonst nur für diese Sitzung. Hierdurch wird keine Anfrage an den Anbieter gestartet.' : 'Der Schlüssel wird nur an deinen JARVIS-Server gesendet und bleibt bis zum Serverneustart in dessen Arbeitsspeicher. Hierdurch wird keine Anfrage an den Anbieter gestartet.';
     }
     state.persistentCapability = persistentAvailable;
+    refreshLocalVoiceOptions();
     $('usage-summary').textContent = `Heute: ${usageItem('gemini')} / ${settings.gemini_daily_limit ?? 20} KI-Anfragen · ${usageItem('elevenlabs')} / ${settings.elevenlabs_daily_char_limit ?? 1500} Sprachzeichen`;
   }
   function renderSystem(system = {}) {
@@ -94,9 +95,9 @@
   $('action-status').addEventListener('click', () => { refreshStatus(false).then(() => { if (state.connected) toast('Systemdaten aktualisiert. Die Anzeigen stammen vom laufenden Server.'); }); });
   function focusChat() { $('conversation-panel').scrollIntoView({ behavior: 'smooth', block: 'center' }); $('chat-input').focus({ preventScroll:true }); }
   $('nav-chat').addEventListener('click', focusChat); $('nav-overview').addEventListener('click', () => { $('main').scrollIntoView({ behavior:'smooth' }); });
-  function openSettings() { const form = $('settings-form'); for (const key of ['cloud_enabled','gemini_model','gemini_daily_limit','elevenlabs_enabled','elevenlabs_voice_id','elevenlabs_daily_char_limit']) { const input = form.elements.namedItem(key); if (input.type === 'checkbox') input.checked = !!state.settings[key]; else input.value = state.settings[key] ?? input.defaultValue; } $('settings-error').textContent = ''; updateConfigView(); showDialog('settings-dialog'); }
+  function openSettings() { const form = $('settings-form'); for (const key of ['cloud_enabled','gemini_model','gemini_daily_limit','elevenlabs_enabled','elevenlabs_voice_id','elevenlabs_daily_char_limit','local_voice_uri']) { const input = form.elements.namedItem(key); if (input.type === 'checkbox') input.checked = !!state.settings[key]; else input.value = state.settings[key] ?? input.defaultValue; } $('settings-error').textContent = ''; refreshLocalVoiceOptions(true); updateConfigView(); showDialog('settings-dialog'); }
   for (const id of ['settings-top','nav-settings','connect-services']) $(id).addEventListener('click', openSettings);
-  $('settings-form').addEventListener('submit', async event => { event.preventDefault(); const form = event.currentTarget; const settings = {}; for(const key of ['cloud_enabled','gemini_model','gemini_daily_limit','elevenlabs_enabled','elevenlabs_voice_id','elevenlabs_daily_char_limit']) { const input = form.elements.namedItem(key); settings[key] = input.type === 'checkbox' ? input.checked : input.type === 'number' ? Number(input.value) : input.value.trim(); } const submit = form.querySelector('[type=submit]'); submit.disabled = true; try { const result = await api('/api/settings', { method:'PUT', body:JSON.stringify(settings) }); state.settings = result.settings || { ...state.settings, ...settings }; updateConfigView(); closeDialog('settings-dialog'); toast('Einstellungen lokal gespeichert.'); refreshStatus(); } catch(error) { $('settings-error').textContent = error.message; } finally { submit.disabled = false; } });
+  $('settings-form').addEventListener('submit', async event => { event.preventDefault(); const form = event.currentTarget; const settings = {}; for(const key of ['cloud_enabled','gemini_model','gemini_daily_limit','elevenlabs_enabled','elevenlabs_voice_id','elevenlabs_daily_char_limit','local_voice_uri']) { const input = form.elements.namedItem(key); settings[key] = input.type === 'checkbox' ? input.checked : input.type === 'number' ? Number(input.value) : key === 'local_voice_uri' ? input.value : input.value.trim(); } const submit = form.querySelector('[type=submit]'); submit.disabled = true; try { const result = await api('/api/settings', { method:'PUT', body:JSON.stringify(settings) }); state.settings = result.settings || { ...state.settings, ...settings }; updateConfigView(); closeDialog('settings-dialog'); toast('Einstellungen lokal gespeichert.'); refreshStatus(); } catch(error) { $('settings-error').textContent = error.message; } finally { submit.disabled = false; } });
   for (const provider of ['gemini','elevenlabs']) {
     $(`save-${provider}-key`).addEventListener('click', async () => {
       const input = $(`${provider}-api-key`), button = $(`save-${provider}-key`), feedback = $(`${provider}-key-result`);
@@ -129,6 +130,27 @@
   $('clear-chat').addEventListener('click', async () => { if (!window.confirm('Den lokal gespeicherten Gesprächsverlauf endgültig löschen?')) return; try { await api('/api/history', { method:'DELETE' }); $('messages').replaceChildren(); message('notice','Gesprächsverlauf gelöscht. Neue Nachrichten beginnen ohne bisherigen Kontext.'); } catch(error) { showError(error); } });
   function localVoices() { if (!window.speechSynthesis) return []; try { return speechSynthesis.getVoices().filter(voice => voice.localService === true); } catch (_) { return []; } }
   function localGermanVoices() { return localVoices().filter(voice => /^de(?:[-_]|$)/i.test(voice.lang)); }
+  function refreshLocalVoiceOptions(forceSaved = false) {
+    const select = $('local_voice_uri');
+    const desired = forceSaved || !$('settings-dialog').open ? state.settings.local_voice_uri || '' : select.value;
+    const voices = localGermanVoices();
+    select.replaceChildren();
+    const automatic = document.createElement('option'); automatic.value = ''; automatic.textContent = 'Automatisch (deutsche Systemstimme)'; select.append(automatic);
+    const seen = new Set();
+    for (const voice of voices) {
+      if (typeof voice.voiceURI !== 'string' || !voice.voiceURI || seen.has(voice.voiceURI)) continue;
+      seen.add(voice.voiceURI);
+      const option = document.createElement('option'); option.value = voice.voiceURI;
+      option.textContent = `${voice.name || 'Deutsche Systemstimme'} (${voice.lang})`; select.append(option);
+    }
+    if (desired && !seen.has(desired)) {
+      const missing = document.createElement('option'); missing.value = desired;
+      missing.textContent = 'Gespeicherte Stimme auf diesem Gerät nicht verfügbar'; missing.disabled = true; select.append(missing);
+    }
+    select.value = desired;
+    $('local-voice-selection-hint').textContent = desired && !seen.has(desired) ? 'Diese Stimme ist auf diesem Gerät nicht verfügbar. JARVIS wählt automatisch eine vorhandene deutsche Systemstimme. Deine gespeicherte Auswahl bleibt erhalten.' : voices.length ? 'Nur vom Browser gemeldete lokale deutsche Stimmen. Du kannst die Auswahl vor dem Speichern testen.' : 'Noch keine lokale deutsche Stimme gemeldet. Manche Browser laden die Liste verzögert. „Lokale Stimme testen“ wartet kurz darauf.';
+  }
+  $('local_voice_uri').addEventListener('change', () => refreshLocalVoiceOptions());
   function localVoiceFeedback(text, error = false) { $('local-voice-result').textContent = text; $('local-voice-result').classList.toggle('error', error); }
   function waitForLocalGermanVoice(generation, timeout = 1500) {
     const current = localGermanVoices()[0];
@@ -162,24 +184,28 @@
       localVoiceFeedback(notice, true); toast(notice, true); return false;
     }
     localVoiceFeedback('Lokale deutsche Stimme wird geladen …');
-    const voice = await waitForLocalGermanVoice(generation);
+    const availableVoice = await waitForLocalGermanVoice(generation);
     // Stop or a newer answer must never start an older utterance after waiting.
     if (generation !== state.speechGeneration) return false;
-    if (!voice) {
+    if (!availableVoice) {
       const notice = 'Keine lokale deutsche Stimme verfügbar. Prüfe die installierten deutschen Systemstimmen auf deinem Gerät. Es wird nichts automatisch heruntergeladen.';
       localVoiceFeedback(notice, true); toast(notice, true, 10000); return false;
     }
+    const preferredURI = $('settings-dialog').open ? $('local_voice_uri').value : state.settings.local_voice_uri || '';
+    const voice = localGermanVoices().find(item => preferredURI && item.voiceURI === preferredURI) || availableVoice;
+    const automaticFallback = !!preferredURI && voice.voiceURI !== preferredURI;
+    const selectionNotice = automaticFallback ? 'Die gewählte Stimme ist auf diesem Gerät nicht verfügbar; eine vorhandene deutsche Systemstimme wird automatisch verwendet.' : voice.name ? `Lokale Stimme: ${voice.name}.` : 'Lokale deutsche Systemstimme.';
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.voice = voice; utterance.lang = voice.lang; utterance.rate = .98;
     utterance.volume = Number($('volume').value) / 100;
     utterance.onstart = () => {
       if (generation !== state.speechGeneration) return;
-      setMode('speaking'); $('audio-label').textContent = 'LOKALE DEUTSCHE STIMME';
-      localVoiceFeedback('Die lokale deutsche Stimme spricht. Stop beendet die Ausgabe.');
+      setMode('speaking'); $('audio-label').textContent = automaticFallback ? 'LOKALE STIMME · AUTOMATISCH' : 'LOKALE DEUTSCHE STIMME';
+      localVoiceFeedback(`${selectionNotice} Die Ausgabe läuft. Stop beendet sie.`);
     };
     utterance.onend = () => {
       if (generation !== state.speechGeneration) return;
-      setMode('idle'); localVoiceFeedback('Lokale Sprachausgabe beendet.');
+      setMode('idle'); localVoiceFeedback(`${selectionNotice} Ausgabe beendet.`);
     };
     utterance.onerror = event => {
       if (generation !== state.speechGeneration || event.error === 'canceled' || event.error === 'interrupted') return;
@@ -200,6 +226,21 @@
     if (state.settings.elevenlabs_enabled) { const controller = new AbortController(); state.audioRequest = controller; try { const context = await audioContext(); const blob = await api('/api/voice', { method:'POST', body:JSON.stringify({ text }), signal:controller.signal }); if (generation !== state.speechGeneration) return; state.audioUrl = URL.createObjectURL(blob); const audio = new Audio(state.audioUrl); state.audio = audio; audio.volume = Number($('volume').value) / 100; if (context) { const source = context.createMediaElementSource(audio); const analyser = context.createAnalyser(); analyser.fftSize = 256; source.connect(analyser); analyser.connect(context.destination); audio.addEventListener('play', () => { if (generation !== state.speechGeneration) return; setMode('speaking'); animateAnalyser(analyser); }); } else audio.addEventListener('play', () => setMode('speaking')); audio.addEventListener('ended', () => { if (generation === state.speechGeneration) { stopAudio(); setMode('idle'); } }); audio.addEventListener('error', () => { if (generation === state.speechGeneration) { stopAudio(); toast('Die Audiodatei konnte nicht wiedergegeben werden.',true); } }); await audio.play(); refreshStatus(); return; } catch(error) { if (error.name === 'AbortError' || generation !== state.speechGeneration) return; toast(`${error.message} Lokale Sprachausgabe wird versucht.`, true); } }
     return speakLocal(text, generation);
   }
+  $('use-system-voice').addEventListener('click', async () => {
+    const button = $('use-system-voice');
+    const values = { elevenlabs_enabled: false, voice_enabled: true, local_voice_uri: $('local_voice_uri').value };
+    button.disabled = true; stopAudio();
+    try {
+      const result = await api('/api/settings', { method:'PUT', body:JSON.stringify(values) });
+      state.settings = result.settings || { ...state.settings, ...values };
+      if (result.providers) state.providers = result.providers;
+      $('settings-form').elements.namedItem('elevenlabs_enabled').checked = false;
+      updateConfigView();
+      localVoiceFeedback('Lokale Ausgabe als Standard gespeichert. Mit „Lokale Stimme testen“ hörst du deine Auswahl.');
+      toast('Systemstimme ausgewählt. ElevenLabs ist aus; Sprachausgabe ist an.');
+    } catch (error) { localVoiceFeedback(error.message, true); }
+    finally { button.disabled = false; }
+  });
   $('test-local-voice').addEventListener('click', () => {
     stopAudio(); stopMicrophone();
     speakLocal('Guten Tag, Sir. Die lokale Sprachausgabe ist bereit.', state.speechGeneration);

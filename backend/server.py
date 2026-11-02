@@ -26,6 +26,7 @@ from .mac_control import PendingActions
 from .system_info import snapshot
 from .credentials import configure as configure_credential, load_saved_keys
 from .diagnostics import check_connection
+from .certificates import repair_certificates
 
 FRONTEND = Path(__file__).resolve().parent.parent / 'frontend'
 MAX_BODY = 32_768
@@ -368,12 +369,19 @@ def main(argv=None):
     parser.add_argument('--open-browser', action='store_true', help='Nach dem Start die lokale Oberfläche im Browser öffnen')
     parser.add_argument('--diagnose', action='store_true', help='Tatsächliche Hardware und Software anzeigen, ohne Serverstart')
     parser.add_argument('--check-connection', choices=['gemini', 'elevenlabs'], help='HTTPS-Verbindung ohne API-Schlüssel und ohne Generierung prüfen')
+    parser.add_argument('--repair-certificates', action='store_true', help='Auf ausdrücklichen Auftrag das offizielle python.org-Zertifikatsskript auf macOS ausführen')
     args = parser.parse_args(argv)
     if args.diagnose:
         print(json.dumps(snapshot(), ensure_ascii=False, indent=2))
         return
     if args.check_connection:
         print(check_connection(args.check_connection)['message'])
+        return
+    if args.repair_certificates:
+        try:
+            print(repair_certificates())
+        except ValueError as error:
+            parser.exit(1, str(error) + '\n')
         return
     try:
         local = args.host == 'localhost' or ipaddress.ip_address(args.host).is_loopback

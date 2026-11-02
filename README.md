@@ -48,7 +48,9 @@ Die Terminaleingaben werden nicht angezeigt und bleiben nur im Speicher dieses S
 - **ElevenLabs** bewusst aktivieren und deine **Voice ID** eintragen. Der aktuelle Antworttext wird zur Spracherzeugung übertragen. Begrenzung nach Zeichen, deutsche mehrsprachige Stimme.
 - **Sprachausgabe** aktivieren. Ohne ElevenLabs kann eine verfügbare lokale deutsche Browser-/Systemstimme verwendet werden. Ob eine solche Stimme installiert ist, hängt vom Gerät ab.
 
-**Kostenlose Stimme testen:** Öffne die Einstellungen und klicke **Lokale Stimme testen**. Dieser Test verwendet ausschließlich eine vom Browser gemeldete lokale deutsche Stimme, keinen ElevenLabs-Schlüssel und keine Voice ID. Er wartet kurz, falls der Browser seine Stimmenliste erst nachlädt. Mit Stop kannst du auch eine wartende Ausgabe abbrechen. Für normale Antworten ElevenLabs ausschalten und Sprachausgabe einschalten. Ohne installierte deutsche lokale Stimme zeigt JARVIS eine verständliche Meldung und startet keinen Download.
+**Kostenlose Systemstimme wählen:** Öffne **Einstellungen → Lokale Sprachausgabe**, wähle in der Stimmenliste eine installierte deutsche Stimme und klicke **Systemstimme verwenden**. Das speichert die Auswahl, schaltet ElevenLabs aus und die normale Sprachausgabe ein. Die Cloud-KI-Einstellung bleibt erhalten. **Lokale Stimme testen** spricht eine kurze Probe mit der ausgewählten Stimme, auch schon vor dem Speichern. „Automatisch“ verwendet eine verfügbare lokale deutsche Stimme. Ist eine gespeicherte Stimme auf einem anderen Gerät nicht vorhanden, zeigt JARVIS das an und verwendet eine dort verfügbare lokale deutsche Stimme.
+
+Es ist kein API-Schlüssel und keine Voice ID nötig. JARVIS wartet kurz, falls der Browser seine Stimmenliste erst nachlädt. Mit Stop kannst du auch eine wartende Ausgabe abbrechen. Ohne installierte deutsche lokale Stimme zeigt JARVIS eine verständliche Meldung und startet keinen Download. Die Liste hängt vom jeweiligen Browser und Gerät ab. Weitere Systemstimmen kannst du selbst in macOS unter **Systemeinstellungen → Bedienungshilfen → Lesen & Sprechen** (je nach macOS-Version **Gesprochene Inhalte**) verwalten. Nach einer bewusst gewählten Installation gegebenenfalls den Browser neu öffnen; JARVIS installiert keine Stimmen. Die Auswahl innerhalb von JARVIS überschreibt nicht die globale macOS-Stimme.
 
 ### Wenn „Anbieter nicht erreichbar“ erscheint
 
@@ -61,6 +63,14 @@ python3 -m backend --check-connection elevenlabs
 ```
 
 Die neue Fehlermeldung unterscheidet Zertifikatsfehler, Namensauflösung (DNS), Zeitüberschreitung und abgelehnte Verbindungen. Ein Zertifikatsfehler bei einer Python-Installation von python.org auf macOS kann durch fehlende Python-Zertifikate entstehen. Im zu deiner Python-Version passenden Ordner unter `/Applications/Python 3.x/` gibt es dafür **Install Certificates.command**. Dieses offizielle Hilfsskript installiert beziehungsweise aktualisiert ein Zertifikatspaket: Starte es nur, wenn du diese Änderung bewusst möchtest. JARVIS führt es nicht automatisch aus. Bei einer anderen Python-Distribution deren dokumentierten Zertifikatsweg verwenden. TLS-Prüfung nicht ausschalten; eine Firewall oder ein Zertifikatsfehler ist durch eine andere Voice ID nicht behoben.
+
+Wenn du diese Zertifikatseinrichtung ausdrücklich ausführen möchtest, kannst du im Projektordner **Zertifikate-reparieren.command** starten oder folgenden Befehl verwenden:
+
+```bash
+python3 -m backend --repair-certificates
+```
+
+Der Helfer prüft, ob die tatsächlich verwendete Python-Version eine passende python.org-Framework-Installation auf macOS ist und das offizielle Skript vorliegt. Nur dann startet er es. Auf Linux, bei Homebrew-Python oder fehlendem Skript beendet er sich ohne Installation mit einer Erklärung. Das Skript läuft nie beim normalen JARVIS-Start. Anschließend die Verbindung erneut prüfen. Eine kostenlose Systemstimme repariert keine HTTPS-Verbindung zu Gemini: Für KI-Antworten muss das Zertifikatsproblem weiterhin gelöst sein.
 
 **Kosten:** Lokale Limits sind keine Zusage kostenloser Nutzung. JARVIS kann das Abrechnungsmodell deines Kontos nicht kontrollieren. Aktiviere Cloud-Dienste ausschließlich mit einem Anbieter-Konto ohne kostenpflichtige Abrechnung und überprüfe dessen Gratis-Kontingent. Es gibt keine automatischen Wiederholungen, kein automatisches Modell-Upgrade und keine Käufe. Fehlgeschlagene oder unklare API-Aufrufe zählen vorsorglich zum lokalen Limit. Limits gelten pro UTC-Tag und lokalem Datenverzeichnis; sie erfassen nicht deine Nutzung in anderen Apps.
 

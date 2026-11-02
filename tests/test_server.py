@@ -345,6 +345,62 @@ class LiveServerTests(unittest.TestCase):
             self.assertEqual(os.environ["GEMINI_API_KEY"], "")
             self.assertFalse(self.app.store.settings()["cloud_enabled"])
 
+    def test_connection_check_guard_stops_unauthenticated_and_cross_origin_callbacks(self):
+        with patch("backend.server.check_connection") as check:
+            status, _, _ = self.request("POST", "/api/connections", {"provider": "gemini"}, token=False)
+            self.assertEqual(status, 401)
+            status, _, _ = self.request("POST", "/api/connections", {"provider": "gemini"},
+                                       headers={"Origin": "https://hostile.example"})
+            self.assertEqual(status, 403)
+            check.assert_not_called()
+
+    def test_connection_check_returns_safe_structured_result_only_after_explicit_request(self):
+        outcomes = [
+            {"provider": "gemini", "ok": False, "http_status": None,
+             "message": "Google Gemini: TLS-Zertifikat konnte nicht geprüft werden."},
+            {"provider": "elevenlabs", "ok": True, "http_status": 401,
+             "message": "ElevenLabs: HTTPS-Antwort erhalten. Der Test verwendet keinen API-Schlüssel."},
+        ]
+        fake_keys = {"GEMINI_API_KEY": "fake-gemini-diagnostics-key-123456",
+                     "ELEVENLABS_API_KEY": "fake-elevenlabs-diagnostics-key-123456"}
+        with patch.dict(os.environ, fake_keys):
+            for outcome in outcomes:
+                with patch("backend.server.check_connection", return_value=outcome) as check:
+                    status, result, _ = self.request("POST", "/api/connections", {"provider": outcome["provider"]})
+                    self.assertEqual(status, 200)
+                    self.assertEqual(result, outcome)
+                    # The route passes only an allowlisted provider identifier,
+                    # never a user URL, credential, conversation or generation.
+                    check.assert_called_once_with(outcome["provider"])
+                    for key in fake_keys.values():
+                        self.assertNotIn(key, json.dumps(result))
+        self.assertEqual(self.app.store.history(), [])
+        self.assertEqual(self.app.store.usage()["gemini_requests"], 0)
+        self.assertEqual(self.app.store.usage()["elevenlabs_characters"], 0)
+        self.assertFalse(self.app.store.settings()["cloud_enabled"])
+
+    def test_connection_check_rejects_arbitrary_destination_or_extra_fields_before_callback(self):
+        invalid = [{}, {"provider": "https://hostile.example/private"},
+                   {"provider": "127.0.0.1"}, {"provider": "unknown"},
+                   {"provider": None}, {"provider": ["gemini"]},
+                   {"provider": {"name": "gemini"}},
+                   {"provider": "gemini", "url": "https://hostile.example"},
+                   {"provider": "gemini", "api_key": "fake-secret-must-not-be-forwarded"}]
+        with patch("backend.server.check_connection") as check:
+            for body in invalid:
+                with self.subTest(body=body):
+                    status, result, _ = self.request("POST", "/api/connections", body)
+                    self.assertEqual(status, 400)
+                    self.assertNotIn("fake-secret-must-not-be-forwarded", json.dumps(result))
+            check.assert_not_called()
+
+    def test_settings_and_status_never_trigger_connection_checks_implicitly(self):
+        with patch("backend.server.check_connection") as check:
+            for endpoint in ["/api/session", "/api/status", "/api/settings", "/api/history"]:
+                status, _, _ = self.request("GET", endpoint)
+                self.assertEqual(status, 200)
+            check.assert_not_called()
+
 
 class CommandLineGuardTests(unittest.TestCase):
     def test_network_exposure_rejected_before_app_creation(self):
@@ -382,6 +438,22 @@ class CommandLineGuardTests(unittest.TestCase):
                             load.assert_called_once_with()
                             constructor.assert_called_once()
                             instance.server_close.assert_called_once_with()
+
+    def test_connection_diagnostic_cli_skips_server_storage_and_key_loading(self):
+        outcome = {"provider": "gemini", "ok": False, "http_status": None,
+                   "message": "Google Gemini: DNS-Auflösung fehlgeschlagen."}
+        with patch("backend.server.check_connection", return_value=outcome) as check:
+            with patch("backend.server.Application") as constructor:
+                with patch("backend.server.load_saved_keys") as load:
+                    with patch("backend.server.JarvisServer") as server:
+                        output = io.StringIO()
+                        with contextlib.redirect_stdout(output):
+                            main(["--check-connection", "gemini"])
+                        self.assertEqual(output.getvalue().strip(), outcome["message"])
+                        check.assert_called_once_with("gemini")
+                        constructor.assert_not_called()
+                        load.assert_not_called()
+                        server.assert_not_called()
 
 
 if __name__ == "__main__":

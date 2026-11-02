@@ -25,6 +25,7 @@ from .storage import Store
 from .mac_control import PendingActions
 from .system_info import snapshot
 from .credentials import configure as configure_credential, load_saved_keys
+from .diagnostics import check_connection
 
 FRONTEND = Path(__file__).resolve().parent.parent / 'frontend'
 MAX_BODY = 32_768
@@ -290,6 +291,12 @@ class Handler(BaseHTTPRequestHandler):
             return self._json({'ok': True})
         elif method in {'POST', 'PUT', 'PATCH'}:
             body = self._body()
+            if method == 'POST' and path == '/api/connections':
+                if set(body) != {'provider'}:
+                    raise ValueError('Bitte ausschließlich den Anbieter für die Verbindungsprüfung angeben.')
+                if not isinstance(body['provider'], str) or body['provider'] not in {'gemini', 'elevenlabs'}:
+                    raise ValueError('Bitte Gemini oder ElevenLabs als Anbieter wählen.')
+                return self._json(check_connection(body['provider']))
             if method == 'POST' and path == '/api/credentials':
                 if set(body) - {'provider', 'api_key', 'persist'}:
                     raise ValueError('Ungültige Felder für die Schlüsselkonfiguration.')
@@ -360,9 +367,13 @@ def main(argv=None):
     parser.add_argument('--ask-keys', action='store_true', help='API-Schlüssel verdeckt für diese Sitzung eingeben')
     parser.add_argument('--open-browser', action='store_true', help='Nach dem Start die lokale Oberfläche im Browser öffnen')
     parser.add_argument('--diagnose', action='store_true', help='Tatsächliche Hardware und Software anzeigen, ohne Serverstart')
+    parser.add_argument('--check-connection', choices=['gemini', 'elevenlabs'], help='HTTPS-Verbindung ohne API-Schlüssel und ohne Generierung prüfen')
     args = parser.parse_args(argv)
     if args.diagnose:
         print(json.dumps(snapshot(), ensure_ascii=False, indent=2))
+        return
+    if args.check_connection:
+        print(check_connection(args.check_connection)['message'])
         return
     try:
         local = args.host == 'localhost' or ipaddress.ip_address(args.host).is_loopback

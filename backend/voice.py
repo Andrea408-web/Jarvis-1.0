@@ -19,7 +19,7 @@ class VoiceClient:
             raise ProviderError("ElevenLabs ist deaktiviert. Die lokale Browserstimme bleibt verfügbar.", 409)
         key = os.environ.get("ELEVENLABS_API_KEY", "")
         if not key:
-            raise ProviderError("ELEVENLABS_API_KEY fehlt in der Serverumgebung.", 409)
+            raise ProviderError("ElevenLabs-Schlüssel fehlt. Öffnen Sie Einstellungen → ElevenLabs → Schlüssel hinterlegen, oder verwenden Sie die lokale Stimme.", 409)
         voice = settings.get("elevenlabs_voice_id", "")
         if not isinstance(voice, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,100}", voice):
             raise ProviderError("Bitte konfigurieren Sie eine gültige ElevenLabs Voice ID.", 409)

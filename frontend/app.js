@@ -1,7 +1,7 @@
 'use strict';
 (() => {
   const $ = id => document.getElementById(id);
-  const state = { token: '', status: null, settings: {}, providers: {}, credentials: {}, persistentCapability: null, usage: {}, busy: false, connected: false, mode: 'idle', recognition: null, micStream: null, audioContext: null, audio: null, audioUrl: null, audioRequest: null, speechGeneration: 0, analyserFrame: null, cpuHistory: [], actionQueue: [], currentAction: null, reminders: [], notified: new Set(), micConsented: false, selectedImage: null };
+  const state = { token: '', status: null, settings: {}, providers: {}, credentials: {}, persistentCapability: null, usage: {}, busy: false, connected: false, mode: 'idle', recognition: null, micStream: null, audioContext: null, audio: null, audioUrl: null, audioRequest: null, speechGeneration: 0, cancelVoiceWait: null, analyserFrame: null, cpuHistory: [], actionQueue: [], currentAction: null, reminders: [], notified: new Set(), micConsented: false, selectedImage: null };
   const waveBars = Array.from({ length: 73 }, () => { const bar = document.createElement('span'); $('waveform').append(bar); return bar; });
   const modes = {
     idle: ['BEREIT', 'Bereit für deinen nächsten Auftrag.', 'BEREIT FÜR EINGABEN'],
@@ -43,7 +43,7 @@
     $('gemini-status').textContent = settings.cloud_enabled ? (providers.gemini_configured ? 'Konfiguriert · Cloud aktiv' : 'API-Schlüssel fehlt') : providers.gemini_configured ? 'Konfiguriert · deaktiviert' : 'Nicht konfiguriert';
     $('elevenlabs-status').textContent = settings.elevenlabs_enabled ? (providers.elevenlabs_configured && settings.elevenlabs_voice_id ? 'Konfiguriert · aktiv' : 'Konfiguration fehlt') : providers.elevenlabs_configured ? 'Konfiguriert · deaktiviert' : 'Lokale Stimme verfügbar¹';
     $('gemini-dot').classList.toggle('online', !!(settings.cloud_enabled && providers.gemini_configured)); $('elevenlabs-dot').classList.toggle('online', !!(settings.elevenlabs_enabled && providers.elevenlabs_configured && settings.elevenlabs_voice_id));
-    if (!settings.elevenlabs_enabled) $('elevenlabs-status').textContent = localVoices().length ? 'Lokale Stimme bereit' : 'Keine lokale Browserstimme';
+    if (!settings.elevenlabs_enabled) $('elevenlabs-status').textContent = localGermanVoices().length ? 'Lokale deutsche Stimme bereit' : 'Lokale deutsche Stimme prüfen';
     $('chat-mode').textContent = settings.cloud_enabled && providers.gemini_configured ? 'GEMINI · CLOUD-KI AKTIV' : 'LOKALER MODUS';
     $('chat-footnote').textContent = settings.cloud_enabled ? 'Nachrichten und Verlauf werden an Google Gemini gesendet.' : 'Lokale Befehle · KI lässt sich in Einstellungen aktivieren.';
     if (!document.activeElement || document.activeElement.id !== 'voice-enabled') $('voice-enabled').checked = !!settings.voice_enabled;
@@ -113,21 +113,101 @@
       finally { input.value = ''; button.disabled = false; }
     });
   }
+  for (const provider of ['gemini','elevenlabs']) {
+    $(`test-${provider}-connection`).addEventListener('click', async () => {
+      const button = $(`test-${provider}-connection`), feedback = $(`${provider}-connection-result`);
+      button.disabled = true; feedback.classList.remove('error'); feedback.textContent = 'HTTPS-Verbindung wird geprüft …';
+      try {
+        const result = await api('/api/connections', { method:'POST', body:JSON.stringify({ provider }) });
+        feedback.textContent = typeof result.message === 'string' ? result.message : result.ok ? 'HTTPS-Ziel erreichbar.' : 'HTTPS-Verbindung konnte nicht bestätigt werden.';
+        feedback.classList.toggle('error', result.ok !== true);
+      } catch (error) { feedback.textContent = error.message; feedback.classList.add('error'); }
+      finally { button.disabled = false; }
+    });
+  }
   $('settings-dialog').addEventListener('close', () => { for (const provider of ['gemini','elevenlabs']) $(`${provider}-api-key`).value = ''; });
   $('clear-chat').addEventListener('click', async () => { if (!window.confirm('Den lokal gespeicherten Gesprächsverlauf endgültig löschen?')) return; try { await api('/api/history', { method:'DELETE' }); $('messages').replaceChildren(); message('notice','Gesprächsverlauf gelöscht. Neue Nachrichten beginnen ohne bisherigen Kontext.'); } catch(error) { showError(error); } });
-  function localVoices() { return window.speechSynthesis ? speechSynthesis.getVoices().filter(voice => voice.localService) : []; }
+  function localVoices() { if (!window.speechSynthesis) return []; try { return speechSynthesis.getVoices().filter(voice => voice.localService === true); } catch (_) { return []; } }
+  function localGermanVoices() { return localVoices().filter(voice => /^de(?:[-_]|$)/i.test(voice.lang)); }
+  function localVoiceFeedback(text, error = false) { $('local-voice-result').textContent = text; $('local-voice-result').classList.toggle('error', error); }
+  function waitForLocalGermanVoice(generation, timeout = 1500) {
+    const current = localGermanVoices()[0];
+    if (current) return Promise.resolve(current);
+    return new Promise(resolve => {
+      let settled = false;
+      const finish = voice => {
+        if (settled) return;
+        settled = true; clearTimeout(timer);
+        speechSynthesis.removeEventListener('voiceschanged', changed);
+        if (state.cancelVoiceWait === cancel) state.cancelVoiceWait = null;
+        resolve(voice);
+      };
+      const changed = () => {
+        if (generation !== state.speechGeneration) { finish(null); return; }
+        const voice = localGermanVoices()[0];
+        if (voice) finish(voice);
+      };
+      const cancel = () => finish(null);
+      const timer = setTimeout(() => finish(generation === state.speechGeneration ? localGermanVoices()[0] || null : null), timeout);
+      state.cancelVoiceWait = cancel;
+      speechSynthesis.addEventListener('voiceschanged', changed);
+      // Some engines populate their list between getVoices and listener setup.
+      changed();
+    });
+  }
+  async function speakLocal(text, generation) {
+    if (generation === undefined) { stopAudio(); generation = state.speechGeneration; }
+    if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) {
+      const notice = 'Dieser Browser unterstützt keine lokale Sprachausgabe.';
+      localVoiceFeedback(notice, true); toast(notice, true); return false;
+    }
+    localVoiceFeedback('Lokale deutsche Stimme wird geladen …');
+    const voice = await waitForLocalGermanVoice(generation);
+    // Stop or a newer answer must never start an older utterance after waiting.
+    if (generation !== state.speechGeneration) return false;
+    if (!voice) {
+      const notice = 'Keine lokale deutsche Stimme verfügbar. Prüfe die installierten deutschen Systemstimmen auf deinem Gerät. Es wird nichts automatisch heruntergeladen.';
+      localVoiceFeedback(notice, true); toast(notice, true, 10000); return false;
+    }
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.voice = voice; utterance.lang = voice.lang; utterance.rate = .98;
+    utterance.volume = Number($('volume').value) / 100;
+    utterance.onstart = () => {
+      if (generation !== state.speechGeneration) return;
+      setMode('speaking'); $('audio-label').textContent = 'LOKALE DEUTSCHE STIMME';
+      localVoiceFeedback('Die lokale deutsche Stimme spricht. Stop beendet die Ausgabe.');
+    };
+    utterance.onend = () => {
+      if (generation !== state.speechGeneration) return;
+      setMode('idle'); localVoiceFeedback('Lokale Sprachausgabe beendet.');
+    };
+    utterance.onerror = event => {
+      if (generation !== state.speechGeneration || event.error === 'canceled' || event.error === 'interrupted') return;
+      setMode('error'); const notice = 'Die lokale Sprachausgabe ist fehlgeschlagen. Teste sie durch einen direkten Klick auf „Lokale Stimme testen“.';
+      localVoiceFeedback(notice, true); toast(notice, true);
+    };
+    if (generation !== state.speechGeneration) return false;
+    try { speechSynthesis.speak(utterance); return true; }
+    catch (_) { const notice = 'Die lokale Sprachausgabe konnte nicht gestartet werden.'; localVoiceFeedback(notice, true); toast(notice, true); return false; }
+  }
   if (window.speechSynthesis) speechSynthesis.addEventListener('voiceschanged', updateConfigView);
   function resetWaveform() { document.documentElement.style.setProperty('--audio', 0); for (const bar of waveBars) bar.style.height = '2px'; }
   function animateAnalyser(analyser) { if (state.analyserFrame) cancelAnimationFrame(state.analyserFrame); const data = new Uint8Array(analyser.frequencyBinCount); const tick = () => { analyser.getByteFrequencyData(data); let sum = 0; const stride = Math.max(1, Math.floor(data.length / waveBars.length)); waveBars.forEach((bar, index) => { const value = data[index * stride] / 255; sum += value; bar.style.height = `${2 + value * 31}px`; bar.style.opacity = `${.35 + value * .65}`; }); document.documentElement.style.setProperty('--audio', (sum / waveBars.length).toFixed(3)); state.analyserFrame = requestAnimationFrame(tick); }; tick(); }
   async function audioContext() { const Context = window.AudioContext || window.webkitAudioContext; if (!Context) return null; if (!state.audioContext) state.audioContext = new Context(); if (state.audioContext.state === 'suspended') await state.audioContext.resume(); return state.audioContext; }
-  function stopAudio() { state.speechGeneration++; state.audioRequest?.abort(); state.audioRequest = null; if (state.audio) { state.audio.pause(); state.audio.src = ''; state.audio = null; } if (state.audioUrl) { URL.revokeObjectURL(state.audioUrl); state.audioUrl = null; } if (window.speechSynthesis) speechSynthesis.cancel(); if (state.analyserFrame) { cancelAnimationFrame(state.analyserFrame); state.analyserFrame = null; } resetWaveform(); if (state.mode === 'speaking') setMode('idle'); }
+  function stopAudio() { state.speechGeneration++; if (state.cancelVoiceWait) { const cancel = state.cancelVoiceWait; state.cancelVoiceWait = null; cancel(); localVoiceFeedback('Lokale Sprachausgabe gestoppt.'); } state.audioRequest?.abort(); state.audioRequest = null; if (state.audio) { state.audio.pause(); state.audio.src = ''; state.audio = null; } if (state.audioUrl) { URL.revokeObjectURL(state.audioUrl); state.audioUrl = null; } if (window.speechSynthesis) speechSynthesis.cancel(); if (state.analyserFrame) { cancelAnimationFrame(state.analyserFrame); state.analyserFrame = null; } resetWaveform(); if (state.mode === 'speaking') setMode('idle'); }
   async function speak(text) {
     stopAudio(); const generation = state.speechGeneration;
     if (state.settings.elevenlabs_enabled) { const controller = new AbortController(); state.audioRequest = controller; try { const context = await audioContext(); const blob = await api('/api/voice', { method:'POST', body:JSON.stringify({ text }), signal:controller.signal }); if (generation !== state.speechGeneration) return; state.audioUrl = URL.createObjectURL(blob); const audio = new Audio(state.audioUrl); state.audio = audio; audio.volume = Number($('volume').value) / 100; if (context) { const source = context.createMediaElementSource(audio); const analyser = context.createAnalyser(); analyser.fftSize = 256; source.connect(analyser); analyser.connect(context.destination); audio.addEventListener('play', () => { if (generation !== state.speechGeneration) return; setMode('speaking'); animateAnalyser(analyser); }); } else audio.addEventListener('play', () => setMode('speaking')); audio.addEventListener('ended', () => { if (generation === state.speechGeneration) { stopAudio(); setMode('idle'); } }); audio.addEventListener('error', () => { if (generation === state.speechGeneration) { stopAudio(); toast('Die Audiodatei konnte nicht wiedergegeben werden.',true); } }); await audio.play(); refreshStatus(); return; } catch(error) { if (error.name === 'AbortError' || generation !== state.speechGeneration) return; toast(`${error.message} Lokale Sprachausgabe wird versucht.`, true); } }
-    if (!window.speechSynthesis) { toast('Dieser Browser unterstützt keine lokale Sprachausgabe.',true); return; }
-    const voices = localVoices(); const voice = voices.find(v => v.lang.startsWith('de')) || voices[0]; if (!voice) { toast('Keine lokale Browserstimme verfügbar. Installiere bei Bedarf auf deinem Gerät eine deutsche Systemstimme oder konfiguriere ElevenLabs.',true); return; }
-    const utterance = new SpeechSynthesisUtterance(text); utterance.voice = voice; utterance.lang = 'de-DE'; utterance.rate = .98; utterance.volume = Number($('volume').value) / 100; utterance.onstart = () => { if (generation === state.speechGeneration) { setMode('speaking'); $('audio-label').textContent = 'LOKALE SYSTEMSTIMME'; } }; utterance.onend = () => { if (generation === state.speechGeneration) setMode('idle'); }; utterance.onerror = event => { if (generation === state.speechGeneration && event.error !== 'canceled' && event.error !== 'interrupted') { setMode('error'); toast('Die lokale Sprachausgabe ist fehlgeschlagen.',true); } }; speechSynthesis.speak(utterance);
+    return speakLocal(text, generation);
   }
+  $('test-local-voice').addEventListener('click', () => {
+    stopAudio(); stopMicrophone();
+    speakLocal('Guten Tag, Sir. Die lokale Sprachausgabe ist bereit.', state.speechGeneration);
+  });
+  $('stop-local-voice').addEventListener('click', () => {
+    stopAudio(); localVoiceFeedback('Lokale Sprachausgabe gestoppt.');
+    if (!state.busy) setMode('idle');
+  });
   $('voice-enabled').addEventListener('change', async event => { const enabled = event.target.checked; if (!enabled) stopAudio(); try { const result = await api('/api/settings', { method:'PUT', body:JSON.stringify({ voice_enabled:enabled }) }); state.settings = result.settings || { ...state.settings, voice_enabled:enabled }; toast(enabled ? 'Sprachausgabe für künftige Antworten aktiviert.' : 'Sprachausgabe deaktiviert.'); } catch(error) { event.target.checked = !enabled; toast(error.message,true); } });
   $('volume').addEventListener('input', event => { if (state.audio) state.audio.volume = Number(event.target.value)/100; });
   function stopMicrophone() { if (state.recognition) { state.recognition.onend = null; state.recognition.stop(); state.recognition = null; } if (state.micStream) { state.micStream.getTracks().forEach(track => track.stop()); state.micStream = null; } if (state.mode === 'listening') { if (state.analyserFrame) cancelAnimationFrame(state.analyserFrame); state.analyserFrame = null; resetWaveform(); setMode('idle'); } $('mic-button').classList.remove('active'); $('mic-text').textContent = (window.SpeechRecognition || window.webkitSpeechRecognition) ? 'Sprechen' : 'Nicht verfügbar'; }

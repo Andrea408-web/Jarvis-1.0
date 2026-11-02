@@ -48,6 +48,20 @@ Die Terminaleingaben werden nicht angezeigt und bleiben nur im Speicher dieses S
 - **ElevenLabs** bewusst aktivieren und deine **Voice ID** eintragen. Der aktuelle Antworttext wird zur Spracherzeugung übertragen. Begrenzung nach Zeichen, deutsche mehrsprachige Stimme.
 - **Sprachausgabe** aktivieren. Ohne ElevenLabs kann eine verfügbare lokale deutsche Browser-/Systemstimme verwendet werden. Ob eine solche Stimme installiert ist, hängt vom Gerät ab.
 
+**Kostenlose Stimme testen:** Öffne die Einstellungen und klicke **Lokale Stimme testen**. Dieser Test verwendet ausschließlich eine vom Browser gemeldete lokale deutsche Stimme, keinen ElevenLabs-Schlüssel und keine Voice ID. Er wartet kurz, falls der Browser seine Stimmenliste erst nachlädt. Mit Stop kannst du auch eine wartende Ausgabe abbrechen. Für normale Antworten ElevenLabs ausschalten und Sprachausgabe einschalten. Ohne installierte deutsche lokale Stimme zeigt JARVIS eine verständliche Meldung und startet keinen Download.
+
+### Wenn „Anbieter nicht erreichbar“ erscheint
+
+Klicke beim betroffenen Dienst in den Einstellungen auf **Verbindung prüfen**. Der Test ruft nur eine feste öffentliche Katalog-URL per HTTPS ab, ohne Schlüssel und ohne Text- oder Audioerzeugung. Eine Antwort bestätigt noch nicht die Gültigkeit deines Schlüssels, die Freischaltung deiner Stimme oder ein kostenloses Kontingent. HTTP 403 kann durch eine Netzrichtlinie oder den Anbieter entstehen. Der Test läuft niemals automatisch.
+
+Alternativ im Projektordner:
+
+```bash
+python3 -m backend --check-connection elevenlabs
+```
+
+Die neue Fehlermeldung unterscheidet Zertifikatsfehler, Namensauflösung (DNS), Zeitüberschreitung und abgelehnte Verbindungen. Ein Zertifikatsfehler bei einer Python-Installation von python.org auf macOS kann durch fehlende Python-Zertifikate entstehen. Im zu deiner Python-Version passenden Ordner unter `/Applications/Python 3.x/` gibt es dafür **Install Certificates.command**. Dieses offizielle Hilfsskript installiert beziehungsweise aktualisiert ein Zertifikatspaket: Starte es nur, wenn du diese Änderung bewusst möchtest. JARVIS führt es nicht automatisch aus. Bei einer anderen Python-Distribution deren dokumentierten Zertifikatsweg verwenden. TLS-Prüfung nicht ausschalten; eine Firewall oder ein Zertifikatsfehler ist durch eine andere Voice ID nicht behoben.
+
 **Kosten:** Lokale Limits sind keine Zusage kostenloser Nutzung. JARVIS kann das Abrechnungsmodell deines Kontos nicht kontrollieren. Aktiviere Cloud-Dienste ausschließlich mit einem Anbieter-Konto ohne kostenpflichtige Abrechnung und überprüfe dessen Gratis-Kontingent. Es gibt keine automatischen Wiederholungen, kein automatisches Modell-Upgrade und keine Käufe. Fehlgeschlagene oder unklare API-Aufrufe zählen vorsorglich zum lokalen Limit. Limits gelten pro UTC-Tag und lokalem Datenverzeichnis; sie erfassen nicht deine Nutzung in anderen Apps.
 
 ## Was bereits echt funktioniert

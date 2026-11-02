@@ -1,12 +1,15 @@
 import base64
+import errno
 import io
 import os
+import socket
+import ssl
 import unittest
 import urllib.error
 from unittest.mock import patch
 
 from backend.ai import GeminiClient
-from backend.providers import ProviderError, _NoRedirect, provider_status, request_json
+from backend.providers import ProviderError, _NoRedirect, provider_status, request_json, safe_network_message
 from backend.voice import VoiceClient
 
 
@@ -236,6 +239,66 @@ class VoiceTests(unittest.TestCase):
 
 
 class TransportTests(unittest.TestCase):
+    def assert_transport_failure(self, error, expected, provider="ElevenLabs"):
+        url = "https://api.elevenlabs.io/v1/text-to-speech/private-voice?private=secret-value"
+        with patch("backend.providers._open_request", side_effect=error) as request:
+            with self.assertRaises(ProviderError) as caught:
+                request_json(url, {"private-text": "secret-value"}, {"xi-api-key": "secret-value"})
+        message = str(caught.exception)
+        self.assertIn(expected, message)
+        self.assertIn(provider, message)
+        self.assertNotIn("secret-value", message)
+        self.assertNotIn("private-voice", message)
+        self.assertNotIn("https://", message)
+        self.assertEqual(caught.exception.status, 502)
+        request.assert_called_once()
+        return message
+
+    def test_nested_certificate_failure_has_actionable_safe_diagnosis(self):
+        error = urllib.error.URLError(urllib.error.URLError(ssl.SSLCertVerificationError(1, "secret-value")))
+        message = self.assert_transport_failure(error, "HTTPS-Zertifikat")
+        self.assertIn("python.org", message)
+        self.assertIn("macOS", message)
+        self.assertIn("Install Certificates.command", message)
+        self.assertIn("Zertifikatsprüfung bleibt aktiviert", message)
+
+    def test_timeout_dns_refused_and_other_tls_are_distinct(self):
+        cases = [
+            (urllib.error.URLError(TimeoutError("secret-value")), "Wartezeit"),
+            (socket.gaierror(socket.EAI_NONAME, "secret-value"), "DNS"),
+            (urllib.error.URLError(ConnectionRefusedError(errno.ECONNREFUSED, "secret-value")), "abgelehnt"),
+            (ssl.SSLError(1, "secret-value"), "sichere HTTPS-Verbindung"),
+            (ConnectionResetError(errno.ECONNRESET, "secret-value"), "unterbrochen"),
+            (OSError(errno.ENETUNREACH, "secret-value"), "keine Netzwerkverbindung"),
+            (urllib.error.URLError("secret-value"), "momentan nicht erreichbar"),
+        ]
+        for error, expected in cases:
+            with self.subTest(error=type(error).__name__, category=expected):
+                self.assert_transport_failure(error, expected)
+
+    def test_provider_name_only_comes_from_exact_host_allowlist(self):
+        cause = urllib.error.URLError(TimeoutError("secret-value"))
+        self.assertIn("Google Gemini", safe_network_message("https://generativelanguage.googleapis.com/v1beta/models", cause))
+        message = safe_network_message("https://api.elevenlabs.io.attacker.invalid/private?key=secret-value", cause)
+        self.assertIn("Der Anbieter", message)
+        self.assertNotIn("ElevenLabs", message)
+        self.assertNotIn("attacker.invalid", message)
+        self.assertNotIn("secret-value", message)
+
+    def test_key_refusal_is_not_misclassified_as_network_failure(self):
+        error = urllib.error.HTTPError("https://api.elevenlabs.io/private", 401, "secret-value", {}, io.BytesIO(b"secret-value"))
+        message = self.assert_transport_failure(error, "Zugriff abgelehnt")
+        self.assertNotIn("momentan nicht erreichbar", message)
+        self.assertIn("Schlüssel", message)
+
+    def test_diagnostic_exception_cycles_terminate_without_raw_data(self):
+        error = urllib.error.URLError("secret-value")
+        error.reason = error
+        error.__cause__ = error
+        message = safe_network_message("https://api.elevenlabs.io", error)
+        self.assertIn("momentan nicht erreichbar", message)
+        self.assertNotIn("secret-value", message)
+
     def test_upstream_error_body_never_exposed(self):
         secret = "sensitive-upstream-secret"
         error = urllib.error.HTTPError("https://example.test", 403, secret, {}, io.BytesIO(secret.encode()))

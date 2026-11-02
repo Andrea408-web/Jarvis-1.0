@@ -24,19 +24,23 @@ Ein lokaler, modularer Assistent mit einer animierten goldenen HUD-Oberfläche, 
 5. Öffne auf **diesem Mac** im Browser die Adresse `http://127.0.0.1:8765`.
 6. Klicke auf **Rechner öffnen**, prüfe den Bestätigungsdialog und bestätige. Auf macOS wird die echte Rechner-App über ihre feste App-ID geöffnet. Auf anderen Betriebssystemen zeigt JARVIS einen Fehler, keinen simulierten Erfolg. Erfolgreich bedeutet hier: macOS hat den Öffnen-Auftrag angenommen; eine sichtbare App wird nicht durch Bildschirmüberwachung überprüft.
 
-Mit **Strg+C** im Terminal beendest du den Server. `Start-JARVIS.command` ist ein alternativer Mac-Starter mit verdeckter Schlüsseleingabe. Falls macOS das Öffnen blockiert, verwende den obigen Terminalbefehl; JARVIS umgeht keine Sicherheitsabfrage.
+Mit **Strg+C** im Terminal beendest du den Server. `Start-JARVIS.command` ist ein alternativer Mac-Starter, der den Browser direkt öffnet; Schlüssel gibst du anschließend in den Einstellungen ein. Falls macOS das Öffnen blockiert, verwende den obigen Terminalbefehl; JARVIS umgeht keine Sicherheitsabfrage.
 
 ## Gemini und ElevenLabs verbinden
 
 Die im ursprünglichen Chat geteilten Schlüssel gehören nicht in Git oder JavaScript. Erneuere sie beim Anbieter. Gib neue Schlüssel nicht im Chat ein.
 
-Starte den Server mit verdeckter Eingabe:
+**Einfachster Weg:** Starte JARVIS normal mit `python3 -m backend`. Öffne im Browser die **Einstellungen**, füge unter **Gemini** den Schlüssel ins verdeckte Feld ein und klicke **Schlüssel hinterlegen**. Auf deinem Mac kann JARVIS ihn auf deinen ausdrücklichen Auftrag im **macOS-Schlüsselbund** speichern. Danach aktiviere **Cloud-KI** und speichere die Einstellungen. Für ElevenLabs funktioniert das entsprechend; zusätzlich benötigst du deine Voice ID.
+
+Die Schlüssel werden nicht in Git, SQLite oder im Browserspeicher abgelegt. Auf macOS wird ein bewusst gespeicherter Schlüssel beim nächsten Serverstart aus dem Schlüsselbund geladen. Außerhalb von macOS ist nur eine Sitzung bis zum Serverneustart möglich. Die Anzeige „konfiguriert“ bestätigt die Hinterlegung, noch nicht die Gültigkeit beim Anbieter.
+
+Alternativ kannst du die Schlüssel weiterhin im Terminal verdeckt eingeben:
 
 ```bash
 python3 -m backend --ask-keys
 ```
 
-Die Eingaben werden nicht angezeigt und bleiben nur im Speicher dieses Serverprozesses. Leere Eingabe überspringt den jeweiligen Dienst. Alternativ liest JARVIS bereits vorhandene Server-Umgebungsvariablen `GEMINI_API_KEY` und `ELEVENLABS_API_KEY`, beispielsweise aus einem Passwortmanager. Das Projekt speichert Schlüssel weder in Einstellungen noch im Browser. `.env.example` beschreibt nur die Namen; `.env`-Dateien werden nicht automatisch geladen. Ein Betriebssystem-Schlüsselspeicher ist noch nicht integriert.
+Die Terminaleingaben werden nicht angezeigt und bleiben nur im Speicher dieses Serverprozesses. Leere Eingabe überspringt den jeweiligen Dienst. Alternativ liest JARVIS bereits vorhandene Server-Umgebungsvariablen `GEMINI_API_KEY` und `ELEVENLABS_API_KEY`, beispielsweise aus einem Passwortmanager. Diese haben Vorrang vor gespeicherten Schlüsselbund-Einträgen. `.env.example` beschreibt nur die Namen; `.env`-Dateien werden nicht automatisch geladen.
 
 Öffne anschließend die **Einstellungen** in der Oberfläche:
 

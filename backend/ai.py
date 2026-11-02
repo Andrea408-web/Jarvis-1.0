@@ -117,7 +117,7 @@ class GeminiClient:
             raise ProviderError("Gemini ist deaktiviert. Aktivieren Sie Cloud-KI bewusst in den Einstellungen.", 409)
         api_key = os.environ.get("GEMINI_API_KEY", "")
         if not api_key:
-            raise ProviderError("GEMINI_API_KEY fehlt in der Serverumgebung.", 409)
+            raise ProviderError("Gemini-Schlüssel fehlt. Öffnen Sie Einstellungen → Gemini → Schlüssel hinterlegen.", 409)
         model = settings.get("gemini_model", "gemini-2.5-flash")
         if not isinstance(model, str) or not re.fullmatch(r"gemini-[A-Za-z0-9._-]{1,80}", model):
             raise ProviderError("Der Gemini-Modellname ist ungültig.")

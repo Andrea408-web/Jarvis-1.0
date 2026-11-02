@@ -262,6 +262,89 @@ class LiveServerTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(result["token"], self.app.token)
 
+    def test_credentials_require_session_and_same_origin_before_environment_mutation(self):
+        key = "fake-local-test-gemini-key-123456"
+        body = {"provider": "gemini", "api_key": key, "persist": False}
+        with patch.dict(os.environ, {"GEMINI_API_KEY": "", "ELEVENLABS_API_KEY": ""}):
+            status, error, _ = self.request("POST", "/api/credentials", body, token=False)
+            self.assertEqual(status, 401)
+            self.assertEqual(os.environ["GEMINI_API_KEY"], "")
+            self.assertNotIn(key, json.dumps(error))
+            status, error, _ = self.request("POST", "/api/credentials", body,
+                                           headers={"Origin": "https://hostile.example"})
+            self.assertEqual(status, 403)
+            self.assertEqual(os.environ["GEMINI_API_KEY"], "")
+            self.assertNotIn(key, json.dumps(error))
+
+    def test_session_credentials_enable_presence_only_and_never_enter_public_or_disk_data(self):
+        keys = {"gemini": "fake-local-gemini-key-123456789", "elevenlabs": "fake-local-elevenlabs-key-123456789"}
+        with patch.dict(os.environ, {"GEMINI_API_KEY": "", "ELEVENLABS_API_KEY": ""}):
+            with patch("backend.providers._open_request") as upstream:
+                for provider, key in keys.items():
+                    status, result, _ = self.request("POST", "/api/credentials", {
+                        "provider": provider, "api_key": key, "persist": False})
+                    self.assertEqual(status, 200)
+                    self.assertEqual(set(result), {"provider", "configured", "persisted", "message"})
+                    self.assertEqual(result["provider"], provider)
+                    self.assertTrue(result["configured"])
+                    self.assertFalse(result["persisted"])
+                    self.assertNotIn(key, json.dumps(result))
+                upstream.assert_not_called()
+            self.assertEqual(os.environ["GEMINI_API_KEY"], keys["gemini"])
+            self.assertEqual(os.environ["ELEVENLABS_API_KEY"], keys["elevenlabs"])
+            for endpoint in ["/api/status", "/api/settings", "/api/history"]:
+                status, result, _ = self.request("GET", endpoint)
+                self.assertEqual(status, 200)
+                public = json.dumps(result)
+                for key in keys.values():
+                    self.assertNotIn(key, public)
+            status = self.request("GET", "/api/status")[1]
+            self.assertTrue(status["providers"]["gemini_configured"])
+            self.assertTrue(status["providers"]["elevenlabs_configured"])
+            self.assertIn("persistent_available", status["credentials"])
+            self.assertFalse(status["settings"]["cloud_enabled"])
+            self.assertFalse(status["settings"]["elevenlabs_enabled"])
+            self.assertEqual(self.app.store.history(), [])
+            self.assertEqual(self.app.store.usage()["gemini_requests"], 0)
+            self.assertEqual(self.app.store.usage()["elevenlabs_characters"], 0)
+            database = self.app.store.path.read_bytes()
+            for key in keys.values():
+                self.assertNotIn(key.encode(), database)
+
+    def test_invalid_credentials_do_not_mutate_environment_or_echo_submitted_values(self):
+        key = "fake-private-credential-validation-123456"
+        invalid = [
+            {"provider": "unknown", "api_key": key, "persist": False},
+            {"provider": "gemini", "api_key": key + "\nsecondline", "persist": False},
+            {"provider": "gemini", "api_key": key + " space", "persist": False},
+            {"provider": "gemini", "api_key": "", "persist": False},
+            {"provider": "gemini", "api_key": {"value": key}, "persist": False},
+            {"provider": "gemini", "api_key": key, "persist": "false"},
+            {"provider": "gemini", "api_key": key, "persist": 0},
+            {"provider": "gemini", "api_key": key, "persist": False, "debug": True},
+        ]
+        with patch.dict(os.environ, {"GEMINI_API_KEY": "", "ELEVENLABS_API_KEY": ""}):
+            for body in invalid:
+                with self.subTest(case=invalid.index(body)):
+                    status, error, _ = self.request("POST", "/api/credentials", body)
+                    self.assertEqual(status, 400)
+                    self.assertNotIn(key, json.dumps(error))
+                    self.assertEqual(os.environ["GEMINI_API_KEY"], "")
+                    self.assertEqual(os.environ["ELEVENLABS_API_KEY"], "")
+            self.assertEqual(self.app.store.history(), [])
+            self.assertNotIn(key.encode(), self.app.store.path.read_bytes())
+
+    def test_keychain_unavailable_error_does_not_silently_store_or_enable_key(self):
+        key = "fake-keychain-unavailable-test-123456"
+        with patch.dict(os.environ, {"GEMINI_API_KEY": "", "ELEVENLABS_API_KEY": ""}):
+            with patch("backend.credentials.platform.system", return_value="Linux"):
+                # Omitted persist deliberately tests the explicit persistent default.
+                status, error, _ = self.request("POST", "/api/credentials", {"provider": "gemini", "api_key": key})
+            self.assertEqual(status, 400)
+            self.assertNotIn(key, json.dumps(error))
+            self.assertEqual(os.environ["GEMINI_API_KEY"], "")
+            self.assertFalse(self.app.store.settings()["cloud_enabled"])
+
 
 class CommandLineGuardTests(unittest.TestCase):
     def test_network_exposure_rejected_before_app_creation(self):
@@ -280,6 +363,25 @@ class CommandLineGuardTests(unittest.TestCase):
                             main(argv)
                         self.assertEqual(error.exception.code, 2)
                 constructor.assert_not_called()
+
+    def test_startup_loads_saved_credentials_before_app_creation(self):
+        with tempfile.TemporaryDirectory() as data_dir:
+            with patch.dict(os.environ, {"JARVIS_ACCESS_PASSWORD": "", "GEMINI_API_KEY": "", "ELEVENLABS_API_KEY": ""}):
+                with patch("backend.server.load_saved_keys") as load:
+                    def make_app(directory):
+                        self.assertTrue(load.called)
+                        self.assertEqual(directory, Path(data_dir))
+                        return object()
+                    with patch("backend.server.Application", side_effect=make_app) as constructor:
+                        with patch("backend.server.JarvisServer") as server:
+                            instance = server.return_value
+                            instance.server_port = 8765
+                            instance.serve_forever.side_effect = KeyboardInterrupt
+                            with contextlib.redirect_stdout(io.StringIO()):
+                                main(["--data-dir", data_dir])
+                            load.assert_called_once_with()
+                            constructor.assert_called_once()
+                            instance.server_close.assert_called_once_with()
 
 
 if __name__ == "__main__":

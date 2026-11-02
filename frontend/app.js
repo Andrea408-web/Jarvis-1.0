@@ -1,7 +1,7 @@
 'use strict';
 (() => {
   const $ = id => document.getElementById(id);
-  const state = { token: '', status: null, settings: {}, providers: {}, usage: {}, busy: false, connected: false, mode: 'idle', recognition: null, micStream: null, audioContext: null, audio: null, audioUrl: null, audioRequest: null, speechGeneration: 0, analyserFrame: null, cpuHistory: [], actionQueue: [], currentAction: null, reminders: [], notified: new Set(), micConsented: false, selectedImage: null };
+  const state = { token: '', status: null, settings: {}, providers: {}, credentials: {}, persistentCapability: null, usage: {}, busy: false, connected: false, mode: 'idle', recognition: null, micStream: null, audioContext: null, audio: null, audioUrl: null, audioRequest: null, speechGeneration: 0, analyserFrame: null, cpuHistory: [], actionQueue: [], currentAction: null, reminders: [], notified: new Set(), micConsented: false, selectedImage: null };
   const waveBars = Array.from({ length: 73 }, () => { const bar = document.createElement('span'); $('waveform').append(bar); return bar; });
   const modes = {
     idle: ['BEREIT', 'Bereit für deinen nächsten Auftrag.', 'BEREIT FÜR EINGABEN'],
@@ -47,8 +47,17 @@
     $('chat-mode').textContent = settings.cloud_enabled && providers.gemini_configured ? 'GEMINI · CLOUD-KI AKTIV' : 'LOKALER MODUS';
     $('chat-footnote').textContent = settings.cloud_enabled ? 'Nachrichten und Verlauf werden an Google Gemini gesendet.' : 'Lokale Befehle · KI lässt sich in Einstellungen aktivieren.';
     if (!document.activeElement || document.activeElement.id !== 'voice-enabled') $('voice-enabled').checked = !!settings.voice_enabled;
-    $('gemini-config-hint').textContent = providers.gemini_configured ? 'API-Schlüssel im Backend vorhanden. Aktivität und Kontingent bitte im Google-Konto prüfen.' : 'Kein API-Schlüssel im Backend. Setze vor dem Serverstart diese Umgebungsvariable:';
-    $('voice-config-hint').textContent = providers.elevenlabs_configured ? 'API-Schlüssel im Backend vorhanden. Trage deine Voice ID oben ein.' : 'Kein API-Schlüssel im Backend. Setze vor dem Serverstart diese Umgebungsvariable:';
+    $('gemini-config-hint').textContent = providers.gemini_configured ? 'API-Schlüssel im Backend vorhanden. Aktivität und Kontingent bitte im Google-Konto prüfen.' : 'Noch kein API-Schlüssel hinterlegt. Gib ihn unten verdeckt ein oder verwende eine Umgebungsvariable beim Serverstart.';
+    $('voice-config-hint').textContent = providers.elevenlabs_configured ? 'API-Schlüssel im Backend vorhanden. Trage deine Voice ID oben ein.' : 'Noch kein API-Schlüssel hinterlegt. Gib ihn unten verdeckt ein oder verwende eine Umgebungsvariable beim Serverstart.';
+    const persistentAvailable = state.credentials.persistent_available === true;
+    for (const provider of ['gemini','elevenlabs']) {
+      const checkbox = $(`${provider}-persist-key`);
+      checkbox.disabled = !persistentAvailable;
+      if (state.persistentCapability !== persistentAvailable) checkbox.checked = persistentAvailable;
+      $(`${provider}-persist-label`).textContent = persistentAvailable ? 'Im macOS-Schlüsselbund speichern' : 'Nur bis Serverneustart';
+      $(`${provider}-key-privacy`).textContent = persistentAvailable ? 'Der Schlüssel wird nur an deinen JARVIS-Server gesendet. Mit gewählter Option speichert der Mac ihn im Schlüsselbund, sonst nur für diese Sitzung. Hierdurch wird keine Anfrage an den Anbieter gestartet.' : 'Der Schlüssel wird nur an deinen JARVIS-Server gesendet und bleibt bis zum Serverneustart in dessen Arbeitsspeicher. Hierdurch wird keine Anfrage an den Anbieter gestartet.';
+    }
+    state.persistentCapability = persistentAvailable;
     $('usage-summary').textContent = `Heute: ${usageItem('gemini')} / ${settings.gemini_daily_limit ?? 20} KI-Anfragen · ${usageItem('elevenlabs')} / ${settings.elevenlabs_daily_char_limit ?? 1500} Sprachzeichen`;
   }
   function renderSystem(system = {}) {
@@ -65,7 +74,7 @@
     const uptime = system.uptime_seconds; $('uptime').textContent = uptime != null ? `${String(Math.floor(uptime / 3600)).padStart(2,'0')}:${String(Math.floor(uptime / 60) % 60).padStart(2,'0')}:${String(Math.floor(uptime) % 60).padStart(2,'0')}` : '—';
     $('action-calculator').title = isMac ? 'Rechner nach Bestätigung auf diesem Mac öffnen' : 'Benötigt den Server auf einem Mac; hier wird ein verständlicher Fehler angezeigt';
   }
-  async function refreshStatus(silent = true) { try { const result = await api('/api/status'); state.status = result; state.settings = result.settings || state.settings; state.providers = result.providers || state.providers; state.usage = result.usage || state.usage; renderSystem(result.system || result); updateConfigView(); setConnected(true); } catch (error) { setConnected(false); if (!silent) showError(error); } }
+  async function refreshStatus(silent = true) { try { const result = await api('/api/status'); state.status = result; state.settings = result.settings || state.settings; state.providers = result.providers || state.providers; state.credentials = result.credentials || state.credentials; state.usage = result.usage || state.usage; renderSystem(result.system || result); updateConfigView(); setConnected(true); } catch (error) { setConnected(false); if (!silent) showError(error); } }
   function markBusy(busy) { state.busy = busy; $('send-button').disabled = busy; $('image-button').disabled = busy; if (busy) setMode('thinking'); else if (state.mode === 'thinking') setMode('idle'); }
   async function sendMessage(text) {
     if (state.busy || !text.trim()) return;
@@ -88,6 +97,23 @@
   function openSettings() { const form = $('settings-form'); for (const key of ['cloud_enabled','gemini_model','gemini_daily_limit','elevenlabs_enabled','elevenlabs_voice_id','elevenlabs_daily_char_limit']) { const input = form.elements.namedItem(key); if (input.type === 'checkbox') input.checked = !!state.settings[key]; else input.value = state.settings[key] ?? input.defaultValue; } $('settings-error').textContent = ''; updateConfigView(); showDialog('settings-dialog'); }
   for (const id of ['settings-top','nav-settings','connect-services']) $(id).addEventListener('click', openSettings);
   $('settings-form').addEventListener('submit', async event => { event.preventDefault(); const form = event.currentTarget; const settings = {}; for(const key of ['cloud_enabled','gemini_model','gemini_daily_limit','elevenlabs_enabled','elevenlabs_voice_id','elevenlabs_daily_char_limit']) { const input = form.elements.namedItem(key); settings[key] = input.type === 'checkbox' ? input.checked : input.type === 'number' ? Number(input.value) : input.value.trim(); } const submit = form.querySelector('[type=submit]'); submit.disabled = true; try { const result = await api('/api/settings', { method:'PUT', body:JSON.stringify(settings) }); state.settings = result.settings || { ...state.settings, ...settings }; updateConfigView(); closeDialog('settings-dialog'); toast('Einstellungen lokal gespeichert.'); refreshStatus(); } catch(error) { $('settings-error').textContent = error.message; } finally { submit.disabled = false; } });
+  for (const provider of ['gemini','elevenlabs']) {
+    $(`save-${provider}-key`).addEventListener('click', async () => {
+      const input = $(`${provider}-api-key`), button = $(`save-${provider}-key`), feedback = $(`${provider}-key-result`);
+      const key = input.value.trim();
+      if (!key) { feedback.textContent = 'Bitte gib einen API-Schlüssel ein.'; feedback.classList.add('error'); input.focus(); return; }
+      const persist = state.credentials.persistent_available === true && $(`${provider}-persist-key`).checked;
+      button.disabled = true; feedback.classList.remove('error'); feedback.textContent = 'Schlüssel wird im Backend hinterlegt …';
+      input.value = '';
+      try {
+        const result = await api('/api/credentials', { method:'POST', body:JSON.stringify({ provider, api_key:key, persist }) });
+        feedback.textContent = result.persisted ? 'Schlüssel im macOS-Schlüsselbund hinterlegt. Die Cloud-Freigabe wurde nicht geändert.' : 'Schlüssel für diese Serversitzung hinterlegt. Die Cloud-Freigabe wurde nicht geändert.';
+        await refreshStatus(false);
+      } catch(error) { feedback.textContent = error.message; feedback.classList.add('error'); }
+      finally { input.value = ''; button.disabled = false; }
+    });
+  }
+  $('settings-dialog').addEventListener('close', () => { for (const provider of ['gemini','elevenlabs']) $(`${provider}-api-key`).value = ''; });
   $('clear-chat').addEventListener('click', async () => { if (!window.confirm('Den lokal gespeicherten Gesprächsverlauf endgültig löschen?')) return; try { await api('/api/history', { method:'DELETE' }); $('messages').replaceChildren(); message('notice','Gesprächsverlauf gelöscht. Neue Nachrichten beginnen ohne bisherigen Kontext.'); } catch(error) { showError(error); } });
   function localVoices() { return window.speechSynthesis ? speechSynthesis.getVoices().filter(voice => voice.localService) : []; }
   if (window.speechSynthesis) speechSynthesis.addEventListener('voiceschanged', updateConfigView);

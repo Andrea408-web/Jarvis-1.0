@@ -9,6 +9,7 @@ import ipaddress
 import json
 import mimetypes
 import os
+import platform
 from pathlib import Path
 import re
 import secrets
@@ -23,6 +24,7 @@ from .voice import VoiceClient
 from .storage import Store
 from .mac_control import PendingActions
 from .system_info import snapshot
+from .credentials import configure as configure_credential, load_saved_keys
 
 FRONTEND = Path(__file__).resolve().parent.parent / 'frontend'
 MAX_BODY = 32_768
@@ -45,7 +47,8 @@ class Application:
             'elevenlabs_configured': providers.get('elevenlabs_key_configured', False),
         }
         usage = self.store.usage()
-        return {'settings': values, 'providers': providers, 'usage': {
+        return {'settings': values, 'providers': providers,
+                'credentials': {'persistent_available': platform.system() == 'Darwin'}, 'usage': {
             'date': usage['date'],
             'gemini': {'used': usage['gemini_requests'], 'limit': values['gemini_daily_limit']},
             'elevenlabs': {'used': usage['elevenlabs_characters'], 'limit': values['elevenlabs_daily_char_limit']},
@@ -287,6 +290,10 @@ class Handler(BaseHTTPRequestHandler):
             return self._json({'ok': True})
         elif method in {'POST', 'PUT', 'PATCH'}:
             body = self._body()
+            if method == 'POST' and path == '/api/credentials':
+                if set(body) - {'provider', 'api_key', 'persist'}:
+                    raise ValueError('Ungültige Felder für die Schlüsselkonfiguration.')
+                return self._json(configure_credential(body.get('provider'), body.get('api_key'), body.get('persist', True)))
             if method == 'POST' and path == '/api/chat':
                 return self._json(app.chat(body.get('text')))
             if method == 'POST' and path == '/api/image':
@@ -351,6 +358,7 @@ def main(argv=None):
     parser.add_argument('--cert', type=Path, help='Vertrauenswürdiges TLS-Zertifikat für LAN-Zugriff')
     parser.add_argument('--key', type=Path, help='Privater TLS-Schlüssel')
     parser.add_argument('--ask-keys', action='store_true', help='API-Schlüssel verdeckt für diese Sitzung eingeben')
+    parser.add_argument('--open-browser', action='store_true', help='Nach dem Start die lokale Oberfläche im Browser öffnen')
     parser.add_argument('--diagnose', action='store_true', help='Tatsächliche Hardware und Software anzeigen, ohne Serverstart')
     args = parser.parse_args(argv)
     if args.diagnose:
@@ -374,6 +382,7 @@ def main(argv=None):
             value = getpass.getpass(label + ' (leer = überspringen): ').strip()
             if value:
                 os.environ[name] = value
+    load_saved_keys()
     app = Application(args.data_dir)
     if ':' in args.host:
         import socket
@@ -387,7 +396,14 @@ def main(argv=None):
         # timeout, so a silent TLS peer cannot block the accept loop.
         server.socket = context.wrap_socket(server.socket, server_side=True, do_handshake_on_connect=False)
     print(f'JARVIS läuft auf Port {server.server_port}. Beenden mit Strg+C.', flush=True)
-    print('Nur lokale Befehle aktiv, bis Sie Cloud-KI in den Einstellungen freigeben.', flush=True)
+    print('Cloud-Funktionen verwenden ausschließlich Ihre gespeicherten Freigaben.', flush=True)
+    if args.open_browser:
+        import webbrowser
+        address = f'[{args.host}]' if ':' in args.host else args.host
+        try:
+            webbrowser.open(('https' if args.cert else 'http') + f'://{address}:{server.server_port}')
+        except OSError:
+            print('Bitte die lokale JARVIS-Adresse manuell im Browser öffnen.', flush=True)
     try:
         server.serve_forever()
     except KeyboardInterrupt:

@@ -4,7 +4,7 @@ Datum: 2. November 2026. Ausführung in einer Linux-x86_64-Cloud mit Python 3.12
 
 ## Bestanden
 
-- `python3 -m unittest discover -s tests -v`: **48 Tests**, alle bestanden, kein Test übersprungen. Laufzeit rund 13 Sekunden. Für Loopback-Sockets wurde die vorgesehene Cloud-Sandboxfreigabe genutzt.
+- `python3 -m unittest discover -s tests -v`: **62 Tests**, alle bestanden, kein Test übersprungen. Laufzeit rund 11 Sekunden. Für Loopback-Sockets wurde die vorgesehene Cloud-Sandboxfreigabe genutzt.
 - Darunter echte HTTP-/HTTPS-Verbindungen, explizit vertrautes temporäres TLS-Zertifikat, Basic-Authentifizierung, Origin-/Host-Prüfungen und Prozess-Token.
 - Maximal 24 Handler gleichzeitig; langsame Header laufen aus; ein Client ohne TLS-Handshake blockiert andere Clients nicht.
 - Persistenz von Gesprächen, Einstellungen, Tageslimits und Erinnerungen; atomare Budgetgrenzen bei parallelen Anfragen.
@@ -13,6 +13,7 @@ Datum: 2. November 2026. Ausführung in einer Linux-x86_64-Cloud mit Python 3.12
 - Offizielle Gemini-/ElevenLabs-Anfrageformate mit kontrollierten Testantworten, Kontext, Funktionsvorschläge, Bildformatgrenzen, Quoten und sichere Anbieterfehler.
 - `node --check frontend/app.js`, Python-Kompilierung und Shell-Syntaxprüfung des Mac-Starters.
 - Browserprüfung mit vorhandenem Chromium: lokale Verbindung, Hilfe/Status, Rechner-Bestätigung mit korrekter Linux-Fehlermeldung, Einstellungen, Erinnerung speichern und erledigen. Keine JavaScript-Fehler. Desktop und 390-Pixel-Mobilansicht ohne horizontalen Überlauf.
+- Schlüsseleinrichtung im echten Browser mit erfundenen Sitzungsschlüsseln für beide Anbieter geprüft: Eingaben geleert, keine Schlüssel in Browser-Speichern, Statusantworten oder SQLite, Cloud-Freigaben bleiben ausgeschaltet. Native Schlüsselbundbefehle mit kontrollierten Rückgaben geprüft, einschließlich fehlgeschlagener Speicherung und sicherem Laden ohne Überschreiben vorhandener Umgebungsbindungen.
 - Laufender lokaler Server: authentifizierte Status-, Verlaufs- und Erinnerungsabfragen antworten mit HTTP 200. Cloud-Funktionen ausgeschaltet.
 - Kein geteilter Original-API-Schlüssel in Projektdateien. Keine Pakete installiert und keine Systemberechtigungen erweitert.
 
@@ -20,6 +21,7 @@ Datum: 2. November 2026. Ausführung in einer Linux-x86_64-Cloud mit Python 3.12
 
 - Echte Gemini-Antworten, Bildanalyse beim Anbieter und ElevenLabs-Audio: benötigten bewusst freigegebenes, nachweislich kostenloses Anbieterkontingent und sichere Schlüsselkonfiguration. Die Tests senden keine externen Anbieteranfragen.
 - Physischer Mac: tatsächliche Hardware/macOS-Version, Rechner-App, weitere Apps und lokale Dateifreigaben.
+- Tatsächliches Schreiben und Lesen des macOS-Schlüsselbunds auf einem Mac. Hier wurde der native Ablauf durch kontrollierte Prozessantworten geprüft.
 - Echtes iPhone: vertrauenswürdiges LAN-TLS, Anmeldung, Safari-Mikrofon und lokale deutsche Systemstimme.
 - Tatsächliche Mikrofoneingabe, ElevenLabs-Wiedergabe und vom Betriebssystem bereitgestellte Sprachstimmen. Die Steuerelemente und Fehlerpfade sind implementiert; ein Browser-Bildtest ist kein Audio-Gerätetest.
 

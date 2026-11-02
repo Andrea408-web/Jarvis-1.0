@@ -10,6 +10,7 @@
 | `backend/ai.py` | Gemini REST, Kontext, streng geprüfte Funktionsvorschläge, Bildanalyse. |
 | `backend/voice.py` | ElevenLabs REST mit festem maximalem Textumfang. |
 | `backend/providers.py` | Verifiziertes HTTPS, begrenzte Antwortgrößen, keine Redirects mit Schlüsseln. |
+| `backend/credentials.py` | Verdeckte Browserkonfiguration, auf ausdrücklichen Auftrag Speicherung im macOS-Schlüsselbund, sonst nur Sitzung. Kein Schlüsselwert in Prozessargumenten, Git, SQLite oder API-Antworten. |
 | `backend/mac_control.py` | Freigabeliste, kurzlebige Einmalbestätigungen, sichere native Öffnen-Aufträge und begrenzte Dateien. |
 | `backend/automations.py` | Fällige Erinnerungen und Timer als lokale Datensätze, kein Hintergrunddaemon. |
 | `tests/` | Standardbibliothek `unittest`, temporäre Datenverzeichnisse. |
@@ -28,6 +29,7 @@ HTTP-Fehler enthalten `{"error":"verständliche Meldung"}`. Schlüssel/Anbieter-
 | `GET /api/status` | Echte `system`-Messwerte, `settings`, `providers` (nur Schlüssel vorhanden/fehlend), `usage`, `capabilities`. |
 | `GET /api/settings` | Einstellungen, Anbieterpräsenz und Tageszähler. |
 | `PUT /api/settings` | Whitelist-Objekt, etwa `{"cloud_enabled":false,"gemini_daily_limit":20}` → bestätigte Einstellungen. Unbekannte Felder/Schlüssel werden abgewiesen. |
+| `POST /api/credentials` | `{"provider":"gemini","api_key":"…","persist":true}` → nur Statusmeldung. Anbieter `gemini` oder `elevenlabs`. Speicherung nur im macOS-Schlüsselbund; `persist:false` gilt bis zum Serverneustart. Keine Schlüssel-Leseschnittstelle. |
 | `GET /api/history` | `{"messages":[{"role":"user","text":"…","created_at":"…"}]}` |
 | `DELETE /api/history` | Lokale Nachrichten löschen. |
 | `POST /api/chat` | `{"text":"…"}` → `{"reply":"…","proposals":[]}` |

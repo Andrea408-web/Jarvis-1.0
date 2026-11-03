@@ -6,6 +6,8 @@ from .providers import ProviderError
 from .storage import utc_now
 
 ROLES = {
+    'studio': {'name':'STUDIO','title':'Werbeclip','instruction':'Schreibe genau drei kurze Szenentexte für einen Werbeclip. Pro Szene eine Zeile, maximal 100 Zeichen. Keine erfundenen Produkteigenschaften.'},
+    'builder': {'name':'BAUER','title':'Mini-App','instruction':'Erstelle eine konkrete interaktive Checkliste zum Auftrag. Pro Zeile einen kurzen anklickbaren Arbeitsschritt. Keine Programmcodeblöcke.'},
     'planner': {'name':'ATLAS', 'title':'Planung', 'instruction':'Erstelle einen konkreten, übersichtlichen Arbeitsplan mit sinnvollen nächsten Schritten.'},
     'writer': {'name':'NOVA', 'title':'Entwurf', 'instruction':'Erstelle einen brauchbaren Textentwurf zum Auftrag. Trenne Annahmen von bekannten Angaben.'},
     'reviewer': {'name':'SENTINEL', 'title':'Prüfung', 'instruction':'Prüfe den übergebenen Text auf Fehler und Unklarheiten. Nenne konkrete Verbesserungen. Ohne Text frage danach.'},

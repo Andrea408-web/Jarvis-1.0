@@ -107,3 +107,23 @@ class AgentHTTPTests(unittest.TestCase):
                 self.assertEqual(data['jobs'][0]['result'],'HTTP-Entwurf')
                 self.assertEqual(request('/api/agents/cancel','POST',{'id':job['id']})[0],400)
             finally:app.office.stop();server.shutdown();server.server_close();thread.join(timeout=3)
+
+
+class TaskRoutingTests(unittest.TestCase):
+    def test_natural_requests_and_negation(self):
+        from backend.task_router import task_request
+        for text in ['Beauftrage einen Agenten, der eine Einkaufsliste erstellt','Lass einen Agenten einen Lernplan machen','Ein Agent soll einen Text schreiben','Kannst du einen Agenten beauftragen, eine Werbung zu erstellen?']:
+            self.assertIsNotNone(task_request(text))
+        self.assertEqual(task_request('Beauftrage Atlas: Schreibe einen Plan')['role'],'planner')
+        for text in ['Beauftrage keinen Agenten','Warum beauftragt der Agent nichts?','Zeig meine Agenten','Hallo']:
+            self.assertIsNone(task_request(text))
+    def test_chat_creates_job_instead_of_model_promise(self):
+        with tempfile.TemporaryDirectory() as folder:
+            app=Application(folder);app.store.update_settings({'ai_provider':'llamacpp'})
+            app.llamacpp.endpoint_transport=Mock(return_value={'choices':[{'finish_reason':'stop','message':{'content':'Ein Lernplan'}}]})
+            try:
+                response=app.chat('Beauftrage einen Agenten, der einen Lernplan erstellt')
+                self.assertIn('job_id',response)
+                self.assertEqual(response['view'],'office')
+                self.assertEqual(app.office.snapshot()['jobs'][0]['id'],response['job_id'])
+            finally:app.office.stop()

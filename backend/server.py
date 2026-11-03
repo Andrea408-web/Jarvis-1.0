@@ -23,6 +23,7 @@ from .ai import GeminiClient, ProviderError, provider_status
 from .voice import VoiceClient
 from .mobile import MobileLink
 from .agents import AgentOffice
+from .task_router import task_request
 from .cameras import CAMERAS
 from .training import plan as training_plan
 from .openai_client import OpenAIClient
@@ -89,6 +90,12 @@ class Application:
     def chat(self, text):
         if not isinstance(text, str) or not text.strip() or len(text) > 12000:
             raise ValueError('Bitte eine Nachricht mit 1 bis 12.000 Zeichen eingeben.')
+        task=task_request(text)
+        if task:
+            if not task['task']:
+                return {'reply':'Sir, was genau soll der Agent erstellen? Beschreibe bitte den Auftrag.','proposals':[],'view':'office'}
+            job=self.office.submit(task)
+            return {'reply':'Sir, der Auftrag wurde tatsächlich angelegt. Auftragsnummer: '+job['id'][:8]+'. Status und Ergebnis stehen in der Werkstatt.','proposals':[],'view':'office','job_id':job['id']}
         if not self.chat_lock.acquire(blocking=False):
             raise ProviderError('Eine Anfrage läuft bereits. Bitte kurz warten.', 409)
         try:
@@ -314,7 +321,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({'reminders': app.store.reminders()})
             # Exact static allowlist: no arbitrary files, keys or directory listings.
             static = {'/': 'index.html', '/index.html': 'index.html',
-                      '/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js'}
+                      '/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js', '/artifacts.js':'artifacts.js'}
             if path in static:
                 file = FRONTEND / static[path]
                 body = file.read_bytes()

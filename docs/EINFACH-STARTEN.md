@@ -78,3 +78,10 @@ Der Helfer unterstützt auch offizielle stabile Veröffentlichungen, die statt B
 Das bereits vorhandene lokale Modell wird gemeinsam genutzt: höchstens acht offene Aufgaben, nacheinander verarbeitet. Ein Auftrag wartet, solange das Modell im Chat beschäftigt ist. Fehlende KI erscheint als Fehler. Beim Abbrechen wird ein verspätetes Ergebnis verworfen; die laufende Berechnung kann noch auslaufen. Beim Serverneustart werden offene Aufträge als unterbrochen markiert und nicht automatisch neu ausgeführt. Aufgaben und fertige Ergebnisse bleiben im privaten JARVIS-Datenordner gespeichert, getrennt vom normalen Chatverlauf. Das Löschen des Chatverlaufs löscht diese Aufträge nicht.
 
 Die Agenten sind Rollen für lokale Textaufgaben. Sie haben keine eigenständige Websuche, keine Kameraaugen und führen keine Änderungen an deinen Geräten durch. Ein fertiger Entwurf ist kein Nachweis, dass eine darin beschriebene reale Aktion ausgeführt wurde. Fakten bitte prüfen. Ohne größeres oder externes Modell bleibt die Sprach- und Denkqualität der kleinen KI begrenzt.
+
+
+## Direkte Aufträge, Mini-Apps und Textvideos
+
+„Beauftrage einen Agenten, der eine anklickbare Checkliste erstellt“ startet BAUER. Im fertigen Ergebnis kannst du die Schritte abhaken; Häkchen werden im Browser auf diesem Gerät gespeichert. „Ein Agent soll eine Werbung als Video erstellen“ startet STUDIO. Im Ergebnis erscheinen Vorschau und Videoexport. Es ist eine lokal gerenderte Textanimation ohne Ton, keine generative Film-KI. Der Export dauert etwa neun Sekunden; lasse den Bereich dabei geöffnet und sichtbar. Je nach Browser wird WebM oder MP4 unterstützt. Die lokale Text-KI muss laufen, um das Skript zu erzeugen.
+
+Öffentliche Kameraseiten lassen sich über „In Jarvis anzeigen“ im Fenster laden. Verbietet der Anbieter die Einbettung, ist nur dessen eigener Tab nutzbar; JARVIS umgeht diese Einschränkung nicht. Die eigene Gerätekamera kann direkt mit „Kamera starten“ und der Browserfreigabe aktiviert werden.

@@ -85,7 +85,7 @@
   async function sendMessage(text, {keepDraft=false}={}) {
     if (state.busy || !text.trim()) return;
     stopAudio(); stopMicrophone(); markBusy(true); message('user', text); if(!keepDraft){$('chat-input').value = ''; $('chat-input').style.height = '';}
-    try { const local = window.JarvisExtras ? await window.JarvisExtras.command(text) : null; const result = local || await api('/api/chat', { method: 'POST', body: JSON.stringify({ text }) }); const item = message('assistant', result.reply || 'Die Anfrage wurde verarbeitet.'); addProposals(item, result.proposals || result.proposed_actions || []); markBusy(false); if (state.settings.voice_enabled && result.reply) speak(result.reply); refreshStatus(); } catch (error) { markBusy(false); showError(error); }
+    try { const local = window.JarvisExtras ? await window.JarvisExtras.command(text) : null; const result = local || await api('/api/chat', { method: 'POST', body: JSON.stringify({ text }) }); if(result.view==='office')await window.JarvisOffice?.open(); const item = message('assistant', result.reply || 'Die Anfrage wurde verarbeitet.'); addProposals(item, result.proposals || result.proposed_actions || []); markBusy(false); if (state.settings.voice_enabled && result.reply) speak(result.reply); refreshStatus(); } catch (error) { markBusy(false); showError(error); }
   }
   $('chat-form').addEventListener('submit', event => { event.preventDefault(); sendMessage($('chat-input').value.trim()); });
   $('chat-input').addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); $('chat-form').requestSubmit(); } });

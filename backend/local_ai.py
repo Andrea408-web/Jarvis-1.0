@@ -73,7 +73,15 @@ class LocalClient:
         model = self.store.settings()['local_model']
         validate_model(model)
         messages, remaining = [], 6000
-        for item in reversed(self.store.history(conversation)[-12:]):
+        history=self.store.history(conversation)[-12:]
+        # A past gaming discussion is not a standing instruction for new topics.
+        if not re.search(r'minecraft|pvp|bedrock|\bjava\b|weiter|dazu|darauf|genauer|das spiel',text,re.I):
+            filtered=[];gaming=False
+            for entry in history:
+                if entry['role']=='user':gaming=bool(re.search(r'minecraft|pvp|bedrock|\bjava\b',entry['text'],re.I))
+                if not gaming:filtered.append(entry)
+            history=filtered
+        for item in reversed(history):
             if item['role'] not in {'user', 'assistant'}:
                 continue
             if len(item['text']) > remaining:

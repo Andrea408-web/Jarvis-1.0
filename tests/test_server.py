@@ -14,7 +14,7 @@ import threading
 import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch, Mock
 
 from backend.ai import ProviderError
 from backend.server import Application, JarvisServer, main
@@ -464,7 +464,7 @@ class CommandLineGuardTests(unittest.TestCase):
                     def make_app(directory):
                         self.assertTrue(load.called)
                         self.assertEqual(directory, Path(data_dir))
-                        return object()
+                        return Mock()
                     with patch("backend.server.Application", side_effect=make_app) as constructor:
                         with patch("backend.server.JarvisServer") as server:
                             instance = server.return_value

@@ -12,6 +12,10 @@ Das kleine Modell benötigt ungefähr 400 MB, zusätzlich das Startprogramm. Tat
 
 **[Kurze deutsche Anleitung](docs/EINFACH-STARTEN.md)**. Der echte Download und Modellbetrieb auf deinem Mac ist noch nicht verifiziert; die Prüfung in der Cloud verwendet kontrollierte Installationsdaten und Antworten. Bei fehlender Prüfsumme wird sicher gestoppt.
 
+## Weltkarte und Handy
+
+**Welt & Kameras** zeigt eine lokale Weltkarte mit vier öffentlichen Kameraseiten. „Zeig öffentliche Kameras in London“ fokussiert den Standort. **Handy verbinden** führt am Mac durch die private HTTPS-Kopplung per QR-Code; iOS benötigt einmalig bewusstes Vertrauen für das eigene Zertifikatsprofil. Die Kamera startet ausschließlich nach Einstellung und Klick. Ohne zusätzliches Bildmodell gibt es Vorschau und Training aus deinen Angaben, keine visuelle Analyse. [Anleitung und Grenzen](docs/EINFACH-STARTEN.md#sprechen-weltkarte-und-handy).
+
 ## Manueller Start und weitere Anbieter
 
 ## Auf deinem Mac starten
@@ -94,7 +98,7 @@ Der Helfer prüft, ob die tatsächlich verwendete Python-Version eine passende p
 | Systemdaten | Messwerte des **Servergeräts**, keine Zufallsdaten. Fehlende Messwerte bleiben unbekannt. Unter Linux können Host- und Containerressourcen voneinander abweichen. |
 | Lokaler Chat | `Hilfe`, `Status`, `Rechner öffnen` und weitere erlaubte App-Befehle funktionieren ohne KI. Freie Gespräche benötigen Gemini. |
 | Gemini | Offizielle REST-API, deutsche Persönlichkeit, gespeicherter Gesprächskontext, strukturierte Aktionsvorschläge, echte API-Fehler statt erfundener Antworten. |
-| Bilder | Ausgewählte PNG/JPEG/WebP-Bilder bis 4 MiB auf ausdrücklichen Auftrag mit Gemini beschreiben; Bilder werden nicht lokal archiviert. Keine Kameraaktivierung. |
+| Bilder | Ausgewählte PNG/JPEG/WebP-Bilder bis 4 MiB auf ausdrücklichen Auftrag mit Gemini beschreiben; Bilder werden nicht lokal archiviert. Eigene Kameravorschau und regelbasierte Minecraft-Tipps separat unter „Kamera & Training“; das kleine lokale Modell analysiert keine Bilder. |
 | Stimme | ElevenLabs über offizielle REST-API, Voice ID, Lautstärke, Stop und lokale Browserstimme als Fallback. Bei WebAudio-Wiedergabe stammt der Pegel aus dem echten Audio. Für Systemstimmen ist kein Audio-Wellenformzugriff zugesichert. |
 | Mikrofon | Nur nach Klick und ausdrücklicher Zustimmung, über unterstützte Browser-Spracherkennung. Browser können Audiodaten an ihren Erkennungsdienst senden; dies ist keine garantierte Offline-Erkennung. Kein Wakeword/Dauerlauschen. |
 | Apps | Rechner, Safari, Kalender, Notizen, Musik, Finder und Systemeinstellungen auf macOS; feste IDs, keine freie Shell. |
@@ -136,7 +140,7 @@ Die Beispiel-IP musst du durch die deines Macs ersetzen. Öffne auf dem iPhone `
 
 ## Bewusst noch nicht freigeschaltet
 
-E-Mail, Nachrichtenversand, Kontakte, Telefonanrufe, Live-Webrecherche, Wetter, Kamerastreams, Wakeword, wiederkehrende Routinen und Hintergrund-Systembenachrichtigungen sind **noch nicht integriert**. Es gibt dafür keine versteckten Platzhalter-Erfolge. Diese Erweiterungen benötigen eigene offizielle Integrationen, Geräteprüfungen, Berechtigungen und Tests. Die aktuelle Version liest keine Mails und kann weder Nachrichten senden noch selbstständig telefonieren.
+E-Mail, Nachrichtenversand, Kontakte, Telefonanrufe, Live-Webrecherche, Wetter, Wakeword, wiederkehrende Routinen und Hintergrund-Systembenachrichtigungen sind **noch nicht integriert**. Es gibt dafür keine versteckten Platzhalter-Erfolge. Diese Erweiterungen benötigen eigene offizielle Integrationen, Geräteprüfungen, Berechtigungen und Tests. Die aktuelle Version liest keine Mails und kann weder Nachrichten senden noch selbstständig telefonieren.
 
 ## Entwicklung und Tests
 

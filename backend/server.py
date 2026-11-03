@@ -21,6 +21,9 @@ from urllib.parse import urlsplit
 
 from .ai import GeminiClient, ProviderError, provider_status
 from .voice import VoiceClient
+from .mobile import MobileLink
+from .cameras import CAMERAS
+from .training import plan as training_plan
 from .openai_client import OpenAIClient
 from .local_ai import LocalClient, local_status
 from .llamacpp import LlamaCppClient, status as llama_status
@@ -47,6 +50,7 @@ class Application:
         self.voice = VoiceClient(self.store)
         self.token = secrets.token_urlsafe(32)
         self.chat_lock = threading.Lock()
+        self.mobile = MobileLink(self)
 
     def settings(self):
         values = self.store.settings()
@@ -76,7 +80,7 @@ class Application:
             'mac_control': result['system'].get('is_macos', False),
             'file_scope': str(self.actions.file_root),
             'web_research': False, 'email': False, 'phone': False,
-            'camera': False, 'wake_word': False,
+            'camera': True, 'camera_image_analysis': False, 'public_camera_map': True, 'wake_word': False,
         }
         return result
 
@@ -142,6 +146,7 @@ class JarvisServer(ThreadingHTTPServer):
         self.allowed_hosts = {'localhost', '127.0.0.1', '::1', address[0].lower()}
         self.auth_failures = {}
         self.auth_lock = threading.Lock()
+        self.device_auth = None
 
     def get_request(self):
         connection, address = super().get_request()
@@ -178,23 +183,25 @@ class Handler(BaseHTTPRequestHandler):
         # Paths, queries, headers and provider output can contain personal data.
         pass
 
-    def _headers(self, status, content_type, length):
+    def _headers(self, status, content_type, length, cookie=None):
         self.send_response(status)
         self.send_header('Content-Type', content_type)
+        if cookie:
+            self.send_header('Set-Cookie',cookie)
         self.send_header('Content-Length', str(length))
         self.send_header('Cache-Control', 'no-store')
         self.send_header('X-Content-Type-Options', 'nosniff')
         self.send_header('Referrer-Policy', 'no-referrer')
         self.send_header('X-Frame-Options', 'DENY')
-        self.send_header('Permissions-Policy', 'camera=(), microphone=(self), geolocation=()')
-        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
+        self.send_header('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=()')
+        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; frame-src https://www.earthcam.com https://www.abbeyroad.com https://www.livefromiceland.is https://www.skylinewebcams.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
         if self.server.secure:
             self.send_header('Strict-Transport-Security', 'max-age=86400')
         self.end_headers()
 
-    def _json(self, value, status=200):
+    def _json(self, value, status=200, cookie=None):
         body = json.dumps(value, ensure_ascii=False).encode('utf-8')
-        self._headers(status, 'application/json; charset=utf-8', len(body))
+        self._headers(status, 'application/json; charset=utf-8', len(body),cookie)
         self.wfile.write(body)
 
     def _guard(self):
@@ -242,6 +249,14 @@ class Handler(BaseHTTPRequestHandler):
                 self.wfile.write(body)
                 return False
         path = urlsplit(self.path).path
+        if self.server.device_auth:
+            if path == '/api/mobile/pair' and self.command == 'POST':
+                return True
+            if not self.server.device_auth.valid(self.headers.get('Cookie')):
+                if self.command == 'GET' and path in {'/','/pair.js','/style.css'}:
+                    return True
+                self._json({'error':'Bitte dieses Gerät über den aktuellen QR-Code am Mac koppeln.'},401)
+                return False
         if path.startswith('/api/') and path != '/api/session':
             token = self.headers.get('X-Jarvis-Token', '')
             if not hmac.compare_digest(token.encode('utf-8'), self.server.app.token.encode('utf-8')):
@@ -277,8 +292,14 @@ class Handler(BaseHTTPRequestHandler):
         app = self.server.app
         method = self.command
         if method == 'GET':
+            if self.server.device_auth and not self.server.device_auth.valid(self.headers.get('Cookie')) and path == '/':
+                body=(FRONTEND/'pair.html').read_bytes()
+                self._headers(200,'text/html; charset=utf-8',len(body))
+                return self.wfile.write(body)
             if path == '/api/session':
                 return self._json({'token': app.token})
+            if path == '/api/cameras':
+                return self._json({'cameras': CAMERAS})
             if path == '/api/status':
                 return self._json(app.status())
             if path == '/api/settings':
@@ -289,7 +310,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({'reminders': app.store.reminders()})
             # Exact static allowlist: no arbitrary files, keys or directory listings.
             static = {'/': 'index.html', '/index.html': 'index.html',
-                      '/style.css': 'style.css', '/app.js': 'app.js'}
+                      '/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson'}
             if path in static:
                 file = FRONTEND / static[path]
                 body = file.read_bytes()
@@ -306,6 +327,25 @@ class Handler(BaseHTTPRequestHandler):
             return self._json({'ok': True})
         elif method in {'POST', 'PUT', 'PATCH'}:
             body = self._body()
+            if method == 'POST' and path == '/api/training/plan':
+                return self._json(training_plan(body))
+            if method == 'POST' and path == '/api/mobile/pair' and self.server.device_auth:
+                if set(body)!={'ticket'}:
+                    raise ValueError('Ungültige Kopplungsanfrage.')
+                session=self.server.device_auth.pair(body['ticket'])
+                return self._json({'ok':True},cookie='jarvis_device='+session+'; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=43200')
+            if method == 'POST' and path in {'/api/mobile/start','/api/mobile/profile','/api/mobile/reveal','/api/mobile/stop'}:
+                if self.server.device_auth or not ipaddress.ip_address(self.client_address[0]).is_loopback:
+                    return self._json({'error':'Handykopplung nur direkt am Mac verwalten.'},403)
+                if body:
+                    raise ValueError('Keine Parameter für die Handykopplung erforderlich.')
+                if path.endswith('/start'): return self._json(app.mobile.start())
+                if path.endswith('/profile'): return self._json(app.mobile.profile_data())
+                if path.endswith('/reveal'):
+                    app.mobile.reveal_profile()
+                    return self._json({'ok':True})
+                app.mobile.stop()
+                return self._json({'ok':True})
             if method == 'POST' and path == '/api/llamacpp/status':
                 if body:
                     raise ValueError('Die lokale Prüfung benötigt keine Parameter.')
@@ -475,7 +515,10 @@ def main(argv=None):
     except KeyboardInterrupt:
         pass
     finally:
-        server.server_close()
+        try:
+            app.mobile.stop()
+        finally:
+            server.server_close()
 
 
 if __name__ == '__main__':

@@ -215,19 +215,42 @@ def resolve_runtime(architecture):
     return result
 
 
-def select_model(info):
-    revision = info.get('sha')
-    if not isinstance(revision, str) or not re.fullmatch(r'[0-9a-f]{40,64}', revision):
-        raise ValueError('Die Modellversion konnte nicht sicher bestimmt werden.')
-    for item in info.get('siblings', []):
-        if not isinstance(item, dict) or item.get('rfilename') != MODEL_NAME:
-            continue
-        lfs = item.get('lfs') or {}
-        checksum, size = lfs.get('sha256'), lfs.get('size')
-        if not _sha(checksum) or type(size) is not int or not 1_000_000 <= size <= MAX_MODEL:
-            raise ValueError('Das kleine Modell hat keine gültige Prüfsumme oder überschreitet 450 MB. Kein größeres Modell wird geladen.')
-        return {'url': MODEL_REPO + '/resolve/' + revision + '/' + MODEL_NAME, 'size': size, 'sha256': checksum, 'name': MODEL_NAME}
-    raise ValueError('Das erwartete kleine Q4_K_M-Modell ist in der offiziellen Quelle nicht verfügbar.')
+def select_model(info, repo=MODEL_REPO, names=None):
+    revision=info.get('sha')
+    if not isinstance(revision,str) or not re.fullmatch(r'[0-9a-f]{40,64}',revision):
+        raise ValueError('Modellversion nicht sicher bestimmbar.')
+    names=names or [MODEL_NAME,'qwen2.5-0.5b-instruct-q4_k_s.gguf','qwen2.5-0.5b-instruct-q4_0.gguf']
+    files={item.get('rfilename'):item for item in info.get('siblings',[]) if isinstance(item,dict)}
+    problems=[]
+    for name in names:
+        item=files.get(name)
+        if not item:continue
+        lfs=item.get('lfs') or {}
+        if not isinstance(lfs,dict):continue
+        values=[lfs[k].removeprefix('sha256:') if isinstance(lfs.get(k),str) else '' for k in ('sha256','oid') if k in lfs]
+        size=lfs.get('size',item.get('size'))
+        if not values or any(not _sha(v) for v in values) or len(set(values))!=1:
+            problems.append(name+': SHA256 fehlt oder ist widersprüchlich');continue
+        if type(size) is not int or size<1000000:
+            problems.append(name+': Dateigröße fehlt');continue
+        if size>MAX_MODEL:
+            problems.append(f'{name}: {size/1000000:.1f} MB, über450MB');continue
+        return {'url':repo+'/resolve/'+revision+'/'+name,'size':size,'sha256':values[0],'name':name,'source':repo}
+    raise ValueError('Keine gültige kleine Modellvariante. '+'; '.join(problems or ['Dateien fehlen.']))
+
+
+def resolve_model():
+    sources=[(MODEL_REPO,MODEL_API,None),('https://huggingface.co/bartowski/Qwen2.5-0.5B-Instruct-GGUF',
+        'https://huggingface.co/api/models/bartowski/Qwen2.5-0.5B-Instruct-GGUF?blobs=true',
+        ['Qwen2.5-0.5B-Instruct-Q4_K_M.gguf','Qwen2.5-0.5B-Instruct-Q4_K_S.gguf','Qwen2.5-0.5B-Instruct-Q4_0.gguf'])]
+    errors=[]
+    for repo,url,names in sources:
+        try:
+            spec=select_model(metadata(url),repo,names)
+            print(f'Kleine Modellvariante: {spec["name"]}, {spec["size"]/1000000:.1f} MB, Quelle: {repo}',flush=True)
+            return spec
+        except ValueError as error:errors.append(str(error))
+    raise ValueError('Kein prüfbares Modell unter450MB gefunden; nichts Größeres geladen. '+' | '.join(errors))
 
 
 def verified_download(spec):
@@ -382,7 +405,7 @@ def _prepare(architecture):
     if shutil.disk_usage(ROOT).free < 1_500_000_000:
         raise ValueError('Bitte mindestens 1,5 GB freien Speicher für die Einrichtung bereitstellen.')
     runtime = resolve_runtime(architecture)
-    model = select_model(metadata(MODEL_API))
+    model = resolve_model()
     print(f"Einmaliger Download: Startprogramm {runtime['size']/1_000_000:.1f} MB, kleines KI-Modell {model['size']/1_000_000:.1f} MB. Kein API-Schlüssel oder Anbieter-Guthaben.", flush=True)
     archive = verified_download(runtime)
     print('Startpaket geprüft. Lade und prüfe das kleine Modell …', flush=True)

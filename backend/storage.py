@@ -21,6 +21,8 @@ DEFAULT_SETTINGS = {
     "openai_model": "gpt-4o-mini",
     "openai_daily_limit": 10,
     "cloud_enabled": False,
+    "speech_auto_send": True,
+    "camera_enabled": False,
     "gemini_model": "gemini-2.5-flash",
     "gemini_daily_limit": 20,
     "elevenlabs_enabled": False,
@@ -104,7 +106,7 @@ class Store:
         if unknown:
             raise ValueError("Unbekannte Einstellung. Schlüssel gehören nicht in die Einstellungen.")
         for key, value in values.items():
-            if key in {"cloud_enabled", "elevenlabs_enabled", "voice_enabled"}:
+            if key in {"cloud_enabled", "elevenlabs_enabled", "voice_enabled", "speech_auto_send", "camera_enabled"}:
                 if type(value) is not bool:
                     raise ValueError("Diese Einstellung muss ein Wahrheitswert sein.")
             elif key == "ai_provider":

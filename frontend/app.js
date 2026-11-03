@@ -106,7 +106,7 @@
       const result=await api('/api/settings',{method:'PUT',body:JSON.stringify({ai_provider:'llamacpp',cloud_enabled:false,elevenlabs_enabled:false,voice_enabled:true})});
       state.settings=result.settings; $('settings-form').elements.namedItem('ai_provider').value='llamacpp';
       $('settings-form').elements.namedItem('cloud_enabled').checked=false; $('settings-form').elements.namedItem('elevenlabs_enabled').checked=false;
-      updateConfigView(); $('small-ai-result').textContent='Kleine lokale KI ausgewählt. Bitte Kleine-KI-starten.command öffnen und dann hier prüfen.';
+      updateConfigView(); $('small-ai-result').textContent='Kleine lokale KI ausgewählt. Bitte 1-JARVIS-einrichten.command einmal ausführen und anschließend 2-JARVIS-starten.command verwenden.';
     } catch(error){$('small-ai-result').textContent=error.message;}
   });
   $('test-small-ai').addEventListener('click', async () => {

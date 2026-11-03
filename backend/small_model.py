@@ -12,6 +12,9 @@ MODEL = 'qwen2.5-0.5b-instruct-q4_k_m.gguf'
 def locate():
     if platform.system() != 'Darwin':
         raise ValueError('Dieser Starter ist für den Mac vorbereitet. Hier wird nichts installiert.')
+    if (ROOT / '.jarvis' / 'installed.json').is_file():
+        from .easy_setup import read_installation
+        return read_installation()
     executable = ROOT / 'runtime' / 'llama-server'
     if not executable.is_file():
         found = shutil.which('llama-server')

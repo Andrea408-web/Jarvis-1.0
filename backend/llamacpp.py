@@ -27,7 +27,7 @@ def request_local(path, payload=None):
         error.close()
         raise ProviderError('Die kleine lokale KI ist noch nicht bereit oder konnte die Anfrage nicht verarbeiten. Bitte das llama-server-Terminal prüfen.', 503) from None
     except (urllib.error.URLError, TimeoutError, OSError):
-        raise ProviderError('Die kleine lokale KI läuft noch nicht. Bitte zuerst „Kleine-KI-starten.command“ öffnen. Kein Ollama und kein API-Schlüssel nötig.', 503) from None
+        raise ProviderError('Die kleine lokale KI läuft noch nicht. Bitte zuerst „1-JARVIS-einrichten.command“ ausführen, danach „2-JARVIS-starten.command“ verwenden. Kein Ollama und kein API-Schlüssel nötig.', 503) from None
     except (ValueError, UnicodeError):
         raise ProviderError('Die kleine lokale KI hat keine gültige Antwort geliefert.', 502) from None
 

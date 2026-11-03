@@ -1,5 +1,7 @@
 # Kleine lokale KI ohne Ollama und ohne API-Schlüssel
 
+**Einfacher geht es jetzt mit [1-JARVIS-einrichten.command](../1-JARVIS-einrichten.command). Die kurze Anleitung steht in [EINFACH-STARTEN.md](EINFACH-STARTEN.md). Die folgenden Schritte sind nur die manuelle Alternative.**
+
 Diese Variante verwendet **llama.cpp** und **Qwen2.5-0.5B-Instruct Q4_K_M**. Das kleine Modell liegt ungefähr im Bereich von 350–450 MB; die genaue Größe zeigt die Downloadseite. Zusätzlich ist ein passendes llama.cpp-Startprogramm nötig. Es wird weder Ollama noch ein kostenpflichtiger API-Zugang benötigt. Nach dem einmaligen Download funktionieren Textgespräche offline.
 
 Ein Modell dieser Größe ist deutlich schwächer als ChatGPT. Es ist für einfache kurze Gespräche geeignet, nicht für verlässliche komplexe Aufgaben. Die Laufzeit auf deinem tatsächlichen Mac wurde hier nicht geprüft. Die Cloud-Tests verwenden kontrollierte Antworten.

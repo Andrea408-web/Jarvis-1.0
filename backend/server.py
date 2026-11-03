@@ -394,7 +394,19 @@ def main(argv=None):
     parser.add_argument('--check-connection', choices=['gemini', 'elevenlabs', 'openai'], help='HTTPS-Verbindung ohne API-Schlüssel und ohne Generierung prüfen')
     parser.add_argument('--repair-certificates', action='store_true', help='Auf ausdrücklichen Auftrag das offizielle python.org-Zertifikatsskript auf macOS ausführen')
     parser.add_argument('--start-small-ai', action='store_true', help='Vorhandene kleine lokale KI ohne Download starten')
+    parser.add_argument('--setup-small-ai', action='store_true', help='Kleine lokale KI ausdrücklich herunterladen, prüfen und JARVIS starten')
+    parser.add_argument('--easy-local', action='store_true', help='Bereits eingerichtete lokale KI und JARVIS zusammen offline starten')
+    parser.add_argument('--local-only', action='store_true', help='Lokalen Modus ohne API-Schlüsselbund starten')
     args = parser.parse_args(argv)
+    if args.setup_small_ai or args.easy_local:
+        from .easy_start import run
+        try:
+            run(setup=args.setup_small_ai)
+        except KeyboardInterrupt:
+            pass
+        except (ValueError, OSError) as error:
+            parser.exit(1, str(error) + '\n')
+        return
     if args.start_small_ai:
         try:
             start_small_model()
@@ -428,13 +440,16 @@ def main(argv=None):
     password = os.environ.get('JARVIS_ACCESS_PASSWORD')
     if not local and (not args.cert or not password or len(password) < 16):
         parser.error('LAN benötigt TLS (--cert und --key) und JARVIS_ACCESS_PASSWORD mit mindestens 16 Zeichen.')
-    if args.ask_keys:
+    if args.ask_keys and not args.local_only:
         for name, label in [('GEMINI_API_KEY', 'Gemini API-Schlüssel'), ('ELEVENLABS_API_KEY', 'ElevenLabs API-Schlüssel')]:
             value = getpass.getpass(label + ' (leer = überspringen): ').strip()
             if value:
                 os.environ[name] = value
-    load_saved_keys()
+    if not args.local_only:
+        load_saved_keys()
     app = Application(args.data_dir)
+    if args.local_only:
+        app.store.update_settings({'ai_provider':'llamacpp','cloud_enabled':False,'elevenlabs_enabled':False,'voice_enabled':True})
     if ':' in args.host:
         import socket
         JarvisServer.address_family = socket.AF_INET6

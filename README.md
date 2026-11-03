@@ -1,6 +1,18 @@
 # J.A.R.V.I.S.
 
-Ein lokaler, modularer Assistent mit einer animierten goldenen HUD-Oberfläche, echtem Gemini-Chat, optionaler ElevenLabs-Stimme und ausdrücklich bestätigten Mac-Aktionen. Kein Paketmanager, kein Framework, keine automatische Installation: Python-Standardbibliothek, HTML, CSS und JavaScript.
+Ein lokaler, modularer Assistent mit einer animierten goldenen HUD-Oberfläche, echtem Gemini-Chat, optionaler ElevenLabs-Stimme und ausdrücklich bestätigten Mac-Aktionen. Python-Standardbibliothek, HTML, CSS und JavaScript ohne Python-Fremdpakete. Der ausdrücklich gestartete Einrichtungshelfer lädt auf Wunsch die lokale KI; normale Starts installieren nichts.
+
+## Einfachster Start: nur ein ZIP-Download
+
+1. Projekt-ZIP herunterladen und entpacken.
+2. **1-JARVIS-einrichten.command** öffnen. Der Helfer erkennt den Mac, lädt und prüft die beiden passenden KI-Dateien und startet JARVIS automatisch.
+3. Später nur **2-JARVIS-starten.command** öffnen. Keine manuelle Dateiauswahl, keine Schlüssel und keine Konfiguration der Verbindung.
+
+Das kleine Modell benötigt ungefähr 400 MB, zusätzlich das Startprogramm. Tatsächliche Größen werden angezeigt; kein Modell über450MB und kein Startpaket über150MB. Die einmalige Einrichtung braucht Internet; danach startet die lokale KI offline. Python3.10+ und macOS14+ müssen vorhanden sein. Nichts wird ohne Start des Einrichtungshelfers geladen.
+
+**[Kurze deutsche Anleitung](docs/EINFACH-STARTEN.md)**. Der echte Download und Modellbetrieb auf deinem Mac ist noch nicht verifiziert; die Prüfung in der Cloud verwendet kontrollierte Installationsdaten und Antworten. Bei fehlender Prüfsumme wird sicher gestoppt.
+
+## Manueller Start und weitere Anbieter
 
 ## Auf deinem Mac starten
 

@@ -4,7 +4,6 @@ import re
 import urllib.error
 import urllib.request
 
-from .ai import SYSTEM_INSTRUCTION
 from .providers import ProviderError, _NoRedirect
 
 BASE = 'http://127.0.0.1:11434'
@@ -81,7 +80,18 @@ class LocalClient:
                 break
             remaining -= len(item['text'])
             messages.append({'role': item['role'], 'content': item['text']})
-        instruction = SYSTEM_INSTRUCTION + '\nDu bist ein kleines lokales Textmodell ohne Werkzeuge. Führe keine Aktionen aus und behaupte keine Ausführung. Verweise für Rechner und Systemstatus auf die lokalen Direktbefehle.'
+        instruction = (
+            'Du bist JARVIS. Antworte auf Deutsch, ruhig, präzise und nützlich. '
+            'Sprich den Nutzer natürlich mit Sir an. Beantworte zuerst die konkrete Frage. '
+            'Bei Aufgaben gib konkrete Schritte oder einen fertigen Entwurf. '
+            'Wenn Informationen fehlen, stelle eine kurze gezielte Frage. '
+            'Erfinde kein Wissen und keine erledigten Aktionen. Du hast nur Text, keine Bilder oder Live-Websuche. '
+            'Die Oberfläche bietet Kamera, Globus und Agentenwerkstatt. Dafür nutze die Schaltflächen '
+            'oder sage: Zeig die Weltkarte / Öffne Kamera / Zeig meine Agenten. '
+            'Agenten erstellen lokale Textentwürfe, keine eigenständige Internetrecherche. '
+            'Du kannst hier keine Werkzeuge aufrufen, Nachrichten verschicken oder Geräte steuern. '
+            'Behaupte niemals, etwas ausgeführt oder gesehen zu haben.'
+        )
         payload = {'model': model, 'messages': [{'role': 'system', 'content': instruction}, *reversed(messages), {'role': 'user', 'content': text.strip()}],
                    'stream': False, 'options': {'num_ctx': 4096, 'num_predict': 512}, 'keep_alive': '5m'}
         result = self.transport('/api/chat', payload)

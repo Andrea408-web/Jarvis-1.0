@@ -30,6 +30,7 @@ DEFAULT_SETTINGS = {
     "elevenlabs_daily_char_limit": 1500,
     "voice_enabled": False,
     "local_voice_uri": "",
+    "voice_preset": "jarvis",
 }
 
 
@@ -133,6 +134,9 @@ class Store:
             elif key == "elevenlabs_voice_id":
                 if not isinstance(value, str) or (value and not re.fullmatch(r"[a-zA-Z0-9_-]{1,100}", value)):
                     raise ValueError("Ungültige ElevenLabs Voice ID.")
+            elif key == "voice_preset":
+                if not isinstance(value,str) or value not in {"jarvis","clear","system"}:
+                    raise ValueError("Bitte ein vorhandenes Stimmprofil wählen.")
             elif key == "local_voice_uri":
                 # Opaque browser voice identifier: never interpreted as a URL,
                 # fetched, or used as a shell argument by this backend.

@@ -100,7 +100,7 @@
   $('action-status').addEventListener('click', () => { refreshStatus(false).then(() => { if (state.connected) toast('Systemdaten aktualisiert. Die Anzeigen stammen vom laufenden Server.'); }); });
   function focusChat() { $('conversation-panel').scrollIntoView({ behavior: 'smooth', block: 'center' }); $('chat-input').focus({ preventScroll:true }); }
   $('nav-chat').addEventListener('click', focusChat); $('nav-overview').addEventListener('click', () => { $('main').scrollIntoView({ behavior:'smooth' }); });
-  function openSettings() { const form = $('settings-form'); for (const key of ['cloud_enabled','gemini_model','gemini_daily_limit','elevenlabs_enabled','elevenlabs_voice_id','elevenlabs_daily_char_limit','local_voice_uri','ai_provider','openai_model','openai_daily_limit','local_model','speech_auto_send','camera_enabled']) { const input = form.elements.namedItem(key); if (input.type === 'checkbox') input.checked = !!state.settings[key]; else input.value = state.settings[key] ?? input.defaultValue; } $('settings-error').textContent = ''; refreshLocalVoiceOptions(true); updateConfigView(); showDialog('settings-dialog'); }
+  function openSettings() { const form = $('settings-form'); for (const key of ['cloud_enabled','gemini_model','gemini_daily_limit','elevenlabs_enabled','elevenlabs_voice_id','elevenlabs_daily_char_limit','local_voice_uri','voice_preset','ai_provider','openai_model','openai_daily_limit','local_model','speech_auto_send','camera_enabled']) { const input = form.elements.namedItem(key); if (input.type === 'checkbox') input.checked = !!state.settings[key]; else input.value = state.settings[key] ?? input.defaultValue; } $('settings-error').textContent = ''; refreshLocalVoiceOptions(true); updateConfigView(); showDialog('settings-dialog'); }
   for (const id of ['settings-top','nav-settings','connect-services']) $(id).addEventListener('click', openSettings);
   $('use-small-ai').addEventListener('click', async () => {
     stopAudio(); try {
@@ -128,7 +128,7 @@
     const button=$('test-local-ai'), feedback=$('local-ai-result'); button.disabled=true;
     try {const result=await api('/api/local/status',{method:'POST',body:'{}'});feedback.textContent=result.message;} catch(error){feedback.textContent=error.message;}finally{button.disabled=false;}
   });
-  $('settings-form').addEventListener('submit', async event => { event.preventDefault(); const form = event.currentTarget; const settings = {}; for(const key of ['cloud_enabled','gemini_model','gemini_daily_limit','elevenlabs_enabled','elevenlabs_voice_id','elevenlabs_daily_char_limit','local_voice_uri','ai_provider','openai_model','openai_daily_limit','local_model','speech_auto_send','camera_enabled']) { const input = form.elements.namedItem(key); settings[key] = input.type === 'checkbox' ? input.checked : input.type === 'number' ? Number(input.value) : key === 'local_voice_uri' ? input.value : input.value.trim(); } if(['ollama','llamacpp'].includes(settings.ai_provider)){settings.cloud_enabled=false;settings.elevenlabs_enabled=false;} const submit = form.querySelector('[type=submit]'); submit.disabled = true; try { const result = await api('/api/settings', { method:'PUT', body:JSON.stringify(settings) }); state.settings = result.settings || { ...state.settings, ...settings }; updateConfigView(); closeDialog('settings-dialog'); toast('Einstellungen lokal gespeichert.'); refreshStatus(); } catch(error) { $('settings-error').textContent = error.message; } finally { submit.disabled = false; } });
+  $('settings-form').addEventListener('submit', async event => { event.preventDefault(); const form = event.currentTarget; const settings = {}; for(const key of ['cloud_enabled','gemini_model','gemini_daily_limit','elevenlabs_enabled','elevenlabs_voice_id','elevenlabs_daily_char_limit','local_voice_uri','voice_preset','ai_provider','openai_model','openai_daily_limit','local_model','speech_auto_send','camera_enabled']) { const input = form.elements.namedItem(key); settings[key] = input.type === 'checkbox' ? input.checked : input.type === 'number' ? Number(input.value) : key === 'local_voice_uri' ? input.value : input.value.trim(); } if(['ollama','llamacpp'].includes(settings.ai_provider)){settings.cloud_enabled=false;settings.elevenlabs_enabled=false;} const submit = form.querySelector('[type=submit]'); submit.disabled = true; try { const result = await api('/api/settings', { method:'PUT', body:JSON.stringify(settings) }); state.settings = result.settings || { ...state.settings, ...settings }; updateConfigView(); closeDialog('settings-dialog'); toast('Einstellungen lokal gespeichert.'); refreshStatus(); } catch(error) { $('settings-error').textContent = error.message; } finally { submit.disabled = false; } });
   for (const provider of ['gemini','elevenlabs','openai']) {
     $(`save-${provider}-key`).addEventListener('click', async () => {
       const input = $(`${provider}-api-key`), button = $(`save-${provider}-key`), feedback = $(`${provider}-key-result`);
@@ -223,11 +223,13 @@
       localVoiceFeedback(notice, true); toast(notice, true, 10000); return false;
     }
     const preferredURI = $('settings-dialog').open ? $('local_voice_uri').value : state.settings.local_voice_uri || '';
-    const voice = localGermanVoices().find(item => preferredURI && item.voiceURI === preferredURI) || availableVoice;
+    const preset = $('settings-dialog').open ? $('voice-preset').value : state.settings.voice_preset || 'jarvis';
+    const automaticVoice = preset === 'jarvis' ? localGermanVoices().find(item => /martin|stefan|markus|yannick|hans|conrad/i.test(item.name)) || availableVoice : availableVoice;
+    const voice = localGermanVoices().find(item => preferredURI && item.voiceURI === preferredURI) || automaticVoice;
     const automaticFallback = !!preferredURI && voice.voiceURI !== preferredURI;
     const selectionNotice = automaticFallback ? 'Die gewählte Stimme ist auf diesem Gerät nicht verfügbar; eine vorhandene deutsche Systemstimme wird automatisch verwendet.' : voice.name ? `Lokale Stimme: ${voice.name}.` : 'Lokale deutsche Systemstimme.';
     const utterance = new SpeechSynthesisUtterance(text);
-    utterance.voice = voice; utterance.lang = voice.lang; utterance.rate = .98;
+    utterance.voice = voice; utterance.lang = voice.lang; utterance.rate = preset === 'jarvis' ? .91 : preset === 'clear' ? 1.02 : .98; utterance.pitch = preset === 'jarvis' ? .78 : preset === 'clear' ? 1 : 1;
     utterance.volume = Number($('volume').value) / 100;
     utterance.onstart = () => {
       if (generation !== state.speechGeneration) return;
@@ -259,7 +261,7 @@
   }
   $('use-system-voice').addEventListener('click', async () => {
     const button = $('use-system-voice');
-    const values = { elevenlabs_enabled: false, voice_enabled: true, local_voice_uri: $('local_voice_uri').value };
+    const values = { elevenlabs_enabled: false, voice_enabled: true, voice_preset: $('voice-preset').value, local_voice_uri: $('local_voice_uri').value };
     button.disabled = true; stopAudio();
     try {
       const result = await api('/api/settings', { method:'PUT', body:JSON.stringify(values) });
@@ -298,6 +300,18 @@
   $('image-input').addEventListener('change',async event=>{const file=event.target.files[0];event.target.value='';if(!file)return;if(state.busy){toast('Bitte warte, bis die aktuelle Anfrage abgeschlossen ist.');return;}if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>4*1024*1024){toast('Bitte wähle ein PNG-, JPEG- oder WebP-Bild mit höchstens 4 MB.',true);return;}const text=$('chat-input').value.trim()||'Beschreibe dieses Bild auf Deutsch.';stopAudio();stopMicrophone();markBusy(true);message('user',`${text}\n[Ausgewähltes Bild: ${file.name}]`);try{const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(new Error('Das Bild konnte nicht gelesen werden.'));reader.readAsDataURL(file);});const result=await api('/api/image',{method:'POST',body:JSON.stringify({text,image:data,mime:file.type})});$('chat-input').value='';const item=message('assistant',result.reply);addProposals(item,result.proposals||[]);markBusy(false);if(state.settings.voice_enabled&&result.reply)speak(result.reply);refreshStatus();}catch(error){markBusy(false);showError(error);}});
   window.addEventListener('beforeunload',()=>{stopAudio();stopMicrophone();});
   async function initialize() { try { const session=await fetch('/api/session',{cache:'no-store'});if(!session.ok)throw new Error('Die lokale Sitzung konnte nicht gestartet werden.');const data=await session.json();state.token=data.token;await refreshStatus(false);const history=await api('/api/history');for(const entry of history.messages||[])message(entry.role,entry.text||entry.content,entry.created_at||entry.timestamp);await refreshReminders();if(!state.settings.cloud_enabled){$('core-subtitle').textContent='Lokaler Modus. Du bestimmst den nächsten Schritt.';} } catch(error) { setConnected(false); showError(error); } }
-  window.JarvisBridge={api,message,sendMessage,getSettings:()=>({...state.settings}),refreshStatus};
+  const voiceDialog=document.createElement('dialog');voiceDialog.id='voice-dialog';voiceDialog.className='extras-dialog';
+  const voiceHeading=document.createElement('h2');voiceHeading.textContent='Deine JARVIS-Stimme';voiceDialog.append(voiceHeading);
+  const voiceNote=document.createElement('p');voiceNote.textContent='Ein Klick wählt und testet das Profil. Nutzt eine bereits vorhandene deutsche Systemstimme. Keine Downloads, kein API-Schlüssel. Der Klang hängt von deinem Gerät ab; dies ist keine Original-Filmstimme.';voiceDialog.append(voiceNote);
+  const voiceCards=document.createElement('div');voiceCards.className='voice-presets';voiceDialog.append(voiceCards);
+  const quickStatus=document.createElement('p');quickStatus.setAttribute('role','status');voiceDialog.append(quickStatus);
+  for(const [id,label,description] of [['jarvis','JARVIS · Ruhig','Tiefer, gemächlich, kurze klare Ansagen.'],['clear','JARVIS · Klar','Normale Tonhöhe, etwas zügiger.'],['system','System pur','Vorhandene Stimme ohne JARVIS-Anpassung.']]){
+    const choice=document.createElement('button');choice.type='button';choice.className='voice-preset-card';choice.dataset.preset=id;const title=document.createElement('strong');title.textContent=label;const detail=document.createElement('span');detail.textContent=description;choice.append(title,detail);voiceCards.append(choice);
+    choice.addEventListener('click',async()=>{choice.disabled=true;stopAudio();stopMicrophone();try{const result=await api('/api/settings',{method:'PUT',body:JSON.stringify({voice_preset:id,local_voice_uri:'',elevenlabs_enabled:false,voice_enabled:true})});state.settings=result.settings;updateConfigView();quickStatus.textContent='Profil gespeichert. Die Hörprobe verwendet nur eine vorhandene lokale Stimme.';voiceCards.querySelectorAll('button').forEach(button=>button.setAttribute('aria-pressed',String(button===choice)));const spoken=await speakLocal('Zu Ihren Diensten, Sir. Systeme bereit. Womit beginnen wir?',state.speechGeneration);if(!spoken)quickStatus.textContent='Auf diesem Gerät ist keine nutzbare lokale deutsche Stimme verfügbar. Es wurde nichts heruntergeladen.';}catch(error){quickStatus.textContent=error.message;}finally{choice.disabled=false;}});
+  }
+  const voiceClose=document.createElement('button');voiceClose.textContent='Schließen';voiceClose.className='secondary-button';voiceClose.onclick=()=>{stopAudio();voiceDialog.close();};voiceDialog.append(voiceClose);voiceDialog.addEventListener('close',()=>{if(!voiceDialog.open)stopAudio();});document.body.append(voiceDialog);
+  function openVoiceProfiles(){quickStatus.textContent='';voiceCards.querySelectorAll('button').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.preset===(state.settings.voice_preset||'jarvis'))));if(!voiceDialog.open)voiceDialog.showModal();}
+  window.addEventListener('DOMContentLoaded',()=>{const nav=document.querySelector('.extras-nav');if(nav){const button=document.createElement('button');button.type='button';button.className='secondary-button';button.textContent='Stimme';button.onclick=openVoiceProfiles;nav.append(button);}});
+  window.JarvisBridge={api,message,sendMessage,getSettings:()=>({...state.settings}),refreshStatus,openVoiceProfiles};
   initialize();setInterval(()=>refreshStatus(),5000);setInterval(refreshReminders,15000);
 })();

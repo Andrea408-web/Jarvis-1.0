@@ -22,6 +22,7 @@ from urllib.parse import urlsplit
 from .ai import GeminiClient, ProviderError, provider_status
 from .voice import VoiceClient
 from .mobile import MobileLink
+from .agents import AgentOffice
 from .cameras import CAMERAS
 from .training import plan as training_plan
 from .openai_client import OpenAIClient
@@ -51,6 +52,7 @@ class Application:
         self.token = secrets.token_urlsafe(32)
         self.chat_lock = threading.Lock()
         self.mobile = MobileLink(self)
+        self.office = AgentOffice(self)
 
     def settings(self):
         values = self.store.settings()
@@ -298,6 +300,8 @@ class Handler(BaseHTTPRequestHandler):
                 return self.wfile.write(body)
             if path == '/api/session':
                 return self._json({'token': app.token})
+            if path == '/api/agents':
+                return self._json(app.office.snapshot())
             if path == '/api/cameras':
                 return self._json({'cameras': CAMERAS})
             if path == '/api/status':
@@ -310,7 +314,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({'reminders': app.store.reminders()})
             # Exact static allowlist: no arbitrary files, keys or directory listings.
             static = {'/': 'index.html', '/index.html': 'index.html',
-                      '/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson'}
+                      '/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js'}
             if path in static:
                 file = FRONTEND / static[path]
                 body = file.read_bytes()
@@ -327,6 +331,11 @@ class Handler(BaseHTTPRequestHandler):
             return self._json({'ok': True})
         elif method in {'POST', 'PUT', 'PATCH'}:
             body = self._body()
+            if method == 'POST' and path == '/api/agents':
+                return self._json(app.office.submit(body),202)
+            if method == 'POST' and path == '/api/agents/cancel':
+                if set(body)!={'id'}:raise ValueError('Bitte nur die Auftragskennung angeben.')
+                return self._json(app.office.cancel(body['id']))
             if method == 'POST' and path == '/api/training/plan':
                 return self._json(training_plan(body))
             if method == 'POST' and path == '/api/mobile/pair' and self.server.device_auth:
@@ -516,6 +525,7 @@ def main(argv=None):
         pass
     finally:
         try:
+            app.office.stop()
             app.mobile.stop()
         finally:
             server.server_close()

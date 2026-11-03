@@ -12,9 +12,13 @@ Das kleine Modell benötigt ungefähr 400 MB, zusätzlich das Startprogramm. Tat
 
 **[Kurze deutsche Anleitung](docs/EINFACH-STARTEN.md)**. Der echte Download und Modellbetrieb auf deinem Mac ist noch nicht verifiziert; die Prüfung in der Cloud verwendet kontrollierte Installationsdaten und Antworten. Bei fehlender Prüfsumme wird sicher gestoppt.
 
-## Weltkarte und Handy
+## Stimme, Globus, Kamera und Agenten
 
-**Welt & Kameras** zeigt eine lokale Weltkarte mit vier öffentlichen Kameraseiten. „Zeig öffentliche Kameras in London“ fokussiert den Standort. **Handy verbinden** führt am Mac durch die private HTTPS-Kopplung per QR-Code; iOS benötigt einmalig bewusstes Vertrauen für das eigene Zertifikatsprofil. Die Kamera startet ausschließlich nach Einstellung und Klick. Ohne zusätzliches Bildmodell gibt es Vorschau und Training aus deinen Angaben, keine visuelle Analyse. [Anleitung und Grenzen](docs/EINFACH-STARTEN.md#sprechen-weltkarte-und-handy).
+- **Stimme:** Ein Klick auf ein Profil wählt und testet eine bereits vorhandene deutsche Systemstimme. „JARVIS · Ruhig“ spricht tiefer und langsamer; „Klar“ und „System pur“ sind Alternativen. Keine zusätzlichen Sprachgewichte, Schlüssel oder Downloads. Dies ist keine Original-Filmstimme. Falls dein Gerät keine lokale deutsche Stimme bereitstellt, wird das angezeigt statt eine Online-Stimme zu laden.
+- **Welt & Kameras:** Drehbarer orthografischer Globus mit lokalen Kartendaten, Zoom, Tastaturbedienung und vier öffentlichen Kamerastandorten. Beispiel: „Zeig öffentliche Kameras in London“. Die früher oft blockierten Webseiten-Einbettungen entfallen. „Kamera öffnen“ führt direkt zur offiziellen Anbieterseite; Videoverfügbarkeit, Werbung und Anmeldung liegen beim Anbieter.
+- **Kamera:** Eigene Vorschau mit Freigabe direkt in der Ansicht. Minecraft-Übungen sind ein optionaler aufklappbarer Zusatz. Das kleine Textmodell sieht keine Bilder; es gibt keine erfundene Bildanalyse oder zusätzliche Modelldownloads.
+- **Agenten:** Die Werkstatt zeigt drei farbige isometrische Computer-Arbeitsplätze: ATLAS (Planung), NOVA (Textentwurf), SENTINEL (Textprüfung). Aufgaben, Zustände und Ergebnisse kommen vom Backend und werden lokal gespeichert. Beispiel: „Zeig meine Agenten bei der Arbeit“, anschließend „Beauftrage Atlas: Plane meinen Lernnachmittag“. Ein vorhandenes lokales Textmodell verarbeitet die Aufgaben nacheinander; keine automatische Cloud-Nutzung, Webrecherche oder Geräteaktionen. Qualität und Wissen bleiben durch das kleine Modell begrenzt. Ein geänderter Prompt ist kein Modell-Upgrade.
+- **Handy verbinden:** Private HTTPS-Kopplung per QR-Code. iOS benötigt einmalig bewusstes Vertrauen für das eigene Zertifikatsprofil. Der Mac bleibt eingeschaltet. [Anleitung und Grenzen](docs/EINFACH-STARTEN.md#sprechen-weltkarte-und-handy).
 
 ## Manueller Start und weitere Anbieter
 

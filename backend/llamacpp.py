@@ -51,7 +51,7 @@ class LlamaCppClient(LocalClient):
         # The actual model is the local GGUF loaded by llama-server. Never use
         # an HF URL, automatic model fetch, tools, or a cloud fallback here.
         result = self.endpoint_transport('/v1/chat/completions', {
-            'messages': payload['messages'], 'stream': False, 'max_tokens': 512,
+            'messages': payload['messages'], 'stream': False, 'max_tokens': 512, 'temperature': 0.35,
         })
         try:
             choice = result['choices'][0]

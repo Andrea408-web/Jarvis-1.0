@@ -51,3 +51,5 @@ In JARVIS: **Einstellungen → Lokale Sprachausgabe → Deutsche Systemstimme �
 Lass die genaue Meldung im Terminal stehen und teile sie ohne Schlüssel. Ein abgebrochener Download wird nicht als gültig behandelt. Bereits vollständig geprüfte Downloads werden bei einem erneuten Einrichten wiederverwendet. Sobald die gesamte Installation gültig ist, braucht auch ein erneutes Einrichten keinen weiteren Download.
 
 **Prüfstand:** Der Einrichtungsablauf wurde in der Linux-Cloud mit kontrollierten Download-Daten, Archiven, Prozessen und HTTP-Antworten geprüft. Echte Modell-/Binärdownloads und die Ausführung auf deinem Mac sind dort nicht verifiziert. Die offiziellen Metadaten-APIs waren aus der Cloud nicht erreichbar; falls die Quelle auf deinem Mac keine Prüfsumme oder kein passendes Paket bereitstellt, stoppt der Helfer mit einer Erklärung.
+
+Der Helfer unterstützt auch offizielle stabile Veröffentlichungen, die statt Binärpaketen nur eine Datei `nightly-tag.txt` enthalten: Er prüft deren SHA256 und verwendet exakt den darin genannten offiziellen Build. Die Datei-, Architektur- und Prüfsummenkontrollen der eigentlichen Downloads bleiben aktiv.

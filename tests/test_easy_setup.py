@@ -36,6 +36,38 @@ class SetupTests(unittest.TestCase):
         selected=setup.select_model(self.model())
         self.assertIn('/resolve/'+'c'*40+'/',selected['url'])
 
+    def pointer(self,data=b'b11960\n'):
+        return {'assets':[{'name':'nightly-tag.txt','size':len(data),'digest':'sha256:'+sha(data),
+            'browser_download_url':'https://github.com/ggml-org/llama.cpp/releases/download/v0.8.0/nightly-tag.txt'}]}
+
+    def test_real_stable_release_layout_follows_verified_pinned_build(self):
+        data=b'b11960\n';build=self.release();build['tag_name']='b11960'
+        build['assets'][0]['name']='llama-b11960-bin-macos-arm64.tar.gz'
+        build['assets'][0]['browser_download_url']='https://github.com/ggml-org/llama.cpp/releases/download/b11960/llama-b11960-bin-macos-arm64.tar.gz'
+        def download(url,path,maximum):
+            self.assertEqual(maximum,len(data));Path(path).write_bytes(data)
+        with patch.object(setup,'metadata',side_effect=[self.pointer(data),build]) as metadata,patch.object(setup,'fetch',side_effect=download):
+            result=setup.resolve_runtime('arm64')
+        self.assertEqual(result['name'],'llama-b11960-bin-macos-arm64.tar.gz')
+        self.assertEqual(metadata.call_args_list[1].args[0],setup.RELEASE_API.removesuffix('/latest')+'/tags/b11960')
+
+    def test_invalid_pointer_never_queries_or_downloads_another_build(self):
+        for data,downloaded in [(b'b11960\n',b'changed'),(b'../secret',b'../secret')]:
+            with self.subTest(data=data),patch.object(setup,'metadata',return_value=self.pointer(data)) as metadata,patch.object(setup,'fetch',side_effect=lambda url,path,maximum:Path(path).write_bytes(downloaded)):
+                with self.assertRaises(ValueError):setup.resolve_runtime('arm64')
+                metadata.assert_called_once_with(setup.RELEASE_API)
+        pointer=self.pointer();pointer['assets'][0]['digest']=''
+        with patch.object(setup,'metadata',return_value=pointer),patch.object(setup,'fetch') as fetch:
+            with self.assertRaises(ValueError):setup.resolve_runtime('arm64')
+        fetch.assert_not_called()
+
+    def test_pinned_build_does_not_allow_wrong_architecture_or_unverified_binary(self):
+        data=b'b11960\n'
+        for build in [self.release(arch='x64'),self.release(checksum='bad')]:
+            build['tag_name']='b11960'
+            with patch.object(setup,'metadata',side_effect=[self.pointer(data),build]),patch.object(setup,'fetch',side_effect=lambda url,path,maximum:Path(path).write_bytes(data)):
+                with self.assertRaises(ValueError):setup.resolve_runtime('arm64')
+
     @patch('backend.easy_setup.platform.system',return_value='Linux')
     def test_platform_rejects_before_download_or_install(self,_):
         with patch.object(setup,'metadata') as metadata,patch.object(setup,'fetch') as fetch:

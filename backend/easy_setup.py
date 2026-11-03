@@ -23,6 +23,10 @@ MAX_MODEL = 450_000_000
 MAX_RUNTIME = 150_000_000
 
 
+class NoCompatibleRuntime(ValueError):
+    """A release contains no usable binary for this exact architecture."""
+
+
 def digest(path):
     value = hashlib.sha256()
     with Path(path).open('rb') as source:
@@ -137,7 +141,7 @@ def select_runtime(release, architecture):
                 and _github_url(asset.get('browser_download_url'))):
             matches.append(asset)
     if not matches:
-        raise ValueError('Die offizielle Version bietet kein passendes fertiges Mac-Paket. Es wird keine andere Architektur installiert.')
+        raise NoCompatibleRuntime('Die offizielle Version bietet kein passendes fertiges Mac-Paket. Es wird keine andere Architektur installiert.')
     matches.sort(key=lambda a: (not _sha((a.get('digest') or '').removeprefix('sha256:')), not a['name'].endswith('.zip'), a['name']))
     asset = matches[0]
     size = asset.get('size')
@@ -167,6 +171,48 @@ def select_runtime(release, architecture):
     if not _sha(checksum):
         raise ValueError('Das offizielle Startpaket hat keine prüfbare SHA256-Prüfsumme. Die Einrichtung stoppt, bevor es geladen oder ausgeführt wird.')
     return {'url': asset['browser_download_url'], 'size': size, 'sha256': checksum, 'name': asset['name']}
+
+
+def resolve_runtime(architecture):
+    """Follow the checksum-verified stable release's official build pointer.
+
+    Current stable llama.cpp releases publish nightly-tag.txt instead of the
+    binaries themselves. Follow that pinned build, not an arbitrary newer build
+    and never a binary for another architecture.
+    """
+    release = metadata(RELEASE_API)
+    try:
+        return select_runtime(release, architecture)
+    except NoCompatibleRuntime:
+        pass
+    pointers = [item for item in release.get('assets', [])
+                if isinstance(item, dict) and item.get('name') == 'nightly-tag.txt']
+    if len(pointers) != 1:
+        raise NoCompatibleRuntime(f'Kein passendes Mac-Paket für {architecture} und kein eindeutiger offizieller Build-Verweis gefunden.')
+    pointer = pointers[0]
+    size = pointer.get('size')
+    raw_checksum = pointer.get('digest')
+    checksum = raw_checksum.removeprefix('sha256:') if isinstance(raw_checksum, str) else ''
+    if (type(size) is not int or not 1 <= size <= 64 or not _sha(checksum)
+            or not _github_url(pointer.get('browser_download_url'))):
+        raise ValueError('Der offizielle Build-Verweis konnte nicht sicher geprüft werden. Es wird kein Programm geladen.')
+    with tempfile.TemporaryDirectory() as temporary:
+        path = Path(temporary) / 'nightly-tag.txt'
+        fetch(pointer['browser_download_url'], path, size)
+        if path.stat().st_size != size or digest(path) != checksum:
+            raise ValueError('Die Prüfsumme des offiziellen Build-Verweises stimmt nicht.')
+        try:
+            tag = path.read_text(encoding='ascii').strip()
+        except UnicodeError:
+            raise ValueError('Der offizielle Build-Verweis ist ungültig.') from None
+    if not re.fullmatch(r'b[0-9]{1,12}', tag):
+        raise ValueError('Der offizielle Build-Verweis enthält keine erlaubte Build-Kennung.')
+    build = metadata(RELEASE_API.removesuffix('/latest') + '/tags/' + tag)
+    if build.get('tag_name') != tag:
+        raise ValueError('Die offiziellen Build-Metadaten passen nicht zum geprüften Verweis.')
+    result = select_runtime(build, architecture)
+    print(f'Passendes offizielles Mac-Paket gefunden: {result["name"]}', flush=True)
+    return result
 
 
 def select_model(info):
@@ -335,7 +381,7 @@ def _prepare(architecture):
         pass
     if shutil.disk_usage(ROOT).free < 1_500_000_000:
         raise ValueError('Bitte mindestens 1,5 GB freien Speicher für die Einrichtung bereitstellen.')
-    runtime = select_runtime(metadata(RELEASE_API), architecture)
+    runtime = resolve_runtime(architecture)
     model = select_model(metadata(MODEL_API))
     print(f"Einmaliger Download: Startprogramm {runtime['size']/1_000_000:.1f} MB, kleines KI-Modell {model['size']/1_000_000:.1f} MB. Kein API-Schlüssel oder Anbieter-Guthaben.", flush=True)
     archive = verified_download(runtime)

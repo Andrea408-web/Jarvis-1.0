@@ -21,6 +21,8 @@ from urllib.parse import urlsplit
 
 from .ai import GeminiClient, ProviderError, provider_status
 from .voice import VoiceClient
+from .natural_voice import NaturalVoice
+from .hub import MiniHub
 from .mobile import MobileLink
 from .agents import AgentOffice
 from .task_router import task_request
@@ -50,10 +52,12 @@ class Application:
         self.local_ai = LocalClient(self.store)
         self.llamacpp = LlamaCppClient(self.store)
         self.voice = VoiceClient(self.store)
+        self.natural_voice = NaturalVoice(self.store.data_dir)
         self.token = secrets.token_urlsafe(32)
         self.chat_lock = threading.Lock()
         self.mobile = MobileLink(self)
         self.office = AgentOffice(self)
+        self.hub = MiniHub(self.store)
 
     def settings(self):
         values = self.store.settings()
@@ -209,7 +213,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Referrer-Policy', 'no-referrer')
         self.send_header('X-Frame-Options', 'DENY')
         self.send_header('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=()')
-        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; worker-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; frame-src https://zugspitze.panomax.com https://www.muenchen.de https://www.berlin.de https://www.earthcam.com https://www.abbeyroad.com https://www.livefromiceland.is https://www.skylinewebcams.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
+        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; worker-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://images.tagesschau.de https://www.tagesschau.de https://tagesschau.de https://i.ytimg.com; media-src 'self' blob:; connect-src 'self'; frame-src https://www.youtube-nocookie.com https://www.tiktok.com https://zugspitze.panomax.com https://www.muenchen.de https://www.berlin.de https://www.earthcam.com https://www.abbeyroad.com https://www.livefromiceland.is https://www.skylinewebcams.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
         if self.server.secure:
             self.send_header('Strict-Transport-Security', 'max-age=86400')
         self.end_headers()
@@ -315,6 +319,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({'token': app.token})
             if re.fullmatch(r'/api/agents/[0-9a-f]{32}/image',path):
                 data,mime=app.office.image(path.split('/')[3]);self._headers(200,mime,len(data));return self.wfile.write(data)
+            if path == '/api/hub':return self._json(app.hub.snapshot())
+            if path == '/api/natural-voice/status':
+                return self._json(app.natural_voice.status())
             if path == '/api/agents':
                 return self._json(app.office.snapshot())
             if path == '/api/cameras':
@@ -329,7 +336,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({'reminders': app.store.reminders()})
             # Exact static allowlist: no arbitrary files, keys or directory listings.
             static = {'/': 'index.html', '/index.html': 'index.html',
-                      '/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js', '/artifacts.js':'artifacts.js', '/jarvis-voice.js':'jarvis-voice.js', '/voice-worker.js':'voice-worker.js', '/conversation.js':'conversation.js'}
+                      '/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js', '/artifacts.js':'artifacts.js', '/jarvis-voice.js':'jarvis-voice.js', '/voice-worker.js':'voice-worker.js', '/conversation.js':'conversation.js', '/mini-hub.js':'mini-hub.js'}
             for name in ['ESpeak.js','mespeak.js','config.json','jarvis-de.json','de.json','COPYING','NOTICE.txt','UPSTREAM-README.md','mespeak-2.0.2-source.tgz','speak-source-9c6f642.tar.gz']:
                 static['/vendor/voice/'+name]='vendor/voice/'+name
             if path in static:
@@ -348,6 +355,14 @@ class Handler(BaseHTTPRequestHandler):
             return self._json({'ok': True})
         elif method in {'POST', 'PUT', 'PATCH'}:
             body = self._body()
+            if method=='POST' and path in {'/api/hub/news','/api/hub/channels'}:
+                if body:raise ValueError('Keine Parameter für die Hub-Aktualisierung erforderlich.')
+                return self._json(app.hub.news() if path.endswith('/news') else app.hub.channels())
+            if method == 'POST' and path == '/api/natural-voice/speak':
+                if set(body)-{'text','preset'}:raise ValueError('Unbekannte Sprachfelder.')
+                audio=app.natural_voice.synthesize(body.get('text'),body.get('preset','jarvis'))
+                self._headers(200,'audio/wav',len(audio))
+                return self.wfile.write(audio)
             if method == 'POST' and path == '/api/agents/dispatch':
                 if set(body)-{'text','image','mime'}:raise ValueError('Unbekannte Auftragsfelder.')
                 routed=app.dispatch_agent(body.get('text'),{key:body[key] for key in ('image','mime') if key in body})

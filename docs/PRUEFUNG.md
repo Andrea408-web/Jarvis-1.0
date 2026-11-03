@@ -4,7 +4,7 @@ Stand: 3. November 2026. Linux-Cloud; der persönliche Mac und das iPhone sind n
 
 ## Verifiziert
 
-- **145 Python-Tests bestanden**, keine übersprungen. Python-Suite mit echten lokalen HTTP-/TLS-Verbindungen, Host-/Origin-/Token-Prüfung, privater Ablage, Budgetgrenzen und sicheren bestätigten Aktionen. Temporäre TLS-Zertifikate werden explizit vertraut; TLS-Prüfung wird nicht abgeschaltet.
+- **165 Python-Tests bestanden**, keine übersprungen. Python-Suite mit echten lokalen HTTP-/TLS-Verbindungen, Host-/Origin-/Token-Prüfung, privater Ablage, Budgetgrenzen und sicheren bestätigten Aktionen. Temporäre TLS-Zertifikate werden explizit vertraut; TLS-Prüfung wird nicht abgeschaltet.
 - Agentenaufträge: natürliche Formulierungen führen zu einem tatsächlichen Job. Queue, Fehler, Abbruch, Neustart und getrennte Gespräche sind getestet. Sprachmodellantworten sind hierfür kontrollierte Fixtures; daraus wird keine echte Modellqualität abgeleitet.
 - Bildanhänge: Format-/Größenprüfung, private Dateien mit Modus0600, Migration bestehender Datenbanken, Rückgabe lokaler Bildbefunde und Übergabe als Daten statt auszuführende Befehle. Auf Nicht-Macs wird kein vorhandenes Bildverständnis behauptet.
 - Eigene deutsche Stimme: echte eSpeak/meSpeak-Spracherzeugung im Browser, decodierbare PCM-Daten mit Sprachsignal und echte Web-Audio-Wiedergabe. Jeder Systemstimmen-Aufruf wird im Integrationstest als Fehler behandelt. Keine externen Sprachrequests. Die Engine ist keine neu trainierte neuronale Stimme; es handelt sich um eine mitgelieferte freie Formantengine mit eigener Konfiguration.
@@ -15,7 +15,7 @@ Stand: 3. November 2026. Linux-Cloud; der persönliche Mac und das iPhone sind n
 - Update ohne unnötigen KI-Neudownload: passende Dateien aus einem benachbarten alten JARVIS-Ordner werden nur nach Architektur-/SHA256-Prüfung wiederverwendet. Geänderte Dateien, falsche Architektur, Konflikte und Dateien außerhalb des Cachebereichs werden abgewiesen. Alte Schlüssel und Dokumente werden nicht übernommen. Entfernen des alten Ordners zerstört die übernommenen Dateien nicht.
 - Kein Nutzer-API-Schlüssel in Projektdateien; keine systemweiten Vertrauens- oder Sicherheitsänderungen. Das offizielle Release- und Modell-Downloadverfahren behält HTTPS-, Architektur-, Größen- und Prüfsummenkontrollen.
 
-**Vier Browserprüfungen bestanden.** Optionale reproduzierbare Browserprüfungen stehen in [tests/browser](../tests/browser/README.md). Die Anwendung selbst benötigt weder Playwright noch ffmpeg.
+**Sieben Browserprüfungen bestanden:** gebündelte Stimme, Gespräch, Produktfilm, Navigation, Hub, natürliche Stimme und getrenntes Abbrechen der Gesprächsausgabe. Optionale reproduzierbare Browserprüfungen stehen in [tests/browser](../tests/browser/README.md). Die Anwendung selbst benötigt weder Playwright noch ffmpeg.
 
 ## Nicht auf echter Hardware oder live geprüft
 
@@ -26,3 +26,10 @@ Stand: 3. November 2026. Linux-Cloud; der persönliche Mac und das iPhone sind n
 - TikTok-Videos von Moritz Maacker. TikTok war aus der Cloud nicht erreichbar; eine Analyse sämtlicher Videos oder ein Funktionsvergleich wird nicht erfunden.
 
 Mit nur wenig zusätzlicher Größe und ohne externen KI-Dienst enthält JARVIS keine generative Video-KI und kein großes visuelles Sprachmodell. Die Produktfilmfunktion montiert das eigene Bild mit einem lokalen KI-Skript und lokaler Spracherzeugung.
+
+## Nachrüstung: natürliche Stimme und Mini-Hub
+
+- Echte neuronale Thorsten-Ausgabe mit offizieller sherpa-onnx-Linux-Engine erzeugt, als PCM geprüft und über den geschützten lokalen Endpunkt im Browser decodiert und abgespielt. Kein Systemstimmen-Aufruf. Der native Mac-Selbsttest bleibt Voraussetzung für Aktivierung auf dem Gerät.
+- Hub-Browserprüfung mit kontrollierten RSS-/Plattformdaten: Länderfilter, gespeicherte Kanalnamen, Planer, Systemanzeige, laufender Agentenauftrag und schmales Layout. Das belegt keine Live-Verfügbarkeit von tagesschau.de, YouTube oder TikTok; deren Abruf ist in dieser Cloud eingeschränkt.
+- Gesprächsprüfung umfasst Doppelklatschen während einer Antwort, Schlafen und Aufwecken. Eine zusätzliche Prüfung trennt das Abbrechen der Gesprächsausgabe von weiterlaufender Tonerzeugung für Hintergrundexporte.
+- Additives Update von Basis 232ba23 geprüft: vorhandene Einstellungen, Verlauf, Planer und Textmodell bleiben erhalten. Prüfsummen, unbekannte Änderungen und Rollback werden geprüft. Der kleine ZIP-Helfer enthält keine Modellgewichte.

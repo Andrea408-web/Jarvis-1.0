@@ -62,7 +62,7 @@
   button('Profil herunterladen',mobileTools,async()=>{const data=await bridge.api('/api/mobile/profile',{method:'POST',body:'{}'});const url=URL.createObjectURL(new Blob([data.content],{type:'application/x-apple-aspen-config'}));const a=element('a',null,document.body);a.href=url;a.download=data.filename;a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);});
   button('Verbindung beenden',mobileTools,async()=>{await bridge.api('/api/mobile/stop',{method:'POST',body:'{}'});qr.replaceChildren();link.removeAttribute('href');link.textContent='';fingerprint.textContent='';mobileStatus.textContent='Handyzugang beendet; gekoppelte Sitzungen sind ungültig.';});
   button('Handy verbinden',nav,()=>open(mobile));
-  window.JarvisExtras={async command(text){const lower=text.toLocaleLowerCase('de');let reply;
+  window.JarvisExtras={async command(text){const lower=text.toLocaleLowerCase('de');let reply;const hubReply=await window.JarvisMiniHub?.command(text);if(hubReply)return hubReply;
     if(/(?:stimme|stimmprofil)/.test(lower)&&/(?:zeig|öffne|auswähl|änder|wechsel|aktivier|benutz|möchte)/.test(lower)){bridge.openVoiceProfiles();return {reply:'Sir, die Stimmprofile sind geöffnet. Ein Klick wählt und testet die vorhandene lokale Stimme.',proposals:[]};}
     if(/(?:fußball|fussball|football).*(?:sehen|guck|live|zeig)|(?:zeig|öffne|guck).*(?:fußball|fussball|sport)/.test(lower)){await openSports();return {reply:'Sir, die offiziellen Sportangebote sind geöffnet. Ob das gewünschte Spiel frei läuft, hängt von den Übertragungsrechten ab.',proposals:[]};}
     const officeReply=await window.JarvisOffice?.command(text);if(officeReply)return officeReply;

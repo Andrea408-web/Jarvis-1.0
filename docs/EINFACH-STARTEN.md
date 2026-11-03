@@ -16,7 +16,7 @@ Tippe den goldenen Kern an oder klicke **Mit Jarvis sprechen**. Beim ersten Mal 
 
 Erneutes Antippen oder **Gespräch beenden** stoppt das Gespräch. Laufende Agentenaufträge laufen davon unabhängig weiter und lassen sich in ihrer Ergebnisansicht separat abbrechen. Der Stop-Knopf beendet auch die Klatscherkennung. Beim Ausblenden der Seite werden Mikrofone und Gespräch gestoppt. Nach einem Neustart hört JARVIS nicht automatisch zu.
 
-Optional: **Doppelklatschen aktivieren**. Dafür bleibt das Mikrofon sichtbar eingeschaltet. Zwei kurze Klatscher starten oder beenden ein Gespräch. Die Klatscher werden lokal ausgewertet; die Erkennung kann bei Hintergrundgeräuschen unzuverlässig sein. Während JARVIS spricht, werden Klatscher ignoriert, damit seine Stimme sich nicht selbst aktiviert.
+Optional: **Doppelklatschen aktivieren**. Dafür bleibt das Mikrofon sichtbar eingeschaltet. Zwei kurze Klatscher starten oder beenden ein Gespräch. Die Klatscher werden lokal ausgewertet; die Erkennung kann bei Hintergrundgeräuschen unzuverlässig sein. Auch während JARVIS spricht, versetzt Doppelklatschen das Gespräch in den Schlafmodus und stoppt die Ausgabe; laufende Agentenaufträge bleiben aktiv. Erneutes Doppelklatschen weckt das Gespräch.
 
 Die **Spracherkennung** hängt vom Browser ab und kann durch dessen Anbieter online verarbeitet werden. Sie ist nicht garantiert offline. Der Einwilligungsdialog erklärt dies, bevor du sie nutzt. Die **Sprachausgabe** ist davon unabhängig und wird mit der mitgelieferten Engine lokal erzeugt. Ohne Browser-Spracherkennung kannst du schreiben und trotzdem die JARVIS-Stimme hören.
 
@@ -67,3 +67,7 @@ Ohne vertrauenswürdiges HTTPS gibt Safari die Handy-Kamera nicht frei. JARVIS v
 Python- und HTTP/TLS-Tests laufen in Linux. Die Weboberfläche, echte Spracherzeugung, exportierte Video-/Audiotracks und Gesprächsabläufe werden in Chromium geprüft; Mikrofon und Spracherkennung werden dafür simuliert. Apple-Vision-Ausführung, echte Mac-/iOS-Freigaben, AirDrop, native Safari-Spracherkennung und externe Livevideos sind in der Cloud nicht verifiziert. Die Modellqualität wird nicht aus simulierten Testantworten abgeleitet.
 
 TikTok war aus dieser Cloud nicht erreichbar. Eine Analyse sämtlicher Videos von Moritz Maacker wird deshalb nicht behauptet.
+
+## Optional: natürliche Stimme und Mini-Hub
+
+Das [kleine Nachrüst-Paket](NATUERLICHE-STIMME.md) ergänzt die natürliche Offline-Stimme und den Mini-Hub im vorhandenen Ordner. Kein erneuter Textmodell-Download. Im Hub findest du Nachrichten, gespeicherte Kanalprofile, Planer und Systemwerte; du kannst dort weiter mit Jarvis sprechen.

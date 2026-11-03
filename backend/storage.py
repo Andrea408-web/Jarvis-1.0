@@ -31,6 +31,10 @@ DEFAULT_SETTINGS = {
     "voice_enabled": False,
     "local_voice_uri": "",
     "voice_preset": "jarvis",
+    "voice_engine": "bundled",
+    "youtube_channel": "",
+    "tiktok_channel": "",
+    "hub_country": "ALL",
 }
 
 
@@ -134,6 +138,15 @@ class Store:
             elif key == "elevenlabs_voice_id":
                 if not isinstance(value, str) or (value and not re.fullmatch(r"[a-zA-Z0-9_-]{1,100}", value)):
                     raise ValueError("Ungültige ElevenLabs Voice ID.")
+            elif key in {"youtube_channel","tiktok_channel"}:
+                from .hub import normalize_handle
+                values[key]=normalize_handle(value,key.split("_")[0])
+            elif key == "hub_country":
+                from .hub import COUNTRIES
+                if not isinstance(value,str) or value not in {"ALL",*COUNTRIES}:raise ValueError("Bitte ein vorhandenes Nachrichtenland wählen.")
+            elif key == "voice_engine":
+                if not isinstance(value,str) or value not in {"bundled","natural"}:
+                    raise ValueError("Bitte eine vorhandene Sprachengine wählen.")
             elif key == "voice_preset":
                 if not isinstance(value,str) or value not in {"jarvis","clear","system"}:
                     raise ValueError("Bitte ein vorhandenes Stimmprofil wählen.")

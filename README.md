@@ -12,6 +12,12 @@ Das kleine Modell benötigt ungefähr 400 MB, zusätzlich das Startprogramm. Tat
 
 **[Kurze deutsche Anleitung](docs/EINFACH-STARTEN.md)**. Der echte Download und Modellbetrieb auf deinem Mac ist noch nicht verifiziert; die Prüfung in der Cloud verwendet kontrollierte Installationsdaten und Antworten. Bei fehlender Prüfsumme wird sicher gestoppt.
 
+## Kleines Update für vorhandenen Jarvis
+
+[Nachrüst-Paket herunterladen](updates/JARVIS-Stimme-Nachruestung.zip), entpacken und **JARVIS-Stimme-nachruesten.command** öffnen. Der Helfer aktualisiert eine passende bestehende Version, sichert die Programmdateien und behält Textmodell und persönliche Daten. Kein kompletter Neudownload. Die natürliche Offline-Stimme lädt einmalig ungefähr **100–104 MB** nach und belegt zusätzlich etwa **160–180 MB**; während der Einrichtung werden 500 MB freier Platz benötigt. [Hörprobe](docs/hoerprobe-thorsten.wav) · [Anleitung](docs/NATUERLICHE-STIMME.md). Es ist keine identische Filmstimme.
+
+Der neue **Mini-Hub** enthält Nachrichten mit Weltkarte und Länderfilter, gespeicherte YouTube-/TikTok-Profile, öffentlich verfügbare Kanalzahlen und Videos, Planer, Systemwerte und eine stilisierte Gehirn-Arbeitsanzeige. Gespräche funktionieren auch im Hub. Aktiviertes Doppelklatschen schaltet die Sprachausgabe leise und weckt Jarvis wieder; laufende Agentenaufträge bleiben aktiv. Öffentliche Plattformdaten sind abhängig von der Erreichbarkeit und Freigabe durch den Anbieter.
+
 ## Gespräch, Stimme, Kameras und Agenten
 
 - **Kern antippen:** Ein fortlaufendes Gespräch starten oder stoppen. Erkanntes Gesprochenes wird automatisch gesendet; nach der Antwort hört JARVIS wieder zu, auch in der Agentenansicht. Die optionale lokale Doppelklatscherkennung benötigt eine ausdrücklich freigegebene laufende Mikrofonverbindung. Die Spracheingabe ist browserabhängig und nicht garantiert offline.

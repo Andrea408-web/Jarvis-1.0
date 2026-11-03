@@ -115,7 +115,7 @@ class TaskRoutingTests(unittest.TestCase):
         for text in ['Beauftrage einen Agenten, der eine Einkaufsliste erstellt','Lass einen Agenten einen Lernplan machen','Ein Agent soll einen Text schreiben','Kannst du einen Agenten beauftragen, eine Werbung zu erstellen?']:
             self.assertIsNotNone(task_request(text))
         self.assertEqual(task_request('Beauftrage Atlas: Schreibe einen Plan')['role'],'planner')
-        for text in ['Beauftrage keinen Agenten','Warum beauftragt der Agent nichts?','Zeig meine Agenten','Hallo']:
+        for text in ['Beauftrage keinen Agenten','Warum beauftragt der Agent nichts?','Zeig meine Agenten','Was machen meine Agenten?','Zeig was die Agenten gemacht haben','Hallo']:
             self.assertIsNone(task_request(text))
     def test_chat_creates_job_instead_of_model_promise(self):
         with tempfile.TemporaryDirectory() as folder:

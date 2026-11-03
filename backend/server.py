@@ -24,7 +24,7 @@ from .voice import VoiceClient
 from .mobile import MobileLink
 from .agents import AgentOffice
 from .task_router import task_request
-from .cameras import CAMERAS
+from .cameras import CAMERAS, SPORTS
 from .training import plan as training_plan
 from .openai_client import OpenAIClient
 from .local_ai import LocalClient, local_status
@@ -83,19 +83,25 @@ class Application:
             'mac_control': result['system'].get('is_macos', False),
             'file_scope': str(self.actions.file_root),
             'web_research': False, 'email': False, 'phone': False,
-            'camera': True, 'camera_image_analysis': False, 'public_camera_map': True, 'wake_word': False,
+            'camera': True, 'camera_image_analysis': False, 'agent_image_classification': platform.system()=='Darwin', 'bundled_voice':True, 'public_camera_map': True, 'wake_word': False,
         }
         return result
+
+    def dispatch_agent(self,text,attachment=None):
+        if not isinstance(text,str) or not 1<=len(text.strip())<=12000:raise ValueError('Bitte einen gültigen Auftrag eingeben.')
+        task=task_request(text)
+        if not task:return None
+        if not task['task']:return {'reply':'Sir, was genau soll der Agent erstellen?','proposals':[],'view':'office'}
+        job=self.office.submit({**task,**(attachment or {})})
+        return {'reply':'Sir, der Auftrag wurde tatsächlich angelegt. Auftragsnummer: '+job['id'][:8]+'. Status und Ergebnis stehen in der Werkstatt.','proposals':[],'view':'office','job_id':job['id']}
 
     def chat(self, text):
         if not isinstance(text, str) or not text.strip() or len(text) > 12000:
             raise ValueError('Bitte eine Nachricht mit 1 bis 12.000 Zeichen eingeben.')
-        task=task_request(text)
-        if task:
-            if not task['task']:
-                return {'reply':'Sir, was genau soll der Agent erstellen? Beschreibe bitte den Auftrag.','proposals':[],'view':'office'}
-            job=self.office.submit(task)
-            return {'reply':'Sir, der Auftrag wurde tatsächlich angelegt. Auftragsnummer: '+job['id'][:8]+'. Status und Ergebnis stehen in der Werkstatt.','proposals':[],'view':'office','job_id':job['id']}
+        routed=self.dispatch_agent(text)
+        if routed:return routed
+        if re.search(r'\bagent(?:en)?\b|werkstatt',text,re.I):
+            return {'reply':'Sir, die Werkstatt zeigt deine wirklichen Aufträge und Ergebnisse. Es wurde durch diese Frage kein neuer Auftrag angelegt. Zum Starten: „Beauftrage einen Agenten: …“ oder den Knopf „Auftrag starten“ verwenden.','proposals':[],'view':'office'}
         if not self.chat_lock.acquire(blocking=False):
             raise ProviderError('Eine Anfrage läuft bereits. Bitte kurz warten.', 409)
         try:
@@ -203,7 +209,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Referrer-Policy', 'no-referrer')
         self.send_header('X-Frame-Options', 'DENY')
         self.send_header('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=()')
-        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; frame-src https://www.earthcam.com https://www.abbeyroad.com https://www.livefromiceland.is https://www.skylinewebcams.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
+        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; worker-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; media-src 'self' blob:; connect-src 'self'; frame-src https://zugspitze.panomax.com https://www.muenchen.de https://www.berlin.de https://www.earthcam.com https://www.abbeyroad.com https://www.livefromiceland.is https://www.skylinewebcams.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
         if self.server.secure:
             self.send_header('Strict-Transport-Security', 'max-age=86400')
         self.end_headers()
@@ -280,7 +286,7 @@ class Handler(BaseHTTPRequestHandler):
             length = int(self.headers.get('Content-Length', '0'))
         except ValueError:
             raise ValueError('Ungültige Nachrichtenlänge.') from None
-        maximum = 6 * 1024 * 1024 if urlsplit(self.path).path == '/api/image' else MAX_BODY
+        maximum = 6 * 1024 * 1024 if urlsplit(self.path).path in {'/api/image','/api/agents','/api/agents/dispatch'} else MAX_BODY
         if length < 1 or length > maximum:
             raise ValueError('Die Anfrage ist leer oder überschreitet das Größenlimit.')
         if self.headers.get_content_type() != 'application/json':
@@ -307,10 +313,12 @@ class Handler(BaseHTTPRequestHandler):
                 return self.wfile.write(body)
             if path == '/api/session':
                 return self._json({'token': app.token})
+            if re.fullmatch(r'/api/agents/[0-9a-f]{32}/image',path):
+                data,mime=app.office.image(path.split('/')[3]);self._headers(200,mime,len(data));return self.wfile.write(data)
             if path == '/api/agents':
                 return self._json(app.office.snapshot())
             if path == '/api/cameras':
-                return self._json({'cameras': CAMERAS})
+                return self._json({'cameras': CAMERAS,'sports':SPORTS})
             if path == '/api/status':
                 return self._json(app.status())
             if path == '/api/settings':
@@ -321,7 +329,9 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({'reminders': app.store.reminders()})
             # Exact static allowlist: no arbitrary files, keys or directory listings.
             static = {'/': 'index.html', '/index.html': 'index.html',
-                      '/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js', '/artifacts.js':'artifacts.js'}
+                      '/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js', '/artifacts.js':'artifacts.js', '/jarvis-voice.js':'jarvis-voice.js', '/voice-worker.js':'voice-worker.js', '/conversation.js':'conversation.js'}
+            for name in ['ESpeak.js','mespeak.js','config.json','jarvis-de.json','de.json','COPYING','NOTICE.txt','UPSTREAM-README.md','mespeak-2.0.2-source.tgz','speak-source-9c6f642.tar.gz']:
+                static['/vendor/voice/'+name]='vendor/voice/'+name
             if path in static:
                 file = FRONTEND / static[path]
                 body = file.read_bytes()
@@ -338,6 +348,11 @@ class Handler(BaseHTTPRequestHandler):
             return self._json({'ok': True})
         elif method in {'POST', 'PUT', 'PATCH'}:
             body = self._body()
+            if method == 'POST' and path == '/api/agents/dispatch':
+                if set(body)-{'text','image','mime'}:raise ValueError('Unbekannte Auftragsfelder.')
+                routed=app.dispatch_agent(body.get('text'),{key:body[key] for key in ('image','mime') if key in body})
+                if not routed:raise ValueError('Bitte einen konkreten Agentenauftrag formulieren.')
+                return self._json(routed)
             if method == 'POST' and path == '/api/agents':
                 return self._json(app.office.submit(body),202)
             if method == 'POST' and path == '/api/agents/cancel':

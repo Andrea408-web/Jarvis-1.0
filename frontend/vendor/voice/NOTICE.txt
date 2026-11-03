@@ -1,0 +1,9 @@
+JARVIS offline formant voice
+Engine: meSpeak npm 2.0.2, Norbert Landsteiner; wrapper Mikola Lysenko. GNU GPL.
+Based on eSpeak and speak.js (Alon Zakai). GPLv3 text included as COPYING.
+Original npm source package included unchanged as mespeak-2.0.2-source.tgz.
+Sources: https://github.com/mikolalysenko/mespeak and https://github.com/kripken/speak.js
+Changes: ESpeak.js Latin-1 source comments normalized to UTF-8; custom German JARVIS formant voice in jarvis-de.json; isolated worker adapter and Web Audio shaping written for JARVIS.
+This is rule-based speech synthesis, not a trained neural voice or a film-voice clone.
+Upstream eSpeak/speak.js C++ and build sources included as speak-source-9c6f642.tar.gz, exact upstream commit 9c6f642f7d78bab51d16b2e8b79cdf205643ec35.
+The speech worker and JARVIS voice configuration are distributed under GPLv3; original notices remain in the included sources. No ownership of the underlying speech engine is claimed.

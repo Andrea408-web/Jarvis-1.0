@@ -52,6 +52,6 @@ python3 -m backend --open-browser
 
 Dann **Einstellungen → Kleine lokale KI → Kleine KI verwenden → Kleine KI prüfen**.
 
-Die Auswahl schaltet Cloud-KI und ElevenLabs aus und aktiviert die lokale Systemstimme. Die Stimme wählst du weiterhin unter **Lokale Sprachausgabe**. Textgespräche gehen nur an den lokalen llama.cpp-Prozess. Es gibt keinen automatischen Wechsel zu Google, OpenAI oder Ollama, keine API-Schlüssel, keine Bildanalyse und keine KI-Werkzeugausführung. Direkte lokale Befehle wie Rechner öffnen bleiben nach Bestätigung verfügbar.
+Die Auswahl schaltet Cloud-KI und ElevenLabs aus und aktiviert die mitgelieferte JARVIS-Stimme. Die Stimme wählst du weiterhin unter **Stimme**. Textgespräche gehen nur an den lokalen llama.cpp-Prozess. Es gibt keinen automatischen Wechsel zu Google, OpenAI oder Ollama, keine API-Schlüssel, keine Bildanalyse und keine KI-Werkzeugausführung. Direkte lokale Befehle wie Rechner öffnen bleiben nach Bestätigung verfügbar.
 
 Zum Beenden in beiden Terminals **Control + C** drücken. Wenn die Prüfung nicht bereit meldet, zuerst die Meldung im KI-Terminal lesen. Eine gewählte Einstellung oder ein gestarteter Prozess allein bestätigt noch keine erfolgreiche Modellantwort.

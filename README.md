@@ -1,6 +1,6 @@
 # J.A.R.V.I.S.
 
-Ein lokaler, modularer Assistent mit einer animierten goldenen HUD-Oberfläche, echtem Gemini-Chat, optionaler ElevenLabs-Stimme und ausdrücklich bestätigten Mac-Aktionen. Python-Standardbibliothek, HTML, CSS und JavaScript ohne Python-Fremdpakete. Der ausdrücklich gestartete Einrichtungshelfer lädt auf Wunsch die lokale KI; normale Starts installieren nichts.
+Ein lokaler, modularer Assistent mit einer animierten goldenen HUD-Oberfläche, lokaler Text-KI, mitgelieferter deutscher Sprachengine und ausdrücklich bestätigten Mac-Aktionen. Python-Standardbibliothek, HTML, CSS und JavaScript ohne Python-Fremdpakete. Der ausdrücklich gestartete Einrichtungshelfer lädt auf Wunsch die lokale KI; normale Starts installieren nichts.
 
 ## Einfachster Start: nur ein ZIP-Download
 
@@ -12,13 +12,17 @@ Das kleine Modell benötigt ungefähr 400 MB, zusätzlich das Startprogramm. Tat
 
 **[Kurze deutsche Anleitung](docs/EINFACH-STARTEN.md)**. Der echte Download und Modellbetrieb auf deinem Mac ist noch nicht verifiziert; die Prüfung in der Cloud verwendet kontrollierte Installationsdaten und Antworten. Bei fehlender Prüfsumme wird sicher gestoppt.
 
-## Stimme, Globus, Kamera und Agenten
+## Gespräch, Stimme, Kameras und Agenten
 
-- **Stimme:** Ein Klick auf ein Profil wählt und testet eine bereits vorhandene deutsche Systemstimme. „JARVIS · Ruhig“ spricht tiefer und langsamer; „Klar“ und „System pur“ sind Alternativen. Keine zusätzlichen Sprachgewichte, Schlüssel oder Downloads. Dies ist keine Original-Filmstimme. Falls dein Gerät keine lokale deutsche Stimme bereitstellt, wird das angezeigt statt eine Online-Stimme zu laden.
-- **Welt & Kameras:** Drehbarer orthografischer Globus mit lokalen Kartendaten, Zoom, Tastaturbedienung und vier öffentlichen Kamerastandorten. Beispiel: „Zeig öffentliche Kameras in London“. „In Jarvis anzeigen“ versucht eine Einbettung; manche Anbieter blockieren sie weiterhin. Der direkte Link bleibt verfügbar. „Kamera öffnen“ führt direkt zur offiziellen Anbieterseite; Videoverfügbarkeit, Werbung und Anmeldung liegen beim Anbieter.
-- **Kamera:** Eigene Vorschau mit Freigabe direkt in der Ansicht. Minecraft-Übungen sind ein optionaler aufklappbarer Zusatz. Das kleine Textmodell sieht keine Bilder; es gibt keine erfundene Bildanalyse oder zusätzliche Modelldownloads.
-- **Agenten:** Die Werkstatt zeigt fünf farbige isometrische Computer-Arbeitsplätze: ATLAS (Planung), NOVA (Textentwurf), SENTINEL (Textprüfung), BAUER (anklickbare Checkliste), STUDIO (animierter Text-Werbeclip). Aufgaben, Zustände und Ergebnisse kommen vom Backend und werden lokal gespeichert. Beispiel: „Zeig meine Agenten bei der Arbeit“, anschließend „Beauftrage Atlas: Plane meinen Lernnachmittag“. Ein vorhandenes lokales Textmodell verarbeitet die Aufgaben nacheinander; keine automatische Cloud-Nutzung, Webrecherche oder Geräteaktionen. Qualität und Wissen bleiben durch das kleine Modell begrenzt. Ein geänderter Prompt ist kein Modell-Upgrade.
-- **Handy verbinden:** Private HTTPS-Kopplung per QR-Code. iOS benötigt einmalig bewusstes Vertrauen für das eigene Zertifikatsprofil. Der Mac bleibt eingeschaltet. [Anleitung und Grenzen](docs/EINFACH-STARTEN.md#sprechen-weltkarte-und-handy).
+- **Kern antippen:** Ein fortlaufendes Gespräch starten oder stoppen. Erkanntes Gesprochenes wird automatisch gesendet; nach der Antwort hört JARVIS wieder zu, auch in der Agentenansicht. Die optionale lokale Doppelklatscherkennung benötigt eine ausdrücklich freigegebene laufende Mikrofonverbindung. Die Spracheingabe ist browserabhängig und nicht garantiert offline.
+- **Mitgelieferte Stimme:** Eigene deutsche Formant-Konfiguration einer mitgelieferten meSpeak/eSpeak-Engine. Keine Systemstimme, kein Sprachkonto, kein separater Download. Der Klang ist synthetisch, keine neu trainierte menschliche Filmstimme. Engine, Sprachdaten und freie Quellen vergrößern den entpackten Ordner um ungefähr 10 MB. [Lizenz und Quellen](frontend/vendor/voice/NOTICE.txt).
+- **Welt & Kameras:** Drehbarer Globus mit deutschen und internationalen öffentlichen Kameraseiten. Nach Deutschland filtern oder „Zeig Kameras in München“ sagen. Die Anbieterseiten können in JARVIS eingebettet werden, sofern der Betreiber es erlaubt. Offizielle externe Links bleiben verfügbar. Verfügbarkeit und Anmeldung bestimmt der jeweilige Anbieter.
+- **Fußball & Live:** Offizielle Angebote von Sportschau, ARD und ZDF. Vielfach ohne Konto; ob ein bestimmtes Spiel frei läuft, bestimmen Übertragungsrechte, Sendezeit und Standort.
+- **Kamera und Bilder:** Eigene Vorschau, ausdrücklich gewählte Aufnahme an Agenten oder Bilddatei anhängen. Am Mac nutzt JARVIS Apple Vision für lokale Klassifikation und Texterkennung. Das ist kein vollständiges Bildverständnis oder Gameplay-Coaching. Kein großes zusätzliches Bildmodell und kein externer KI-Dienst. Die native Mac-Ausführung ist in Linux nicht verifiziert.
+- **Agentenwerkstatt:** Fünf farbige isometrische Computer-Arbeitsplätze mit echten Jobs, Phasen, Ergebniszugriff und veränderbarem Blickwinkel. ATLAS plant, NOVA schreibt, SENTINEL prüft, BAUER erstellt Checklisten, STUDIO erstellt Skripte und Produktfilme. Ein vorhandenes lokales Textmodell verarbeitet die Aufträge nacheinander. Ein Prompt oder diese Rollen machen daraus kein deutlich größeres Modell.
+- **Produktfilm:** Dein Produktfoto mit Kamerabewegung, KI-Skript und mitgelieferter JARVIS-Tonspur als Video exportieren. Keine neu generierten Filmszenen. Letztere passen nicht zur Vorgabe „nur wenig größer und kein externer KI-Dienst“.
+
+[Kurze Bedienungsanleitung einschließlich Handy-Kopplung und Grenzen](docs/EINFACH-STARTEN.md).
 
 ## Manueller Start und weitere Anbieter
 
@@ -46,31 +50,11 @@ Das kleine Modell benötigt ungefähr 400 MB, zusätzlich das Startprogramm. Tat
 
 Mit **Strg+C** im Terminal beendest du den Server. `Start-JARVIS.command` ist ein alternativer Mac-Starter, der den Browser direkt öffnet; Schlüssel gibst du anschließend in den Einstellungen ein. Falls macOS das Öffnen blockiert, verwende den obigen Terminalbefehl; JARVIS umgeht keine Sicherheitsabfrage.
 
-## Gemini und ElevenLabs verbinden
+## Optionale Cloud-Textanbieter
 
-Die im ursprünglichen Chat geteilten Schlüssel gehören nicht in Git oder JavaScript. Erneuere sie beim Anbieter. Gib neue Schlüssel nicht im Chat ein.
+Für den lokalen Modus sind keine API-Schlüssel nötig. Die JARVIS-Sprachausgabe verwendet ausschließlich die mitgelieferte Offline-Engine. Frühere ElevenLabs- und Systemstimmprofile sind nicht der aktuelle Ausgabepfad.
 
-**Einfachster Weg:** Starte JARVIS normal mit `python3 -m backend`. Öffne im Browser die **Einstellungen**, füge unter **Gemini** den Schlüssel ins verdeckte Feld ein und klicke **Schlüssel hinterlegen**. Auf deinem Mac kann JARVIS ihn auf deinen ausdrücklichen Auftrag im **macOS-Schlüsselbund** speichern. Danach aktiviere **Cloud-KI** und speichere die Einstellungen. Für ElevenLabs funktioniert das entsprechend; zusätzlich benötigst du deine Voice ID.
-
-Die Schlüssel werden nicht in Git, SQLite oder im Browserspeicher abgelegt. Auf macOS wird ein bewusst gespeicherter Schlüssel beim nächsten Serverstart aus dem Schlüsselbund geladen. Außerhalb von macOS ist nur eine Sitzung bis zum Serverneustart möglich. Die Anzeige „konfiguriert“ bestätigt die Hinterlegung, noch nicht die Gültigkeit beim Anbieter.
-
-Alternativ kannst du die Schlüssel weiterhin im Terminal verdeckt eingeben:
-
-```bash
-python3 -m backend --ask-keys
-```
-
-Die Terminaleingaben werden nicht angezeigt und bleiben nur im Speicher dieses Serverprozesses. Leere Eingabe überspringt den jeweiligen Dienst. Alternativ liest JARVIS bereits vorhandene Server-Umgebungsvariablen `GEMINI_API_KEY` und `ELEVENLABS_API_KEY`, beispielsweise aus einem Passwortmanager. Diese haben Vorrang vor gespeicherten Schlüsselbund-Einträgen. `.env.example` beschreibt nur die Namen; `.env`-Dateien werden nicht automatisch geladen.
-
-Öffne anschließend die **Einstellungen** in der Oberfläche:
-
-- **Gemini** bewusst aktivieren, Modell wählen und Tageslimit setzen. Standard ist `gemini-2.5-flash`; seine Verfügbarkeit hängt vom Google-Konto ab. Gespeicherte Gesprächsnachrichten werden für Kontext an Google übertragen (maximal die letzten 24 Nachrichten, zusätzlich begrenzt).
-- **ElevenLabs** bewusst aktivieren und deine **Voice ID** eintragen. Der aktuelle Antworttext wird zur Spracherzeugung übertragen. Begrenzung nach Zeichen, deutsche mehrsprachige Stimme.
-- **Sprachausgabe** aktivieren. Ohne ElevenLabs kann eine verfügbare lokale deutsche Browser-/Systemstimme verwendet werden. Ob eine solche Stimme installiert ist, hängt vom Gerät ab.
-
-**Kostenlose Systemstimme wählen:** Öffne **Einstellungen → Lokale Sprachausgabe**, wähle in der Stimmenliste eine installierte deutsche Stimme und klicke **Systemstimme verwenden**. Das speichert die Auswahl, schaltet ElevenLabs aus und die normale Sprachausgabe ein. Die Cloud-KI-Einstellung bleibt erhalten. **Lokale Stimme testen** spricht eine kurze Probe mit der ausgewählten Stimme, auch schon vor dem Speichern. „Automatisch“ verwendet eine verfügbare lokale deutsche Stimme. Ist eine gespeicherte Stimme auf einem anderen Gerät nicht vorhanden, zeigt JARVIS das an und verwendet eine dort verfügbare lokale deutsche Stimme.
-
-Es ist kein API-Schlüssel und keine Voice ID nötig. JARVIS wartet kurz, falls der Browser seine Stimmenliste erst nachlädt. Mit Stop kannst du auch eine wartende Ausgabe abbrechen. Ohne installierte deutsche lokale Stimme zeigt JARVIS eine verständliche Meldung und startet keinen Download. Die Liste hängt vom jeweiligen Browser und Gerät ab. Weitere Systemstimmen kannst du selbst in macOS unter **Systemeinstellungen → Bedienungshilfen → Lesen & Sprechen** (je nach macOS-Version **Gesprochene Inhalte**) verwalten. Nach einer bewusst gewählten Installation gegebenenfalls den Browser neu öffnen; JARVIS installiert keine Stimmen. Die Auswahl innerhalb von JARVIS überschreibt nicht die globale macOS-Stimme.
+Wer ausdrücklich Cloud-Textantworten möchte, kann einen Schlüssel in den Einstellungen verdeckt hinterlegen und den jeweiligen Anbieter aktivieren. Konten, Kosten, Kontingente und Bildübertragung an Cloud-Anbieter bleiben davon getrennte bewusste Freigaben. Der einfache lokale Starter deaktiviert Cloud-Funktionen und fragt keine Schlüssel ab. Schlüssel werden nicht in Git, SQLite oder den Browserspeicher geschrieben; auf dem Mac ist bewusstes Speichern im Schlüsselbund möglich. Alte CLI-/Diagnoseschnittstellen für Anbieter bleiben für Kompatibilität vorhanden.
 
 ### Wenn „Anbieter nicht erreichbar“ erscheint
 
@@ -100,11 +84,11 @@ Der Helfer prüft, ob die tatsächlich verwendete Python-Version eine passende p
 | --- | --- |
 | HUD | Echte Zustände für Bereit, Zuhören, Denken, Sprechen und Fehler; rotierende SVG-Ringe, responsive Darstellung, reduzierte Bewegung berücksichtigt. |
 | Systemdaten | Messwerte des **Servergeräts**, keine Zufallsdaten. Fehlende Messwerte bleiben unbekannt. Unter Linux können Host- und Containerressourcen voneinander abweichen. |
-| Lokaler Chat | `Hilfe`, `Status`, `Rechner öffnen` und weitere erlaubte App-Befehle funktionieren ohne KI. Freie Gespräche benötigen Gemini. |
+| Lokaler Chat | `Hilfe`, `Status`, `Rechner öffnen` und weitere erlaubte App-Befehle funktionieren ohne KI. Freie Gespräche benötigen ein vorhandenes lokales Modell oder einen ausdrücklich aktivierten Cloud-Anbieter. |
 | Gemini | Offizielle REST-API, deutsche Persönlichkeit, gespeicherter Gesprächskontext, strukturierte Aktionsvorschläge, echte API-Fehler statt erfundener Antworten. |
-| Bilder | Ausgewählte PNG/JPEG/WebP-Bilder bis 4 MiB auf ausdrücklichen Auftrag mit Gemini beschreiben; Bilder werden nicht lokal archiviert. Eigene Kameravorschau und regelbasierte Minecraft-Tipps separat unter „Kamera & Training“; das kleine lokale Modell analysiert keine Bilder. |
-| Stimme | ElevenLabs über offizielle REST-API, Voice ID, Lautstärke, Stop und lokale Browserstimme als Fallback. Bei WebAudio-Wiedergabe stammt der Pegel aus dem echten Audio. Für Systemstimmen ist kein Audio-Wellenformzugriff zugesichert. |
-| Mikrofon | Nur nach Klick und ausdrücklicher Zustimmung, über unterstützte Browser-Spracherkennung. Browser können Audiodaten an ihren Erkennungsdienst senden; dies ist keine garantierte Offline-Erkennung. Kein Wakeword/Dauerlauschen. |
+| Bilder | Agentenbilder bleiben privat auf dem eigenen Server. Auf dem Mac: Apple-Vision-Klassifikation/OCR als unsicherer Befund; kein vollständiges visuelles Sprachmodell. Eigene Kamera und ausdrückliche Aufnahme unter „Kamera“. Der separate frühere Cloud-Bildpfad benötigt eine bewusste Anbieterfreigabe. |
+| Stimme | Mitgelieferte deutsche Offline-Formantengine ohne Systemstimme. Lautstärke, Stop und echter WebAudio-Pegel. |
+| Mikrofon | Nur nach Klick und ausdrücklicher Zustimmung, über unterstützte Browser-Spracherkennung. Browser können Audiodaten an ihren Erkennungsdienst senden; dies ist keine garantierte Offline-Erkennung. Kein Wakeword. Fortlaufendes Gespräch und lokale Doppelklatscherkennung laufen nur nach ausdrücklicher Aktivierung und stoppen beim Ausblenden. |
 | Apps | Rechner, Safari, Kalender, Notizen, Musik, Finder und Systemeinstellungen auf macOS; feste IDs, keine freie Shell. |
 | Webseiten | Bestätigtes Öffnen vollständiger HTTP-/HTTPS-URLs auf dem Mac. Kein automatisches Abrufen privater Webseiten. |
 | Dateien | Lesen, Auflisten, neue Ordner und neue Textdateien im freigegebenen Ordner. Keine Löschung, kein Verschieben, kein Überschreiben. Auch Lesen benötigt Bestätigung. |
@@ -114,19 +98,21 @@ Für eine Zusammenfassung ausgewählten Text in den Chat eingeben. Dateiinhalte 
 
 ## Daten und Freigaben
 
-Einstellungen, Chatverlauf, Nutzungszähler und Erinnerungen liegen lokal:
+Einstellungen, Chatverlauf, Agentenaufträge, Bildanhänge, Nutzungszähler und Erinnerungen liegen lokal:
 
 - macOS: `~/Library/Application Support/Jarvis/`
 - Linux: `~/.local/share/jarvis/`
 - Überschreibbar mit `JARVIS_DATA_DIR` oder `--data-dir`.
 
-Die SQLite-Datei wird mit privaten Dateirechten angelegt. Lokale Daten sind nicht zusätzlich verschlüsselt; verwende den Schutz deines Betriebssystems. **Verlauf löschen** entfernt gespeicherte Nachrichten; Anbieter können bereits gesendete Daten weiterhin gemäß ihren eigenen Regeln speichern.
+Die SQLite-Datei und Agentenbilder werden mit privaten Dateirechten angelegt. Bilder liegen im Unterordner `agent-assets`. Das Löschen des normalen Chatverlaufs entfernt Agentenaufträge und ihre Bilder nicht. Lokale Daten sind nicht zusätzlich verschlüsselt; verwende den Schutz deines Betriebssystems. **Verlauf löschen** entfernt gespeicherte Nachrichten; Anbieter können bereits gesendete Daten weiterhin gemäß ihren eigenen Regeln speichern.
 
 Dateifunktionen dürfen standardmäßig nur auf den Unterordner `files` dort zugreifen. Wenn du bewusst einen anderen Ordner freigeben möchtest, setze beim Start `JARVIS_ALLOWED_FOLDER` auf einen gesonderten, unkritischen Ordner. Gib weder dein gesamtes Benutzerverzeichnis noch Schlüssel- oder Passwortordner frei. Absolute Aktionspfade, `..`, Symlink-Durchläufe, Hardlink-Dateilesen und vorhandene Zieldateien werden abgewiesen. Ein vorbereiteter Auftrag verfällt nach zwei Minuten und kann nur einmal bestätigt werden. Ein bloßer Modellvorschlag führt nichts aus.
 
 ## iPhone im lokalen Netzwerk
 
-Die Oberfläche passt sich dem iPhone an. Der Server bleibt standardmäßig ausschließlich auf dem Mac erreichbar. LAN-Zugriff wird ohne **TLS und Passwort** abgewiesen; keine Portfreigabe, kein Tunnel und kein öffentlicher Zugriff werden eingerichtet.
+Die Oberfläche passt sich dem iPhone an. Am einfachsten **Handy verbinden** am Mac verwenden: private TLS-Verbindung mit kurz gültiger einmaliger QR-Kopplung und sicheren Sitzungscookies. [Kurze Anleitung](docs/EINFACH-STARTEN.md#sprechen-weltkarte-und-handy).
+
+Der folgende alternative manuelle CLI-Weg bleibt unterstützt. Der Hauptserver bleibt standardmäßig ausschließlich auf dem Mac erreichbar. Manueller LAN-Zugriff wird ohne **TLS und Passwort** abgewiesen; keine Portfreigabe, kein Tunnel und kein öffentlicher Zugriff werden eingerichtet.
 
 Voraussetzungen, die du bewusst selbst bereitstellst:
 
@@ -177,7 +163,7 @@ Die neue Anbindung verwendet **Ollama auf demselben Mac**. Es gibt keine Anbiete
 
 1. Falls du die lokale Installation möchtest: Ollama von **https://ollama.com/download/mac** herunterladen, installieren und öffnen. Die tatsächliche Mac-Kompatibilität anhand der dortigen Anforderungen und der JARVIS-Diagnose prüfen.
 2. Im Mac-Terminal einmal ausführen: `ollama pull qwen2.5:1.5b`. Das kleine Textmodell benötigt ungefähr einen Gigabyte Download und zusätzlichen Arbeitsspeicher; die konkrete Größe zeigt Ollama. Für einen Mac mit 8 GB RAM ist ein kleines Modell ein sinnvoller Einstieg, keine Leistungsgarantie. Für diesen Schritt ist Internet nötig.
-3. JARVIS starten. **Einstellungen → Lokale KI → Lokale KI verwenden → Ollama prüfen**. Diese Schaltfläche speichert lokalen Modus, schaltet Cloud-KI und ElevenLabs aus und aktiviert die Systemstimme.
+3. JARVIS starten. **Einstellungen → Lokale KI → Lokale KI verwenden → Ollama prüfen**. Diese Schaltfläche speichert lokalen Modus, schaltet Cloud-KI und ElevenLabs aus und aktiviert die integrierte JARVIS-Stimme.
 4. Danach kannst du bei laufendem Ollama Textgespräche ohne Internet führen.
 
 Die Verbindung geht ausschließlich an `127.0.0.1:11434`, ohne API-Schlüssel, Proxy oder Weiterleitungen. Es wird kein Modell durch JARVIS heruntergeladen. Cloud-Modellnamen werden abgewiesen. Es gibt keine kostenpflichtige Ausweichanfrage, keine Bildanalyse und keine modellgesteuerten Aktionen in diesem Modus. Direkte lokale Befehle wie „Rechner öffnen“ bleiben nach Bestätigung verfügbar. Kleine Modelle können deutlich schwächer antworten als Cloud-Modelle. Das gespeicherte Gespräch wird begrenzt als Kontext verwendet.
@@ -185,6 +171,4 @@ Die Verbindung geht ausschließlich an `127.0.0.1:11434`, ohne API-Schlüssel, P
 Der echte Modellbetrieb auf deinem Mac ist noch nicht verifiziert; die Tests prüfen die Anbindung mit kontrollierten Antworten und einem lokalen HTTP-Testserver. Wenn Ollama oder das Modell fehlt, erscheint eine verständliche Fehlermeldung, keine simulierte KI-Antwort.
 
 
-Agentenaufträge werden vor dem Sprachmodell durch das Backend erkannt, auch bei „Beauftrage einen Agenten, der …“ oder „Ein Agent soll …“. Nur eine tatsächlich angelegte Auftragskennung gilt als Bestätigung. BAUER erzeugt eine interaktive Checkliste, STUDIO ein Skript mit lokal gerendertem neunsekündigem Textclip. Der Clip kann in unterstützten Browsern als WebM/MP4 exportiert werden: keine KI-Filmaufnahmen, keine Tonspur, keine externe Videogenerierung. Beliebige ausführbare Plugins werden nicht aus Modelltext installiert. Frühere Gaming-Gespräche werden bei neuen, unabhängigen Fragen aus dem Modellkontext ausgefiltert.
-
-Eine neue eigenständige hochwertige Stimme ist hier nicht enthalten. Die bisherigen Profile bleiben Systemstimmprofile. Ein Vergleich mit Moritz Maakers Projekt konnte mangels erreichbarer Quelle in der Cloud nicht verifiziert werden.
+Agentenaufträge werden vor dem Sprachmodell durch das Backend erkannt; nur tatsächlich angelegte Jobs erhalten eine Auftragskennung. Bildanhänge bleiben auf dem eigenen Server. Ein Vergleich mit sämtlichen TikTok-Videos von Moritz Maacker ist mangels erreichbarer Quelle in der Cloud nicht verifiziert.

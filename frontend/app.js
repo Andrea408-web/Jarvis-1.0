@@ -25,7 +25,7 @@
   async function api(path, options = {}) {
     const response = await fetch(path, { ...options, headers: { 'Content-Type': 'application/json', 'X-Jarvis-Token': state.token, ...options.headers } });
     if (!response.ok) { let message = `Anfrage fehlgeschlagen (HTTP ${response.status}).`; try { const data = await response.json(); message = typeof data.error === 'string' ? data.error : message; } catch (_) {} throw new Error(message); }
-    if (response.headers.get('Content-Type')?.includes('audio/')) return response.blob();
+    if (/^(?:audio|image)\//.test(response.headers.get('Content-Type')||'')) return response.blob();
     return response.json();
   }
   function message(role, text, timestamp) {
@@ -47,7 +47,8 @@
     $('gemini-status').textContent = settings.cloud_enabled && active === 'gemini' ? (providers.gemini_configured ? 'Konfiguriert · Cloud aktiv' : 'API-Schlüssel fehlt') : providers.gemini_configured ? 'Konfiguriert · deaktiviert' : 'Nicht konfiguriert';
     $('elevenlabs-status').textContent = settings.elevenlabs_enabled ? (providers.elevenlabs_configured && settings.elevenlabs_voice_id ? 'Konfiguriert · aktiv' : 'Konfiguration fehlt') : providers.elevenlabs_configured ? 'Konfiguriert · deaktiviert' : 'Lokale Stimme verfügbar¹';
     $('gemini-dot').classList.toggle('online', !!(settings.cloud_enabled && active === 'gemini' && providers.gemini_configured)); $('elevenlabs-dot').classList.toggle('online', !!(!['ollama','llamacpp'].includes(active) && settings.elevenlabs_enabled && providers.elevenlabs_configured && settings.elevenlabs_voice_id));
-    if (!settings.elevenlabs_enabled || ['ollama','llamacpp'].includes(active)) $('elevenlabs-status').textContent = localGermanVoices().length ? 'Lokale deutsche Stimme bereit' : 'Lokale deutsche Stimme prüfen';
+    if (!settings.elevenlabs_enabled || ['ollama','llamacpp'].includes(active)) $('elevenlabs-status').textContent = 'Mitgelieferte JARVIS-Stimme bereit';
+    $('elevenlabs-status').textContent='Mitgelieferte deutsche Sprachengine';$('elevenlabs-dot').classList.add('online');
     $('chat-mode').textContent = ['ollama','llamacpp'].includes(active) ? (active === 'llamacpp' ? 'KLEINE LOKALE KI · LLAMA.CPP' : 'LOKALE KI · OLLAMA') : settings.cloud_enabled && providers[active + '_configured'] ? providerName.toUpperCase() + ' · CLOUD-KI AKTIV' : 'LOKALER MODUS';
     $('chat-footnote').textContent = ['ollama','llamacpp'].includes(active) ? 'Textgespräche über die lokale KI auf diesem Servergerät. Keine Cloud-Anfrage.' : settings.cloud_enabled ? `Nachrichten und Verlauf werden an ${providerName} gesendet.` : 'Lokale Befehle · KI lässt sich in Einstellungen aktivieren.';
     if (!document.activeElement || document.activeElement.id !== 'voice-enabled') $('voice-enabled').checked = !!settings.voice_enabled;
@@ -84,8 +85,8 @@
   function markBusy(busy) { state.busy = busy; $('send-button').disabled = busy; $('image-button').disabled = busy; if (busy) setMode('thinking'); else if (state.mode === 'thinking') setMode('idle'); }
   async function sendMessage(text, {keepDraft=false}={}) {
     if (state.busy || !text.trim()) return;
-    stopAudio(); stopMicrophone(); markBusy(true); message('user', text); if(!keepDraft){$('chat-input').value = ''; $('chat-input').style.height = '';}
-    try { const local = window.JarvisExtras ? await window.JarvisExtras.command(text) : null; const result = local || await api('/api/chat', { method: 'POST', body: JSON.stringify({ text }) }); if(result.view==='office')await window.JarvisOffice?.open(); const item = message('assistant', result.reply || 'Die Anfrage wurde verarbeitet.'); addProposals(item, result.proposals || result.proposed_actions || []); markBusy(false); if (state.settings.voice_enabled && result.reply) speak(result.reply); refreshStatus(); } catch (error) { markBusy(false); showError(error); }
+    stopAudio(); stopMicrophone(); const voiceGeneration=state.speechGeneration; markBusy(true); message('user', text); if(!keepDraft){$('chat-input').value = ''; $('chat-input').style.height = '';}
+    try { const local = window.JarvisExtras ? await window.JarvisExtras.command(text) : null; const result = local || await api('/api/chat', { method: 'POST', body: JSON.stringify({ text }) }); if(result.view==='office')await window.JarvisOffice?.open(); const item = message('assistant', result.reply || 'Die Anfrage wurde verarbeitet.'); addProposals(item, result.proposals || result.proposed_actions || []); markBusy(false); if (state.settings.voice_enabled && result.reply && voiceGeneration===state.speechGeneration) speak(result.reply); refreshStatus(); } catch (error) { markBusy(false); showError(error); }
   }
   $('chat-form').addEventListener('submit', event => { event.preventDefault(); sendMessage($('chat-input').value.trim()); });
   $('chat-input').addEventListener('keydown', event => { if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) { event.preventDefault(); $('chat-form').requestSubmit(); } });
@@ -159,106 +160,35 @@
   }
   $('settings-dialog').addEventListener('close', () => { for (const provider of ['gemini','elevenlabs','openai']) $(`${provider}-api-key`).value = ''; });
   $('clear-chat').addEventListener('click', async () => { if (!window.confirm('Den lokal gespeicherten Gesprächsverlauf endgültig löschen?')) return; try { await api('/api/history', { method:'DELETE' }); $('messages').replaceChildren(); message('notice','Gesprächsverlauf gelöscht. Neue Nachrichten beginnen ohne bisherigen Kontext.'); } catch(error) { showError(error); } });
-  function localVoices() { if (!window.speechSynthesis) return []; try { return speechSynthesis.getVoices().filter(voice => voice.localService === true); } catch (_) { return []; } }
-  function localGermanVoices() { return localVoices().filter(voice => /^de(?:[-_]|$)/i.test(voice.lang)); }
-  function refreshLocalVoiceOptions(forceSaved = false) {
-    const select = $('local_voice_uri');
-    const desired = forceSaved || !$('settings-dialog').open ? state.settings.local_voice_uri || '' : select.value;
-    const voices = localGermanVoices();
-    select.replaceChildren();
-    const automatic = document.createElement('option'); automatic.value = ''; automatic.textContent = 'Automatisch (deutsche Systemstimme)'; select.append(automatic);
-    const seen = new Set();
-    for (const voice of voices) {
-      if (typeof voice.voiceURI !== 'string' || !voice.voiceURI || seen.has(voice.voiceURI)) continue;
-      seen.add(voice.voiceURI);
-      const option = document.createElement('option'); option.value = voice.voiceURI;
-      option.textContent = `${voice.name || 'Deutsche Systemstimme'} (${voice.lang})`; select.append(option);
-    }
-    if (desired && !seen.has(desired)) {
-      const missing = document.createElement('option'); missing.value = desired;
-      missing.textContent = 'Gespeicherte Stimme auf diesem Gerät nicht verfügbar'; missing.disabled = true; select.append(missing);
-    }
-    select.value = desired;
-    $('local-voice-selection-hint').textContent = desired && !seen.has(desired) ? 'Diese Stimme ist auf diesem Gerät nicht verfügbar. JARVIS wählt automatisch eine vorhandene deutsche Systemstimme. Deine gespeicherte Auswahl bleibt erhalten.' : voices.length ? 'Nur vom Browser gemeldete lokale deutsche Stimmen. Du kannst die Auswahl vor dem Speichern testen.' : 'Noch keine lokale deutsche Stimme gemeldet. Manche Browser laden die Liste verzögert. „Lokale Stimme testen“ wartet kurz darauf.';
-  }
-  $('local_voice_uri').addEventListener('change', () => refreshLocalVoiceOptions());
+  function refreshLocalVoiceOptions() {const select=$('local_voice_uri');select.replaceChildren();const option=document.createElement('option');option.value='';option.textContent='Mitgelieferte JARVIS-Sprachengine';select.append(option);$('local-voice-selection-hint').textContent='Keine Systemstimme. Die Sprachdaten sind in JARVIS enthalten.';}
   function localVoiceFeedback(text, error = false) { $('local-voice-result').textContent = text; $('local-voice-result').classList.toggle('error', error); }
-  function waitForLocalGermanVoice(generation, timeout = 1500) {
-    const current = localGermanVoices()[0];
-    if (current) return Promise.resolve(current);
-    return new Promise(resolve => {
-      let settled = false;
-      const finish = voice => {
-        if (settled) return;
-        settled = true; clearTimeout(timer);
-        speechSynthesis.removeEventListener('voiceschanged', changed);
-        if (state.cancelVoiceWait === cancel) state.cancelVoiceWait = null;
-        resolve(voice);
-      };
-      const changed = () => {
-        if (generation !== state.speechGeneration) { finish(null); return; }
-        const voice = localGermanVoices()[0];
-        if (voice) finish(voice);
-      };
-      const cancel = () => finish(null);
-      const timer = setTimeout(() => finish(generation === state.speechGeneration ? localGermanVoices()[0] || null : null), timeout);
-      state.cancelVoiceWait = cancel;
-      speechSynthesis.addEventListener('voiceschanged', changed);
-      // Some engines populate their list between getVoices and listener setup.
-      changed();
-    });
-  }
   async function speakLocal(text, generation) {
-    if (generation === undefined) { stopAudio(); generation = state.speechGeneration; }
-    if (!window.speechSynthesis || !window.SpeechSynthesisUtterance) {
-      const notice = 'Dieser Browser unterstützt keine lokale Sprachausgabe.';
-      localVoiceFeedback(notice, true); toast(notice, true); return false;
-    }
-    localVoiceFeedback('Lokale deutsche Stimme wird geladen …');
-    const availableVoice = await waitForLocalGermanVoice(generation);
-    // Stop or a newer answer must never start an older utterance after waiting.
-    if (generation !== state.speechGeneration) return false;
-    if (!availableVoice) {
-      const notice = 'Keine lokale deutsche Stimme verfügbar. Prüfe die installierten deutschen Systemstimmen auf deinem Gerät. Es wird nichts automatisch heruntergeladen.';
-      localVoiceFeedback(notice, true); toast(notice, true, 10000); return false;
-    }
-    const preferredURI = $('settings-dialog').open ? $('local_voice_uri').value : state.settings.local_voice_uri || '';
-    const preset = $('settings-dialog').open ? $('voice-preset').value : state.settings.voice_preset || 'jarvis';
-    const automaticVoice = preset === 'jarvis' ? localGermanVoices().find(item => /martin|stefan|markus|yannick|hans|conrad/i.test(item.name)) || availableVoice : availableVoice;
-    const voice = localGermanVoices().find(item => preferredURI && item.voiceURI === preferredURI) || automaticVoice;
-    const automaticFallback = !!preferredURI && voice.voiceURI !== preferredURI;
-    const selectionNotice = automaticFallback ? 'Die gewählte Stimme ist auf diesem Gerät nicht verfügbar; eine vorhandene deutsche Systemstimme wird automatisch verwendet.' : voice.name ? `Lokale Stimme: ${voice.name}.` : 'Lokale deutsche Systemstimme.';
-    const utterance = new SpeechSynthesisUtterance(text);
-    utterance.voice = voice; utterance.lang = voice.lang; utterance.rate = preset === 'jarvis' ? .91 : preset === 'clear' ? 1.02 : .98; utterance.pitch = preset === 'jarvis' ? .78 : preset === 'clear' ? 1 : 1;
-    utterance.volume = Number($('volume').value) / 100;
-    utterance.onstart = () => {
-      if (generation !== state.speechGeneration) return;
-      setMode('speaking'); $('audio-label').textContent = automaticFallback ? 'LOKALE STIMME · AUTOMATISCH' : 'LOKALE DEUTSCHE STIMME';
-      localVoiceFeedback(`${selectionNotice} Die Ausgabe läuft. Stop beendet sie.`);
-    };
-    utterance.onend = () => {
-      if (generation !== state.speechGeneration) return;
-      setMode('idle'); localVoiceFeedback(`${selectionNotice} Ausgabe beendet.`);
-    };
-    utterance.onerror = event => {
-      if (generation !== state.speechGeneration || event.error === 'canceled' || event.error === 'interrupted') return;
-      setMode('error'); const notice = 'Die lokale Sprachausgabe ist fehlgeschlagen. Teste sie durch einen direkten Klick auf „Lokale Stimme testen“.';
-      localVoiceFeedback(notice, true); toast(notice, true);
-    };
-    if (generation !== state.speechGeneration) return false;
-    try { speechSynthesis.speak(utterance); return true; }
-    catch (_) { const notice = 'Die lokale Sprachausgabe konnte nicht gestartet werden.'; localVoiceFeedback(notice, true); toast(notice, true); return false; }
+    if(generation===undefined){stopAudio();generation=state.speechGeneration;}
+    setMode('speaking','Die mitgelieferte JARVIS-Stimme wird erzeugt …');
+    localVoiceFeedback('Offline-Sprachengine · keine Systemstimme.');
+    try{
+      const context=await audioContext();if(!context)throw new Error('Dieser Browser unterstützt die Audioausgabe nicht.');
+      const preset=$('settings-dialog').open?$('voice-preset').value:state.settings.voice_preset||'jarvis';
+      const wav=await window.JarvisVoice.render(text,preset);if(generation!==state.speechGeneration)return false;
+      const buffer=await context.decodeAudioData(wav);if(generation!==state.speechGeneration)return false;
+      const source=context.createBufferSource();source.buffer=buffer;
+      const high=context.createBiquadFilter();high.type='highpass';high.frequency.value=90;
+      const low=context.createBiquadFilter();low.type='lowpass';low.frequency.value=5900;
+      const tone=context.createBiquadFilter();tone.type='peaking';tone.frequency.value=1500;tone.Q.value=.7;tone.gain.value=2;
+      const compressor=context.createDynamicsCompressor();compressor.threshold.value=-22;compressor.ratio.value=3;
+      const gain=context.createGain();gain.gain.value=Number($('volume').value)/100;
+      const analyser=context.createAnalyser();analyser.fftSize=256;
+      source.connect(high);high.connect(tone);tone.connect(low);low.connect(compressor);compressor.connect(gain);gain.connect(analyser);analyser.connect(context.destination);
+      let stopped=false;state.audio={pause(){if(stopped)return;stopped=true;try{source.stop();}catch(_){}source.disconnect();high.disconnect();tone.disconnect();low.disconnect();compressor.disconnect();gain.disconnect();analyser.disconnect();},get volume(){return gain.gain.value;},set volume(value){gain.gain.value=value;}};
+      source.onended=()=>{if(generation!==state.speechGeneration)return;stopAudio();setMode('idle');localVoiceFeedback('JARVIS-Ausgabe beendet.');window.dispatchEvent(new Event('jarvis:speech-ended'));};
+      setMode('speaking');$('audio-label').textContent='JARVIS · EIGENE OFFLINE-ENGINE';animateAnalyser(analyser);source.start();return true;
+    }catch(error){if(error.name==='AbortError'||generation!==state.speechGeneration)return false;setMode('idle');localVoiceFeedback(error.message,true);toast(error.message,true);window.dispatchEvent(new Event('jarvis:speech-error'));return false;}
   }
-  if (window.speechSynthesis) speechSynthesis.addEventListener('voiceschanged', updateConfigView);
   function resetWaveform() { document.documentElement.style.setProperty('--audio', 0); for (const bar of waveBars) bar.style.height = '2px'; }
   function animateAnalyser(analyser) { if (state.analyserFrame) cancelAnimationFrame(state.analyserFrame); const data = new Uint8Array(analyser.frequencyBinCount); const tick = () => { analyser.getByteFrequencyData(data); let sum = 0; const stride = Math.max(1, Math.floor(data.length / waveBars.length)); waveBars.forEach((bar, index) => { const value = data[index * stride] / 255; sum += value; bar.style.height = `${2 + value * 31}px`; bar.style.opacity = `${.35 + value * .65}`; }); document.documentElement.style.setProperty('--audio', (sum / waveBars.length).toFixed(3)); state.analyserFrame = requestAnimationFrame(tick); }; tick(); }
   async function audioContext() { const Context = window.AudioContext || window.webkitAudioContext; if (!Context) return null; if (!state.audioContext) state.audioContext = new Context(); if (state.audioContext.state === 'suspended') await state.audioContext.resume(); return state.audioContext; }
-  function stopAudio() { state.speechGeneration++; if (state.cancelVoiceWait) { const cancel = state.cancelVoiceWait; state.cancelVoiceWait = null; cancel(); localVoiceFeedback('Lokale Sprachausgabe gestoppt.'); } state.audioRequest?.abort(); state.audioRequest = null; if (state.audio) { state.audio.pause(); state.audio.src = ''; state.audio = null; } if (state.audioUrl) { URL.revokeObjectURL(state.audioUrl); state.audioUrl = null; } if (window.speechSynthesis) speechSynthesis.cancel(); if (state.analyserFrame) { cancelAnimationFrame(state.analyserFrame); state.analyserFrame = null; } resetWaveform(); if (state.mode === 'speaking') setMode('idle'); }
-  async function speak(text) {
-    stopAudio(); const generation = state.speechGeneration;
-    if (state.settings.elevenlabs_enabled && !['ollama','llamacpp'].includes(state.settings.ai_provider)) { const controller = new AbortController(); state.audioRequest = controller; try { const context = await audioContext(); const blob = await api('/api/voice', { method:'POST', body:JSON.stringify({ text }), signal:controller.signal }); if (generation !== state.speechGeneration) return; state.audioUrl = URL.createObjectURL(blob); const audio = new Audio(state.audioUrl); state.audio = audio; audio.volume = Number($('volume').value) / 100; if (context) { const source = context.createMediaElementSource(audio); const analyser = context.createAnalyser(); analyser.fftSize = 256; source.connect(analyser); analyser.connect(context.destination); audio.addEventListener('play', () => { if (generation !== state.speechGeneration) return; setMode('speaking'); animateAnalyser(analyser); }); } else audio.addEventListener('play', () => setMode('speaking')); audio.addEventListener('ended', () => { if (generation === state.speechGeneration) { stopAudio(); setMode('idle'); } }); audio.addEventListener('error', () => { if (generation === state.speechGeneration) { stopAudio(); toast('Die Audiodatei konnte nicht wiedergegeben werden.',true); } }); await audio.play(); refreshStatus(); return; } catch(error) { if (error.name === 'AbortError' || generation !== state.speechGeneration) return; toast(`${error.message} Lokale Sprachausgabe wird versucht.`, true); } }
-    return speakLocal(text, generation);
-  }
+  function stopAudio() { state.speechGeneration++; window.JarvisVoice?.cancel(); if (state.cancelVoiceWait) { const cancel = state.cancelVoiceWait; state.cancelVoiceWait = null; cancel(); localVoiceFeedback('Lokale Sprachausgabe gestoppt.'); } state.audioRequest?.abort(); state.audioRequest = null; if (state.audio) { state.audio.pause(); state.audio.src = ''; state.audio = null; } if (state.audioUrl) { URL.revokeObjectURL(state.audioUrl); state.audioUrl = null; }  if (state.analyserFrame) { cancelAnimationFrame(state.analyserFrame); state.analyserFrame = null; } resetWaveform(); if (state.mode === 'speaking') setMode('idle'); }
+  async function speak(text) {stopAudio();return speakLocal(text,state.speechGeneration);}
   $('use-system-voice').addEventListener('click', async () => {
     const button = $('use-system-voice');
     const values = { elevenlabs_enabled: false, voice_enabled: true, voice_preset: $('voice-preset').value, local_voice_uri: $('local_voice_uri').value };
@@ -269,8 +199,8 @@
       if (result.providers) state.providers = result.providers;
       $('settings-form').elements.namedItem('elevenlabs_enabled').checked = false;
       updateConfigView();
-      localVoiceFeedback('Lokale Ausgabe als Standard gespeichert. Mit „Lokale Stimme testen“ hörst du deine Auswahl.');
-      toast('Systemstimme ausgewählt. ElevenLabs ist aus; Sprachausgabe ist an.');
+      localVoiceFeedback('Mitgelieferte JARVIS-Stimme gespeichert. Mit dem Test hörst du deine Auswahl.');
+      toast('Mitgelieferte JARVIS-Stimme ist an. ElevenLabs ist aus.');
     } catch (error) { localVoiceFeedback(error.message, true); }
     finally { button.disabled = false; }
   });
@@ -285,7 +215,7 @@
   $('voice-enabled').addEventListener('change', async event => { const enabled = event.target.checked; if (!enabled) stopAudio(); try { const result = await api('/api/settings', { method:'PUT', body:JSON.stringify({ voice_enabled:enabled }) }); state.settings = result.settings || { ...state.settings, voice_enabled:enabled }; toast(enabled ? 'Sprachausgabe für künftige Antworten aktiviert.' : 'Sprachausgabe deaktiviert.'); } catch(error) { event.target.checked = !enabled; toast(error.message,true); } });
   $('volume').addEventListener('input', event => { if (state.audio) state.audio.volume = Number(event.target.value)/100; });
   function stopMicrophone() { if (state.recognition) { state.recognition.onend = null; try{state.recognition.stop();}catch(_){} state.recognition = null; } if (state.micStream) { state.micStream.getTracks().forEach(track => track.stop()); state.micStream = null; } if (state.mode === 'listening') { if (state.analyserFrame) cancelAnimationFrame(state.analyserFrame); state.analyserFrame = null; resetWaveform(); setMode('idle'); } $('mic-button').classList.remove('active'); $('mic-text').textContent = (window.SpeechRecognition || window.webkitSpeechRecognition) ? 'Sprechen' : 'Nicht verfügbar'; }
-  async function startMicrophone() { if (state.recognition) { stopMicrophone(); return; } stopAudio(); const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition; if (!Recognition) { toast('Die Spracheingabe wird von diesem Browser nicht unterstützt. Du kannst weiterhin schreiben.',true); return; } try { const recognition = new Recognition(); state.recognition = recognition; recognition.lang = 'de-DE'; recognition.continuous = false; recognition.interimResults = true; let finalText = ''; const prefix = $('chat-input').value.trim(); recognition.onstart = () => { setMode('listening'); $('mic-button').classList.add('active'); $('mic-text').textContent = 'Stoppen'; }; recognition.onresult = event => { let interim = ''; finalText = ''; for (let i = 0; i < event.results.length; i++) { if (event.results[i].isFinal) finalText += event.results[i][0].transcript; else interim += event.results[i][0].transcript; } $('chat-input').value = [prefix,finalText,interim].filter(Boolean).join(' '); }; recognition.onerror = event => { stopMicrophone(); if (event.error !== 'aborted' && event.error !== 'no-speech') showError(new Error(`Spracheingabe nicht verfügbar (${event.error}). Prüfe die Browserfreigabe.`),false); }; recognition.onend = () => { if(state.recognition!==recognition)return; const text=finalText.trim(); stopMicrophone(); $('chat-input').focus(); if(text && state.settings.speech_auto_send!==false && !state.busy){$('chat-input').value=prefix;sendMessage(text,{keepDraft:true});}else if(text)toast('Sprache erkannt. Prüfe den Text und sende deinen Auftrag.'); }; recognition.start(); if (navigator.mediaDevices?.getUserMedia) { try { const stream = await navigator.mediaDevices.getUserMedia({ audio:true }); if (state.recognition !== recognition) { stream.getTracks().forEach(track => track.stop()); return; } state.micStream = stream; const context = await audioContext(); if (context) { const source = context.createMediaStreamSource(stream); const analyser = context.createAnalyser(); analyser.fftSize=256; source.connect(analyser); animateAnalyser(analyser); } } catch (_) { /* Native recognition can still work without a separate waveform stream. */ } } } catch(error) { stopMicrophone(); showError(new Error('Das Mikrofon konnte nicht gestartet werden. Prüfe die Browserunterstützung und Berechtigungen.'),false); } }
+  async function startMicrophone() { if (state.recognition) { stopMicrophone(); return; } stopAudio(); const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition; if (!Recognition) { toast('Die Spracheingabe wird von diesem Browser nicht unterstützt. Du kannst weiterhin schreiben.',true); return; } try { const recognition = new Recognition(); state.recognition = recognition; recognition.lang = 'de-DE'; recognition.continuous = false; recognition.interimResults = true; let finalText = ''; const prefix = $('chat-input').value.trim(); recognition.onstart = () => { setMode('listening'); $('mic-button').classList.add('active'); $('mic-text').textContent = 'Stoppen'; }; recognition.onresult = event => { if(state.recognition!==recognition)return; let interim = ''; finalText = ''; for (let i = 0; i < event.results.length; i++) { if (event.results[i].isFinal) finalText += event.results[i][0].transcript; else interim += event.results[i][0].transcript; } $('chat-input').value = [prefix,finalText,interim].filter(Boolean).join(' '); }; recognition.onerror = event => { stopMicrophone(); if(event.error!=='aborted'&&event.error!=='no-speech')window.dispatchEvent(new Event('jarvis:microphone-error')); if (event.error !== 'aborted' && event.error !== 'no-speech') showError(new Error(`Spracheingabe nicht verfügbar (${event.error}). Prüfe die Browserfreigabe.`),false); }; recognition.onend = () => { if(state.recognition!==recognition)return; const text=finalText.trim(); stopMicrophone(); $('chat-input').focus(); if(text && state.settings.speech_auto_send!==false && !state.busy){$('chat-input').value=prefix;sendMessage(text,{keepDraft:true});}else if(text)toast('Sprache erkannt. Prüfe den Text und sende deinen Auftrag.'); }; recognition.start(); if (navigator.mediaDevices?.getUserMedia) { try { const stream = await navigator.mediaDevices.getUserMedia({ audio:true }); if (state.recognition !== recognition) { stream.getTracks().forEach(track => track.stop()); return; } state.micStream = stream; const context = await audioContext(); if (context) { const source = context.createMediaStreamSource(stream); const analyser = context.createAnalyser(); analyser.fftSize=256; source.connect(analyser); animateAnalyser(analyser); } } catch (_) { /* Native recognition can still work without a separate waveform stream. */ } } } catch(error) { stopMicrophone(); window.dispatchEvent(new Event('jarvis:microphone-error')); showError(new Error('Das Mikrofon konnte nicht gestartet werden. Prüfe die Browserunterstützung und Berechtigungen.'),false); } }
   const Recognition = window.SpeechRecognition || window.webkitSpeechRecognition; if (!Recognition) { $('mic-button').disabled = true; $('mic-button').title = 'Dieser Browser bietet keine unterstützte Spracherkennung.'; $('mic-text').textContent = 'Nicht verfügbar'; }
   $('mic-button').addEventListener('click', () => { if (state.recognition) { stopMicrophone(); return; } if (!state.micConsented) showDialog('mic-dialog'); else startMicrophone(); });
   $('allow-mic').addEventListener('click', () => { state.micConsented = true; closeDialog('mic-dialog'); startMicrophone(); });
@@ -296,22 +226,22 @@
   function openReminders() { $('reminder-error').textContent=''; const future = new Date(Date.now()+3600000); const pad = n => String(n).padStart(2,'0'); $('reminder-time').value=`${future.getFullYear()}-${pad(future.getMonth()+1)}-${pad(future.getDate())}T${pad(future.getHours())}:${pad(future.getMinutes())}`; showDialog('reminders-dialog'); refreshReminders(); }
   $('nav-reminders').addEventListener('click',openReminders); $('action-reminder').addEventListener('click',openReminders);
   $('reminder-form').addEventListener('submit',async event=>{event.preventDefault();const text=$('reminder-text').value.trim();const due=new Date($('reminder-time').value);if(!text || Number.isNaN(due.getTime()) || due.getTime()<=Date.now()){ $('reminder-error').textContent='Bitte gib einen Text und einen Zeitpunkt in der Zukunft an.';return;} const button=event.currentTarget.querySelector('[type=submit]');button.disabled=true;try{await api('/api/reminders',{method:'POST',body:JSON.stringify({text,due_at:due.toISOString()})});$('reminder-text').value='';$('reminder-error').textContent='';toast('Erinnerung lokal gespeichert.');await refreshReminders();}catch(error){$('reminder-error').textContent=error.message;}finally{button.disabled=false;}});
-  $('image-button').addEventListener('click',()=>{if(['ollama','llamacpp'].includes(state.settings.ai_provider)){toast('Die lokale KI unterstützt hier nur Textgespräche.',true);return;}if(!state.settings.cloud_enabled || !state.providers[(state.settings.ai_provider === 'openai' ? 'openai' : 'gemini') + '_configured']){toast('Aktiviere zuerst den gewählten KI-Anbieter in den Einstellungen. Das Bild wird an diesen Anbieter gesendet.',true);openSettings();return;}if(!window.confirm('Das ausgewählte Bild wird zur Analyse an deinen ausgewählten KI-Anbieter gesendet. Fortfahren?'))return;$('image-input').click();});
+  $('image-button').addEventListener('click',async()=>{if(['ollama','llamacpp'].includes(state.settings.ai_provider)){await window.JarvisOffice.open();$('agent-image').focus();toast('Bild unter „Bild anhängen“ wählen und den Agenten beauftragen. Die Verarbeitung bleibt auf deinem Mac.');return;}if(!state.settings.cloud_enabled || !state.providers[(state.settings.ai_provider === 'openai' ? 'openai' : 'gemini') + '_configured']){toast('Aktiviere zuerst den gewählten KI-Anbieter in den Einstellungen. Das Bild wird an diesen Anbieter gesendet.',true);openSettings();return;}if(!window.confirm('Das ausgewählte Bild wird zur Analyse an deinen ausgewählten KI-Anbieter gesendet. Fortfahren?'))return;$('image-input').click();});
   $('image-input').addEventListener('change',async event=>{const file=event.target.files[0];event.target.value='';if(!file)return;if(state.busy){toast('Bitte warte, bis die aktuelle Anfrage abgeschlossen ist.');return;}if(!['image/png','image/jpeg','image/webp'].includes(file.type)||file.size>4*1024*1024){toast('Bitte wähle ein PNG-, JPEG- oder WebP-Bild mit höchstens 4 MB.',true);return;}const text=$('chat-input').value.trim()||'Beschreibe dieses Bild auf Deutsch.';stopAudio();stopMicrophone();markBusy(true);message('user',`${text}\n[Ausgewähltes Bild: ${file.name}]`);try{const data=await new Promise((resolve,reject)=>{const reader=new FileReader();reader.onload=()=>resolve(String(reader.result).split(',')[1]);reader.onerror=()=>reject(new Error('Das Bild konnte nicht gelesen werden.'));reader.readAsDataURL(file);});const result=await api('/api/image',{method:'POST',body:JSON.stringify({text,image:data,mime:file.type})});$('chat-input').value='';const item=message('assistant',result.reply);addProposals(item,result.proposals||[]);markBusy(false);if(state.settings.voice_enabled&&result.reply)speak(result.reply);refreshStatus();}catch(error){markBusy(false);showError(error);}});
   window.addEventListener('beforeunload',()=>{stopAudio();stopMicrophone();});
   async function initialize() { try { const session=await fetch('/api/session',{cache:'no-store'});if(!session.ok)throw new Error('Die lokale Sitzung konnte nicht gestartet werden.');const data=await session.json();state.token=data.token;await refreshStatus(false);const history=await api('/api/history');for(const entry of history.messages||[])message(entry.role,entry.text||entry.content,entry.created_at||entry.timestamp);await refreshReminders();if(!state.settings.cloud_enabled){$('core-subtitle').textContent='Lokaler Modus. Du bestimmst den nächsten Schritt.';} } catch(error) { setConnected(false); showError(error); } }
   const voiceDialog=document.createElement('dialog');voiceDialog.id='voice-dialog';voiceDialog.className='extras-dialog';
   const voiceHeading=document.createElement('h2');voiceHeading.textContent='Deine JARVIS-Stimme';voiceDialog.append(voiceHeading);
-  const voiceNote=document.createElement('p');voiceNote.textContent='Ein Klick wählt und testet das Profil. Nutzt eine bereits vorhandene deutsche Systemstimme. Keine Downloads, kein API-Schlüssel. Der Klang hängt von deinem Gerät ab; dies ist keine Original-Filmstimme.';voiceDialog.append(voiceNote);
+  const voiceNote=document.createElement('p');voiceNote.textContent='Mitgelieferte deutsche Sprachengine, vollständig ohne Systemstimme, API-Schlüssel oder separate Installation. Synthetische Formantstimme mit eigenem JARVIS-Klang. Keine neuronale Filmstimme.';voiceDialog.append(voiceNote);
   const voiceCards=document.createElement('div');voiceCards.className='voice-presets';voiceDialog.append(voiceCards);
   const quickStatus=document.createElement('p');quickStatus.setAttribute('role','status');voiceDialog.append(quickStatus);
-  for(const [id,label,description] of [['jarvis','JARVIS · Ruhig','Tiefer, gemächlich, kurze klare Ansagen.'],['clear','JARVIS · Klar','Normale Tonhöhe, etwas zügiger.'],['system','System pur','Vorhandene Stimme ohne JARVIS-Anpassung.']]){
+  for(const [id,label,description] of [['jarvis','JARVIS · Ruhig','Tiefer, gemächlich, kurze klare Ansagen.'],['clear','JARVIS · Klar','Normale Tonhöhe, etwas zügiger.'],['system','JARVIS · Dunkel','Tiefer und langsamer, aus derselben Offline-Engine.']]){
     const choice=document.createElement('button');choice.type='button';choice.className='voice-preset-card';choice.dataset.preset=id;const title=document.createElement('strong');title.textContent=label;const detail=document.createElement('span');detail.textContent=description;choice.append(title,detail);voiceCards.append(choice);
-    choice.addEventListener('click',async()=>{choice.disabled=true;stopAudio();stopMicrophone();try{const result=await api('/api/settings',{method:'PUT',body:JSON.stringify({voice_preset:id,local_voice_uri:'',elevenlabs_enabled:false,voice_enabled:true})});state.settings=result.settings;updateConfigView();quickStatus.textContent='Profil gespeichert. Die Hörprobe verwendet nur eine vorhandene lokale Stimme.';voiceCards.querySelectorAll('button').forEach(button=>button.setAttribute('aria-pressed',String(button===choice)));const spoken=await speakLocal('Zu Ihren Diensten, Sir. Systeme bereit. Womit beginnen wir?',state.speechGeneration);if(!spoken)quickStatus.textContent='Auf diesem Gerät ist keine nutzbare lokale deutsche Stimme verfügbar. Es wurde nichts heruntergeladen.';}catch(error){quickStatus.textContent=error.message;}finally{choice.disabled=false;}});
+    choice.addEventListener('click',async()=>{choice.disabled=true;stopAudio();stopMicrophone();try{const result=await api('/api/settings',{method:'PUT',body:JSON.stringify({voice_preset:id,local_voice_uri:'',elevenlabs_enabled:false,voice_enabled:true})});state.settings=result.settings;updateConfigView();quickStatus.textContent='Profil gespeichert. Die mitgelieferte JARVIS-Engine erzeugt die Hörprobe.';voiceCards.querySelectorAll('button').forEach(button=>button.setAttribute('aria-pressed',String(button===choice)));const spoken=await speakLocal('Zu Ihren Diensten, Sir. Systeme bereit. Womit beginnen wir?',state.speechGeneration);if(!spoken)quickStatus.textContent='Die JARVIS-Spracherzeugung konnte nicht starten. Bitte die Audiofreigabe prüfen; es wurde keine Systemstimme verwendet.';}catch(error){quickStatus.textContent=error.message;}finally{choice.disabled=false;}});
   }
   const voiceClose=document.createElement('button');voiceClose.textContent='Schließen';voiceClose.className='secondary-button';voiceClose.onclick=()=>{stopAudio();voiceDialog.close();};voiceDialog.append(voiceClose);voiceDialog.addEventListener('close',()=>{if(!voiceDialog.open)stopAudio();});document.body.append(voiceDialog);
   function openVoiceProfiles(){quickStatus.textContent='';voiceCards.querySelectorAll('button').forEach(button=>button.setAttribute('aria-pressed',String(button.dataset.preset===(state.settings.voice_preset||'jarvis'))));if(!voiceDialog.open)voiceDialog.showModal();}
   window.addEventListener('DOMContentLoaded',()=>{const nav=document.querySelector('.extras-nav');if(nav){const button=document.createElement('button');button.type='button';button.className='secondary-button';button.textContent='Stimme';button.onclick=openVoiceProfiles;nav.append(button);}});
-  window.JarvisBridge={api,message,sendMessage,getSettings:()=>({...state.settings}),refreshStatus,openVoiceProfiles};
+  window.JarvisBridge={api,message,sendMessage,getSettings:()=>({...state.settings}),refreshStatus,openVoiceProfiles,listen:()=>{if(!state.micConsented)showDialog('mic-dialog');else return startMicrophone();},stopListening:stopMicrophone,stopAudio,prepareAudio:audioContext,interaction:()=>({busy:state.busy,mode:state.mode,recording:!!state.recognition,consented:state.micConsented})};
   initialize();setInterval(()=>refreshStatus(),5000);setInterval(refreshReminders,15000);
 })();

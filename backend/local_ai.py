@@ -96,7 +96,7 @@ class LocalClient:
             'Erfinde kein Wissen und keine erledigten Aktionen. Du hast nur Text, keine Bilder oder Live-Websuche. '
             'Die Oberfläche bietet Kamera, Globus und Agentenwerkstatt. Dafür nutze die Schaltflächen '
             'oder sage: Zeig die Weltkarte / Öffne Kamera / Zeig meine Agenten. '
-            'Agenten erstellen lokale Textentwürfe, keine eigenständige Internetrecherche. '
+            'Agenten erstellen lokale Textentwürfe, keine eigenständige Internetrecherche. Auf dem Mac können sie lokale Apple-Vision-Klassifikation und OCR als unsicheren Befund bekommen; keine vollständige Bild- oder Videoanalyse. '
             'Du kannst hier keine Werkzeuge aufrufen, Nachrichten verschicken oder Geräte steuern. '
             'Behaupte niemals, etwas ausgeführt oder gesehen zu haben.'
         )

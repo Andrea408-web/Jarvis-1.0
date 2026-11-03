@@ -362,18 +362,20 @@ def extract_runtime(archive, name):
         raise
 
 
-def _inside(relative):
+def _inside(relative, root=None):
     if not isinstance(relative, str):
         raise ValueError('Ungültiger lokaler Installationspfad.')
-    result = (ROOT / relative).resolve()
-    if Path(relative).is_absolute() or not result.is_relative_to(ROOT.resolve()):
+    root=ROOT if root is None else Path(root)
+    result = (root / relative).resolve()
+    if Path(relative).is_absolute() or not result.is_relative_to(root.resolve()):
         raise ValueError('Installationspfad liegt außerhalb des Projektordners.')
     return result
 
 
-def read_installation(architecture=None):
+def read_installation(architecture=None, root=None):
+    root=ROOT if root is None else Path(root)
     try:
-        path = ROOT / '.jarvis' / 'installed.json'
+        path = root / '.jarvis' / 'installed.json'
         if path.stat().st_size > 2_000_000:
             raise ValueError()
         record = json.loads(path.read_text())
@@ -384,15 +386,58 @@ def read_installation(architecture=None):
         if architecture is not None and record.get('architecture') != architecture:
             raise ValueError()
         for relative, checksum in record['files'].items():
-            path = _inside(relative)
+            path = _inside(relative,root)
             if not _sha(checksum) or not path.is_file() or digest(path) != checksum:
                 raise ValueError()
-        executable, model = _inside(record['executable']), _inside(record['model'])
+        executable, model = _inside(record['executable'],root), _inside(record['model'],root)
         if record['executable'] not in record['files'] or record['model'] not in record['files']:
             raise ValueError()
         return executable, model
     except (OSError, ValueError, TypeError, KeyError, RuntimeError):
         raise ValueError('Bitte einmal „1-JARVIS-einrichten.command“ starten. Die lokale KI ist noch nicht vollständig eingerichtet oder eine Datei wurde verändert.') from None
+
+
+def reuse_previous(architecture):
+    """Reuse verified runtime/model files from a sibling JARVIS folder, no network.
+
+    This only runs during explicit setup. Never copy source code, secrets or user
+    documents. Hard links preserve bytes and quarantine attributes on one volume.
+    """
+    try:
+        candidates=[path for path in ROOT.parent.iterdir() if path.is_dir() and not path.is_symlink() and path.resolve()!=ROOT.resolve() and path.name.casefold().startswith('jarvis')][:20]
+    except OSError:return None
+    for candidate in candidates:
+        created=[];temporary=None
+        try:
+            read_installation(architecture,candidate)
+            record=json.loads((candidate/'.jarvis/installed.json').read_text())
+            if len(record['files'])>512:continue
+            safe=True;total=0
+            for relative in record['files']:
+                parts=PurePosixPath(relative).parts
+                if not parts or parts[0]!='.jarvis' or '..' in parts or '\\' in relative:safe=False;break
+                total+=_inside(relative,candidate).stat().st_size
+            if not safe or total>1_500_000_000:continue
+            if _inside(record['model'],candidate).stat().st_size>MAX_MODEL:continue
+            for relative,checksum in record['files'].items():
+                source=_inside(relative,candidate);target=_inside(relative)
+                if target.exists():
+                    if not target.is_file() or digest(target)!=checksum:raise ValueError('Vorhandene Datei wird nicht überschrieben.')
+                    continue
+                target.parent.mkdir(parents=True,exist_ok=True)
+                try:os.link(source,target)
+                except OSError:shutil.copy2(source,target)
+                created.append(target)
+                if digest(target)!=checksum:raise ValueError('Übernommene Datei wurde verändert.')
+            destination=ROOT/'.jarvis/installed.json';temporary=destination.with_name('reuse-'+uuid.uuid4().hex+'.tmp')
+            temporary.write_text(json.dumps(record));temporary.replace(destination);temporary=None
+            result=read_installation(architecture)
+            print('Vorhandene geprüfte KI aus einem benachbarten JARVIS-Ordner übernommen. Kein neuer Modelldownload.',flush=True)
+            return result
+        except (OSError,ValueError,KeyError,TypeError,RuntimeError):
+            if temporary:temporary.unlink(missing_ok=True)
+            for path in reversed(created):path.unlink(missing_ok=True)
+    return None
 
 
 def _prepare(architecture):
@@ -402,6 +447,8 @@ def _prepare(architecture):
         return existing
     except ValueError:
         pass
+    reused=reuse_previous(architecture)
+    if reused:return reused
     if shutil.disk_usage(ROOT).free < 1_500_000_000:
         raise ValueError('Bitte mindestens 1,5 GB freien Speicher für die Einrichtung bereitstellen.')
     runtime = resolve_runtime(architecture)

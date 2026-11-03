@@ -55,7 +55,7 @@ def run(setup=False):
         except (KeyError, IndexError, TypeError, ValueError):
             raise ValueError('Die lokale KI lieferte noch keine bestätigte Textantwort. JARVIS wurde nicht als bereit ausgegeben.') from None
         Store().update_settings({'ai_provider': 'llamacpp', 'cloud_enabled': False, 'elevenlabs_enabled': False, 'voice_enabled': True})
-        print('Lokale Textantwort geprüft. Öffne JARVIS mit kostenloser Systemstimme …', flush=True)
+        print('Lokale Textantwort geprüft. Öffne JARVIS mit der integrierten JARVIS-Stimme …', flush=True)
         from .server import main
         main(['--open-browser', '--local-only'])
     except OSError:

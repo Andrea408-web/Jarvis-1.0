@@ -1,87 +1,69 @@
-# JARVIS einfach einrichten
+# JARVIS einfach benutzen
 
-Du brauchst **einen ZIP-Download** des Projekts und musst keine KI-Dateien selbst auswählen.
+## Einmal einrichten, später starten
 
-## Einmalig
+Lade das Projekt-ZIP herunter und entpacke es. Öffne **1-JARVIS-einrichten.command**. Python 3.10+, macOS 14+ und eine unterstützte Mac-Architektur müssen vorhanden sein. Der Helfer prüft die Downloadquellen, Größe, Architektur und SHA256-Prüfsummen. Er lädt eine passende Qwen2.5-0.5B-4-Bit-Variante unter 450 MB und ein offizielles llama.cpp-Startpaket unter 150 MB. Falls beim offiziellen Qwen-Repository keine passende prüfbare Variante verfügbar ist, wird dasselbe kleine Modell von bartowski geprüft; die Quelle wird angezeigt. Keine größere KI wird automatisch geladen. Internet wird einmal für diese Einrichtung benötigt.
 
-1. Lade JARVIS über den grünen GitHub-Button **Code → Download ZIP** herunter und entpacke die ZIP-Datei.
-2. Beende eine alte JARVIS-Sitzung in deren Terminal mit **Control + C**.
-3. Öffne im entpackten Ordner **1-JARVIS-einrichten.command**.
-4. Lass das Terminal geöffnet und warte. Der Helfer erkennt deinen Mac, lädt das passende llama.cpp-Paket und das kleine KI-Modell, prüft beide Dateien und startet danach KI und JARVIS zusammen. Der Browser öffnet sich automatisch.
+Die deutsche Spracherzeugung und ihre Sprachdaten sind bereits im Projekt enthalten, einschließlich der freien Quellen und Lizenztexte. Kein Stimmenkonto, keine Systemstimme und keine separate Stimmeninstallation. Das Sprachpaket samt Quellen vergrößert den entpackten Projektordner um ungefähr 10 MB; es ist kein großes neuronales Sprachmodell.
 
-Die Auswahl „Kleine lokale KI“, die Verbindung und die kostenlose Systemstimme werden gesetzt. **Du musst keinen API-Schlüssel, keine Voice ID und keinen Port eingeben.** Es wird nichts in eine Cloud-Ausweichroute geschickt.
+Der Einrichter startet JARVIS nach erfolgreicher Einrichtung. Später nur **2-JARVIS-starten.command** öffnen. Das Terminal bleibt offen. **Control + C** beendet JARVIS und nur die vom Starter erzeugte lokale KI. Nicht beide Startdateien gleichzeitig öffnen. Eine bestehende gültige Installation im selben Projektordner wird wiederverwendet. Wenn du die letzte Version neu entpackst, lasse den alten JARVIS-Ordner daneben liegen. Der Einrichter sucht ausschließlich benachbarte JARVIS-Ordner nach passenden bereits geprüften KI-Dateien ab und übernimmt sie nach erneuter SHA256-Prüfung. Er kopiert keine Schlüssel, Dokumente oder alten Programmdateien und verändert den alten Ordner nicht. So wird bei einer gültigen alten Einrichtung kein neuer großer Modelldownload benötigt.
 
-Falls du den Start lieber im Terminal ausführst: `cd ` mit Leerzeichen eingeben, den entpackten JARVIS-Ordner hineinziehen, Enter drücken und dann:
+Alternativ im Terminal: `cd ` mit Leerzeichen eingeben, den entpackten JARVIS-Ordner hineinziehen, Enter drücken. Einmal `python3 -m backend --setup-small-ai`, später `python3 -m backend --easy-local`.
 
-```bash
-python3 -m backend --setup-small-ai
-```
+## Mit dem Kern sprechen
 
-## Später
+Tippe den goldenen Kern an oder klicke **Mit Jarvis sprechen**. Beim ersten Mal bestätigst du die Mikrofoninformation und die Browserfreigabe. Nach einem erkannten Satz wird der Text automatisch gesendet; JARVIS antwortet mit der mitgelieferten Stimme und hört danach wieder zu. Das funktioniert auch bei geöffneter Agentenansicht. Getippte Entwürfe werden nicht automatisch mitgeschickt.
 
-Nur **2-JARVIS-starten.command** öffnen. Das startet KI und JARVIS gemeinsam, prüft eine echte lokale Textantwort und öffnet den Browser. Dieser normale Start lädt nichts neu herunter und benötigt nach der Einrichtung kein Internet. Das Terminal geöffnet lassen; **Control + C** beendet JARVIS und nur den von diesem Starter erzeugten KI-Prozess.
+Erneutes Antippen oder **Gespräch beenden** stoppt das Gespräch. Laufende Agentenaufträge laufen davon unabhängig weiter und lassen sich in ihrer Ergebnisansicht separat abbrechen. Der Stop-Knopf beendet auch die Klatscherkennung. Beim Ausblenden der Seite werden Mikrofone und Gespräch gestoppt. Nach einem Neustart hört JARVIS nicht automatisch zu.
 
-Alternativ im Projektordner:
+Optional: **Doppelklatschen aktivieren**. Dafür bleibt das Mikrofon sichtbar eingeschaltet. Zwei kurze Klatscher starten oder beenden ein Gespräch. Die Klatscher werden lokal ausgewertet; die Erkennung kann bei Hintergrundgeräuschen unzuverlässig sein. Während JARVIS spricht, werden Klatscher ignoriert, damit seine Stimme sich nicht selbst aktiviert.
 
-```bash
-python3 -m backend --easy-local
-```
+Die **Spracherkennung** hängt vom Browser ab und kann durch dessen Anbieter online verarbeitet werden. Sie ist nicht garantiert offline. Der Einwilligungsdialog erklärt dies, bevor du sie nutzt. Die **Sprachausgabe** ist davon unabhängig und wird mit der mitgelieferten Engine lokal erzeugt. Ohne Browser-Spracherkennung kannst du schreiben und trotzdem die JARVIS-Stimme hören.
 
-## Was geladen wird
+## JARVIS-Stimme
 
-- Eine kleine 4-Bit-Variante von **Qwen2.5-0.5B-Instruct**, ungefähr 400 MB. Der Helfer versucht Q4_K_M, Q4_K_S und Q4_0. Ist beim offiziellen Qwen-Repository keine prüfbare Variante unter der Grenze verfügbar, prüft er dasselbe Modell im Community-Repository **bartowski/Qwen2.5-0.5B-Instruct-GGUF**. Quelle und tatsächliche Größe werden angezeigt. Der Helfer prüft die tatsächliche Größe vorab und lädt kein Modell über **450 MB**.
-- Das zur tatsächlichen Mac-Architektur passende offizielle **llama.cpp**-Paket, höchstens **150 MB**. Die genaue Größe wird vor dem Download angezeigt.
+**Stimme → JARVIS · Ruhig**, **Klar** oder **Dunkel** wählt und testet den Klang mit einem Klick. Die Stimme basiert auf einer eigenen deutschen Formant-Konfiguration der mitgelieferten freien meSpeak/eSpeak-Engine. Sie benutzt keine Systemstimme und lädt keinen externen Sprachdienst. Sie klingt synthetisch und robotisch, nicht wie eine neu trainierte menschliche Filmstimme. Lautstärke und Stop findest du unter dem Kern.
 
-Es sind also zwei automatische Dateien im Hintergrund; du wählst sie nicht selbst aus. Die Dateien landen nur im entpackten Projektordner. Für Download und Entpacken sollten mindestens **1,5 GB Speicher frei** sein. Das Modell und sein Arbeitsspeicher sind zusätzliche Daten; völlig ohne Modelldownload kann keine neue Offline-KI bereitgestellt werden. Das kleine Modell ist deutlich schwächer als ChatGPT.
+## Agenten und Bilder
 
-## Voraussetzungen und Sicherheit
+**Agenten** öffnet die Werkstatt. ATLAS plant, NOVA schreibt, SENTINEL prüft Texte, BAUER erstellt eine anklickbare Checkliste und STUDIO erstellt Werbeskripte und Produktclips. Die 3D-Ansicht hat einen einstellbaren Blickwinkel und lässt sich auf eine Liste umschalten. Bewegungen und Licht zeigen tatsächliche Arbeit; es gibt keine erfundenen Prozentwerte.
 
-Du brauchst den Mac mit **macOS 14 oder neuer**, eine unterstützte ARM64- oder Intel-Architektur, **Python 3.10 oder neuer** sowie für die einmalige Einrichtung Internet. Python wird nicht automatisch installiert. Die tatsächliche Kompatibilität des offiziellen Startpakets wird spätestens beim lokalen Start geprüft; eine Architekturauswahl allein garantiert noch keinen funktionierenden Modellbetrieb.
+Beispiele: **„Beauftrage einen Agenten, der einen Lernplan erstellt“**, **„Beauftrage Nova: Schreibe eine Begrüßung“**, **„Ein Agent soll eine anklickbare Checkliste erstellen“**. Nur wenn tatsächlich ein Auftrag angelegt wurde, bekommst du eine Auftragskennung. Ergebnisse stehen unter **Aufträge & Ergebnisse**. Eine fehlende lokale KI erscheint als Fehler, nicht als Erfolg.
 
-Downloads verwenden macOS-curl mit aktivierter HTTPS-Prüfung, um nicht vom zuvor gemeldeten Python-Zertifikatsspeicher abhängig zu sein. Es werden SHA256-Prüfsummen aus den Release-Metadaten von llama.cpp und den Metadaten der angezeigten Modellquelle geprüft. Wenn die Prüfsumme fehlt oder nicht stimmt, wird nichts ausgeführt. Modellrevision und Downloadgrößen sind fest an diese Metadaten gebunden. Es gibt keine automatische Wahl eines größeren Modells, keine Ausführung von Installationsskripten aus dem Internet, keine Änderungen an Systemeinstellungen, kein sudo und kein Umgehen von macOS-Sicherheitsmeldungen. Nur die ausdrücklich heruntergeladenen, geprüften lokalen Programmdateien erhalten die für ihren Start nötigen Dateirechte.
+Ein bereits vorhandenes lokales Textmodell verarbeitet höchstens acht offene Aufgaben nacheinander. Beim Abbrechen werden späte Resultate verworfen; eine laufende Berechnung kann noch auslaufen. Nach einem Serverneustart werden offene Jobs als unterbrochen markiert und nicht automatisch neu ausgeführt.
 
-Vorhandene fremde Prozesse werden nicht beendet. Wenn ein Port belegt ist, schließe deine alte Sitzung in ihrem Terminal. Bei einer Sicherheitsmeldung nutze die regulären macOS-Freigaben für eine vertrauenswürdige Quelle; der Helfer entfernt keine Sicherheitsmarkierungen.
+Unter **Bild anhängen** wählst du ein Foto und beschreibst, was du möchtest. Vor dem Senden wird es auf höchstens 1280 Pixel verkleinert und als JPEG neu erzeugt; ursprüngliche Metadaten werden dabei nicht übernommen. Erst **Auftrag starten** oder ein ausdrücklich gesprochener Agentenauftrag überträgt es an deinen eigenen JARVIS-Server. Bilder und Ergebnisse werden privat im JARVIS-Datenordner gespeichert, nicht an einen externen KI-Dienst gesendet. Das Löschen des normalen Chatverlaufs löscht die Agentenaufträge und ihre Bilder nicht.
 
-## Stimme ändern
+Auf dem Mac versucht JARVIS **Apple Vision** für lokale Bildklassifikation und Texterkennung zu verwenden. Dafür wird kein neues großes Modell geladen. Die Labels, Konfidenzen und erkannten Texte werden dem kleinen Textmodell als unsicherer Befund übergeben. Das ist kein vollständiges Bildverständnis, keine laufende Videoanalyse und kein verlässliches Minecraft-Coaching. Außerhalb des Macs oder bei einem Analysefehler wird das deutlich angezeigt. Dein Bild kann dann weiterhin als Gestaltungsmaterial für STUDIO dienen; JARVIS behauptet keine erkannten Bildinhalte.
 
-In JARVIS: **Einstellungen → Lokale Sprachausgabe → Deutsche Systemstimme → Systemstimme verwenden → Lokale Stimme testen**. Die Liste zeigt nur tatsächlich vom Browser gemeldete deutsche lokale Stimmen.
+## Werbung mit eigenem Produktfoto
 
-## Wenn die Einrichtung stoppt
+Wähle **STUDIO**, hänge ein Produktfoto an und beschreibe das Produkt und die gewünschte Werbung. Das kleine Textmodell schreibt das Skript. Im fertigen Ergebnis kannst du die Vorschau ansehen und den Film exportieren. Der Clip verwendet dein Foto mit Kamerabewegungen, Szenentexten und optional der mitgelieferten JARVIS-Sprecherstimme. Die reine Vorschau ist stumm; die Sprecherstimme wird beim Export hinzugefügt.
 
-Lass die genaue Meldung im Terminal stehen und teile sie ohne Schlüssel. Ein abgebrochener Download wird nicht als gültig behandelt. Bereits vollständig geprüfte Downloads werden bei einem erneuten Einrichten wiederverwendet. Sobald die gesamte Installation gültig ist, braucht auch ein erneutes Einrichten keinen weiteren Download.
+Lasse den Bereich während des Exports sichtbar geöffnet. Je nach Skript dauert er etwa 9–30 Sekunden. Unterstützte Browser liefern WebM oder MP4. Ein ausgeblendeter Tab unterbricht den Export. Eine unbrauchbar kleine Datei wird nicht als Erfolg angeboten.
 
-**Prüfstand:** Der Einrichtungsablauf wurde in der Linux-Cloud mit kontrollierten Download-Daten, Archiven, Prozessen und HTTP-Antworten geprüft. Echte Modell-/Binärdownloads und die Ausführung auf deinem Mac sind dort nicht verifiziert. Die offiziellen Metadaten-APIs waren aus der Cloud nicht erreichbar; falls die Quelle auf deinem Mac keine Prüfsumme oder kein passendes Paket bereitstellt, stoppt der Helfer mit einer Erklärung.
+**Keine generative Film-KI:** Es werden keine neuen Filmszenen aus einem Prompt erzeugt. Unter der Vorgabe „nur wenig größer, kein externer KI-Dienst“ ist diese Funktion nicht möglich. Dieser Produktfilm ist eine lokale Montage aus deinem Bild und einem KI-Skript, kein Ersatz für ein großes Videomodell. Auch die allgemeine Denkfähigkeit des kleinen Textmodells wird dadurch nicht auf ChatGPT-Niveau angehoben.
 
-Der Helfer unterstützt auch offizielle stabile Veröffentlichungen, die statt Binärpaketen nur eine Datei `nightly-tag.txt` enthalten: Er prüft deren SHA256 und verwendet exakt den darin genannten offiziellen Build. Die Datei-, Architektur- und Prüfsummenkontrollen der eigentlichen Downloads bleiben aktiv.
+## Deutschland, Kameras und Fußball
 
+**Welt & Kameras → Deutschland** filtert deutsche Standorte. Der Katalog enthält unter anderem Zugspitze/Panomax, München und Berlin sowie internationale Standorte. Beispiel: **„Zeig Kameras in München“**. **In Jarvis anzeigen** lädt die öffentliche Seite im Fenster. Verbietet der Anbieter die Einbettung, öffne den sichtbaren offiziellen Link. Verfügbarkeit, Aktualisierung, Cookies und etwaige Beschränkungen bestimmt der Betreiber. JARVIS durchsucht keine privaten Kameras und umgeht keine Zugangssperren.
+
+**Fußball & Live** zeigt offizielle Angebote von Sportschau, ARD und ZDF, vielfach ohne Konto. Ob ein bestimmtes Spiel als freier Videostream verfügbar ist, hängt von Sendezeit, Standort und Übertragungsrechten ab. Kein vollständiger Bundesliga-Zugang wird versprochen.
 
 ## Sprechen, Weltkarte und Handy
 
-- Mikrofon anklicken, sprechen und eine Pause machen: Der erkannte Text wird automatisch gesendet. Unter **Einstellungen → Sprache und Kamera** lässt sich das abschalten. Getippte Entwürfe bleiben erhalten. Spracheingabe hängt von Safari/Browserunterstützung ab und kann durch den Browser online verarbeitet werden.
-- **Welt & Kameras** öffnet einen lokal gezeichneten, drehbaren Globus. Beispiel: „Zeig öffentliche Kameras in London“. Auch New York, Reykjavík und Venedig sind hinterlegt. JARVIS fokussiert den Standort und zeigt den offiziellen Link. „Kamera öffnen“ öffnet die öffentliche Seite in einem neuen Tab. Blockierbare Einbettungen entfallen; Verfügbarkeit und etwaige Anmeldung liegen beim Anbieter. Es werden keine privaten Kameras gesucht oder Schutzmechanismen umgangen.
-- **Handy verbinden** am Mac zeigt die Kopplung. Mac und iPhone/iPad bleiben im selben vertrauenswürdigen WLAN; der Mac muss weiterlaufen. Einmalig wird ein eigenes HTTPS-Zertifikatsprofil erzeugt. Per Finder/AirDrop übertragen, in iOS installieren und unter **Allgemein → Info → Zertifikatsvertrauenseinstellungen** bewusst vertrauen. Vergleiche den Fingerabdruck mit dem Mac. Das Profil enthält nur das öffentliche Zertifikat, keine privaten Schlüssel oder Geräteverwaltung. Vertraue ausschließlich deinem eigenen Profil; entferne es nach Ende der Nutzung wieder.
-- Danach den QR-Code scannen: Er gilt fünf Minuten und nur einmal, gekoppelte Sitzungen höchstens zwölf Stunden. Den Kopplungslink nicht öffentlich weitergeben. **Verbindung beenden** widerruft alle Sitzungen. Ein neuer Mac-Start benötigt eine neue Kopplung. Ohne das Zertifikatsvertrauen gibt Safari die Kamera nicht frei; die App verändert keine System-Vertrauensregeln automatisch. Bei geändertem WLAN/IP die Verbindung neu vorbereiten.
-- In Safari über **Teilen → Zum Home-Bildschirm** ablegen. JARVIS läuft weiterhin auf dem Mac; das Handy installiert keine KI-Gewichte.
-- **Kamera → Eigene Kamera erlauben**, anschließend **Kamera starten**. Minecraft-Übungen lassen sich dort optional aufklappen. Die Vorschau stoppt beim Schließen, Ausblenden oder Widerrufen der Einstellung. Es werden keine Bilder gespeichert oder hochgeladen.
+Mac und iPhone/iPad müssen im selben vertrauenswürdigen WLAN sein; der Mac bleibt eingeschaltet. **Handy verbinden** erzeugt am Mac eine private HTTPS-Verbindung und einen kurz gültigen einmaligen Kopplungslink samt QR-Code.
 
-**Keine echte Bildanalyse:** Das zugelassene kleine Modell versteht nur Text. Es wird kein zusätzliches Bildmodell heruntergeladen. Der 10-Minuten-Minecraft-Plan beruht auf Edition, Version, Steuerung und Übungsziel; er beurteilt keine Kamerabilder und erkennt keine Spiele oder Gegenstände. Java bis 1.8, Java ab 1.9 und Bedrock werden unterschiedlich erklärt. Für andere Lernfragen kannst du dem Textassistenten beschreiben, was du üben möchtest.
+1. **Verbindung vorbereiten** anklicken.
+2. **Profil im Finder zeigen** und das eigene JARVIS-Heimnetz.mobileconfig per AirDrop auf dein eigenes iPhone/iPad übertragen. Fingerabdruck mit dem Mac vergleichen.
+3. Auf iOS unter **Profil geladen** installieren und unter **Allgemein → Info → Zertifikatsvertrauenseinstellungen** bewusst der eigenen JARVIS-Zertifizierungsstelle vertrauen. Das Profil enthält nur das öffentliche Zertifikat, keine privaten Schlüssel oder Geräteverwaltung. Entferne es nach Ende der Nutzung wieder.
+4. QR-Code scannen; er gilt fünf Minuten und nur einmal. Sitzungen gelten höchstens zwölf Stunden. Nach einem neuen Serverstart neu koppeln. **Verbindung beenden** widerruft die Sitzungen.
+5. In Safari **Teilen → Zum Home-Bildschirm** wählen. **Kamera → Kamera starten** und die Browserfreigabe bestätigen.
 
-**Prüfgrenzen:** Die Weboberfläche wird in Chromium mit simuliertem Mikrofon/Kamerastream und die Handykopplung mit lokalem TLS und explizit vertrauenswürdigem Testzertifikat geprüft. Echte Safari-/iOS-Freigaben, AirDrop, öffentliche Livevideos und die KI-Ausführung auf einem Mac sind in der Linux-Cloud nicht überprüfbar.
+Ohne vertrauenswürdiges HTTPS gibt Safari die Handy-Kamera nicht frei. JARVIS verändert keine System-Vertrauensregeln automatisch und deaktiviert keine Sicherheitsprüfungen. Die eigene Kameravorschau stoppt beim Schließen, Verbergen oder Widerrufen. Sie speichert oder überträgt nicht automatisch Bilder; nur ausdrücklich angehängte Agentenbilder werden gesendet.
 
+## Prüfstand und Grenzen
 
-## Neue Stimmprofile und Agentenwerkstatt
+Python- und HTTP/TLS-Tests laufen in Linux. Die Weboberfläche, echte Spracherzeugung, exportierte Video-/Audiotracks und Gesprächsabläufe werden in Chromium geprüft; Mikrofon und Spracherkennung werden dafür simuliert. Apple-Vision-Ausführung, echte Mac-/iOS-Freigaben, AirDrop, native Safari-Spracherkennung und externe Livevideos sind in der Cloud nicht verifiziert. Die Modellqualität wird nicht aus simulierten Testantworten abgeleitet.
 
-**Stimme → JARVIS · Ruhig** wählt und testet das tiefere Stimmprofil mit einem Klick. Es nutzt ausschließlich eine vorhandene lokale deutsche Stimme; es wird keine neue Stimme installiert. Falls du den Klang nicht magst, teste **Klar** oder **System pur**. In den Einstellungen kannst du weiterhin eine konkrete vorhandene Stimme wählen. Es handelt sich um Stimmprofile, keine mitgelieferte neuronale Filmstimme. Auf Geräten ohne lokale deutsche Stimme ist der Wunsch nach beliebiger Sprache ohne vorhandene Sprachdaten technisch nicht erfüllbar; JARVIS zeigt das an.
-
-**Agenten** öffnet die Werkstatt. Wähle einen Agenten, beschreibe den Auftrag und klicke **Auftrag starten**. Oder sage: **„Beauftrage Nova: Schreibe eine freundliche Begrüßung.“** ATLAS plant, NOVA schreibt Entwürfe, SENTINEL prüft einen übergebenen Text. In **Aufträge & Ergebnisse** klappst du das Resultat auf und kannst es kopieren. Die Ansicht lässt sich von 3D auf Liste umschalten. Die Computer leuchten beim tatsächlichen Arbeiten; es gibt keine erfundenen Prozentanzeigen.
-
-Das bereits vorhandene lokale Modell wird gemeinsam genutzt: höchstens acht offene Aufgaben, nacheinander verarbeitet. Ein Auftrag wartet, solange das Modell im Chat beschäftigt ist. Fehlende KI erscheint als Fehler. Beim Abbrechen wird ein verspätetes Ergebnis verworfen; die laufende Berechnung kann noch auslaufen. Beim Serverneustart werden offene Aufträge als unterbrochen markiert und nicht automatisch neu ausgeführt. Aufgaben und fertige Ergebnisse bleiben im privaten JARVIS-Datenordner gespeichert, getrennt vom normalen Chatverlauf. Das Löschen des Chatverlaufs löscht diese Aufträge nicht.
-
-Die Agenten sind Rollen für lokale Textaufgaben. Sie haben keine eigenständige Websuche, keine Kameraaugen und führen keine Änderungen an deinen Geräten durch. Ein fertiger Entwurf ist kein Nachweis, dass eine darin beschriebene reale Aktion ausgeführt wurde. Fakten bitte prüfen. Ohne größeres oder externes Modell bleibt die Sprach- und Denkqualität der kleinen KI begrenzt.
-
-
-## Direkte Aufträge, Mini-Apps und Textvideos
-
-„Beauftrage einen Agenten, der eine anklickbare Checkliste erstellt“ startet BAUER. Im fertigen Ergebnis kannst du die Schritte abhaken; Häkchen werden im Browser auf diesem Gerät gespeichert. „Ein Agent soll eine Werbung als Video erstellen“ startet STUDIO. Im Ergebnis erscheinen Vorschau und Videoexport. Es ist eine lokal gerenderte Textanimation ohne Ton, keine generative Film-KI. Der Export dauert etwa neun Sekunden; lasse den Bereich dabei geöffnet und sichtbar. Je nach Browser wird WebM oder MP4 unterstützt. Die lokale Text-KI muss laufen, um das Skript zu erzeugen.
-
-Öffentliche Kameraseiten lassen sich über „In Jarvis anzeigen“ im Fenster laden. Verbietet der Anbieter die Einbettung, ist nur dessen eigener Tab nutzbar; JARVIS umgeht diese Einschränkung nicht. Die eigene Gerätekamera kann direkt mit „Kamera starten“ und der Browserfreigabe aktiviert werden.
+TikTok war aus dieser Cloud nicht erreichbar. Eine Analyse sämtlicher Videos von Moritz Maacker wird deshalb nicht behauptet.

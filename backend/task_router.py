@@ -7,6 +7,7 @@ def task_request(text):
     if not re.search(r'\b(?:'+names+r')\b',clean,re.I):return None
     if not re.search(r'beauftrag|auftrag|\blass\b|\bsoll\b|erstell|mach|bau|schreib|produzier',clean,re.I):return None
     if re.search(r'^(?:jarvis[, ]+)?(?:warum|wieso|was kann|wie funktioniert)\b',clean,re.I) or re.search(r'\b(?:nicht|keinen?|niemals)\b.{0,30}(?:beauftrag|agent)|beauftrag\w*\s+keinen?',clean,re.I):return None
+    if re.search(r'^(?:jarvis[, ]+)?(?:was (?:machen|macht|tun|ist|sind|soll)|wie (?:arbeiten|geht)|zeig|zeige|öffne)\b',clean,re.I):return None
     role='planner'
     if re.search(r'video|werbung|werbeclip|studio',clean,re.I):role='studio'
     elif re.search(r'plugin|mini.?app|anklickbar|checkliste|bauer',clean,re.I):role='builder'

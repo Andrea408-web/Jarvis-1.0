@@ -1,49 +1,28 @@
-# Geprüfter Stand
+# Prüfstand
 
-Datum: 2. November 2026. Ausführung in einer Linux-x86_64-Cloud mit Python 3.12.14; der persönliche Mac und das iPhone waren nicht angeschlossen.
+Stand: 3. November 2026. Linux-Cloud; der persönliche Mac und das iPhone sind nicht verbunden.
 
-## Bestanden
+## Verifiziert
 
-- `python3 -m unittest discover -s tests -v`: **122 Tests**, alle bestanden, kein Test übersprungen. Laufzeit rund 12 Sekunden. Für Loopback-Sockets wurde die vorgesehene Cloud-Sandboxfreigabe genutzt.
-- Darunter echte HTTP-/HTTPS-Verbindungen, explizit vertrautes temporäres TLS-Zertifikat, Basic-Authentifizierung, Origin-/Host-Prüfungen und Prozess-Token.
-- Maximal 24 Handler gleichzeitig; langsame Header laufen aus; ein Client ohne TLS-Handshake blockiert andere Clients nicht.
-- Persistenz von Gesprächen, Einstellungen, Tageslimits und Erinnerungen; atomare Budgetgrenzen bei parallelen Anfragen.
-- Bestätigung vor Dateivorgängen; Einmaligkeit und Ablauf; Schutz vor Pfadwechseln, symbolischen Links, Hardlink-Lesen und Überschreiben.
-- Echte native Rückgabecodes werden ausgewertet. Auf Linux liefert eine Mac-Aktion einen klaren Fehler, keinen Erfolg.
-- Offizielle Gemini-/ElevenLabs-Anfrageformate mit kontrollierten Testantworten, Kontext, Funktionsvorschläge, Bildformatgrenzen, Quoten und sichere Anbieterfehler.
-- `node --check frontend/app.js`, Python-Kompilierung und Shell-Syntaxprüfung des Mac-Starters.
-- Browserprüfung mit vorhandenem Chromium: lokale Verbindung, Hilfe/Status, Rechner-Bestätigung mit korrekter Linux-Fehlermeldung, Einstellungen, Erinnerung speichern und erledigen. Keine JavaScript-Fehler. Desktop und 390-Pixel-Mobilansicht ohne horizontalen Überlauf.
-- Schlüsseleinrichtung im echten Browser mit erfundenen Sitzungsschlüsseln für beide Anbieter geprüft: Eingaben geleert, keine Schlüssel in Browser-Speichern, Statusantworten oder SQLite, Cloud-Freigaben bleiben ausgeschaltet. Native Schlüsselbundbefehle mit kontrollierten Rückgaben geprüft, einschließlich fehlgeschlagener Speicherung und sicherem Laden ohne Überschreiben vorhandener Umgebungsbindungen.
-- Verbindungsdiagnose mit kontrollierten Antworten geprüft: Zertifikatsfehler, DNS, Zeitüberschreitung und andere Transportfehler bleiben unterscheidbar, ohne Schlüssel oder rohe Fehlertexte auszugeben. Nur ausdrücklich ausgelöster GET-Katalogabruf, keine automatische Prüfung, keine Schlüsselübertragung, kein Generieren von Text oder Audio; HTTP 403 wird nicht als bestätigte Anbieterbereitschaft ausgegeben.
-- Browserprüfungen mit kontrollierten Sprachstimmen: nachgeladene lokale deutsche Stimme erkannt, entfernte Stimmen und lokale englische Stimmen abgewiesen, Lautstärke berücksichtigt, Stop verhindert verspätete Ausgabe. Der lokale Stimmtest ruft weder Mikrofon noch ElevenLabs auf. Verbindungsschaltflächen lösen genau eine Anfrage aus. Keine JavaScript-Fehler.
-- Auswahl aus zwei kontrollierten lokalen deutschen Stimmen im Browser geprüft: Auswahl spricht vor dem Speichern, bleibt bei Nachladen der Stimmen erhalten und wird dauerhaft gespeichert. „Systemstimme verwenden“ schaltet ausschließlich ElevenLabs aus und Sprachausgabe ein. Fehlende gespeicherte Stimme bleibt erhalten, automatischer Ersatz wird angezeigt. Kein Anbieteraufruf.
-- Optionalen Zertifikatshelfer mit kontrollierten Prozessantworten geprüft: Linux und unpassende Python-Installationen abgewiesen; nur exakter vorhandener python.org-Skriptpfad für die laufende Version; keine Shell oder sudo, begrenzte Laufzeit, keine Ausgabe vertraulicher Installationsdetails. CLI startet weder Server noch API, Schlüsselabfrage oder Browser. Im Test wurde kein Installer ausgeführt.
-- Laufender lokaler Server: authentifizierte Status-, Verlaufs- und Erinnerungsabfragen antworten mit HTTP 200. Cloud-Funktionen ausgeschaltet.
-- Kein geteilter Original-API-Schlüssel in Projektdateien. Keine Pakete installiert und keine Systemberechtigungen erweitert.
+- **145 Python-Tests bestanden**, keine übersprungen. Python-Suite mit echten lokalen HTTP-/TLS-Verbindungen, Host-/Origin-/Token-Prüfung, privater Ablage, Budgetgrenzen und sicheren bestätigten Aktionen. Temporäre TLS-Zertifikate werden explizit vertraut; TLS-Prüfung wird nicht abgeschaltet.
+- Agentenaufträge: natürliche Formulierungen führen zu einem tatsächlichen Job. Queue, Fehler, Abbruch, Neustart und getrennte Gespräche sind getestet. Sprachmodellantworten sind hierfür kontrollierte Fixtures; daraus wird keine echte Modellqualität abgeleitet.
+- Bildanhänge: Format-/Größenprüfung, private Dateien mit Modus0600, Migration bestehender Datenbanken, Rückgabe lokaler Bildbefunde und Übergabe als Daten statt auszuführende Befehle. Auf Nicht-Macs wird kein vorhandenes Bildverständnis behauptet.
+- Eigene deutsche Stimme: echte eSpeak/meSpeak-Spracherzeugung im Browser, decodierbare PCM-Daten mit Sprachsignal und echte Web-Audio-Wiedergabe. Jeder Systemstimmen-Aufruf wird im Integrationstest als Fehler behandelt. Keine externen Sprachrequests. Die Engine ist keine neu trainierte neuronale Stimme; es handelt sich um eine mitgelieferte freie Formantengine mit eigener Konfiguration.
+- Gesprächsablauf: Kernaktivierung, Mikrofoninformation, automatisches Senden, Wiederaufnahme nach einer Antwort, Agentenansicht während des Gesprächs, tatsächlicher Job nach gesprochenem Auftrag und vollständiger Mikrofon-Stop. Spracherkennung und Mikrofon sind simuliert; die ausgehende Stimme ist echt. Ein Rennen zwischen Einwilligungsdialog und sehr kurzer erster Spracheingabe wurde behoben.
+- Lokale Doppelklatscherkennung: synthetische Mikrofonimpulse laufen durch den tatsächlichen RMS-Detektor. Start/Stop und Freigabe aller Audiotracks sind geprüft. Das ist kein Nachweis für zuverlässige Erkennung in jedem physischen Raum.
+- Produktfilm: generiertes Testfoto wird über den normalen Bildauftrag hochgeladen, im Film tatsächlich verwendet und mit der echten mitgelieferten Sprecherstimme exportiert. `ffprobe` bestätigt Video- und Audiotrack sowie 720×720 Pixel; `ffmpeg` decodiert ein Bild. Eine unbrauchbar kleine Aufnahme wird nicht als Erfolg angeboten. Keine generierten Filmszenen oder echte Film-KI wird behauptet.
+- Mobiles Layout: 390 Pixel Breite, Deutschlandfilter, öffentliche Anbieterlinks, Sportverzeichnis, eigene Kameravorschau mit simuliertem Video und ausdrücklich gewählte Aufnahme an Agenten; danach enden die Kameratracks.
+- Update ohne unnötigen KI-Neudownload: passende Dateien aus einem benachbarten alten JARVIS-Ordner werden nur nach Architektur-/SHA256-Prüfung wiederverwendet. Geänderte Dateien, falsche Architektur, Konflikte und Dateien außerhalb des Cachebereichs werden abgewiesen. Alte Schlüssel und Dokumente werden nicht übernommen. Entfernen des alten Ordners zerstört die übernommenen Dateien nicht.
+- Kein Nutzer-API-Schlüssel in Projektdateien; keine systemweiten Vertrauens- oder Sicherheitsänderungen. Das offizielle Release- und Modell-Downloadverfahren behält HTTPS-, Architektur-, Größen- und Prüfsummenkontrollen.
 
-## Noch nicht live verifiziert
+**Vier Browserprüfungen bestanden.** Optionale reproduzierbare Browserprüfungen stehen in [tests/browser](../tests/browser/README.md). Die Anwendung selbst benötigt weder Playwright noch ffmpeg.
 
-- Echte Gemini-Antworten, Bildanalyse beim Anbieter und ElevenLabs-Audio: benötigten bewusst freigegebenes, nachweislich kostenloses Anbieterkontingent und sichere Schlüsselkonfiguration. Die Tests senden keine externen Anbieteranfragen.
-- Physischer Mac: tatsächliche Hardware/macOS-Version, Rechner-App, weitere Apps und lokale Dateifreigaben.
-- Tatsächliches Schreiben und Lesen des macOS-Schlüsselbunds auf einem Mac. Hier wurde der native Ablauf durch kontrollierte Prozessantworten geprüft.
-- Echtes iPhone: vertrauenswürdiges LAN-TLS, Anmeldung, Safari-Mikrofon und lokale deutsche Systemstimme.
-- Tatsächliche Mikrofoneingabe, ElevenLabs-Wiedergabe und vom Betriebssystem bereitgestellte Sprachstimmen. Die Steuerelemente und Fehlerpfade sind implementiert; ein Browser-Bildtest ist kein Audio-Gerätetest.
-- Der Nutzer meldete inzwischen einen konkreten HTTPS-Zertifikatsprüfungsfehler für Google Gemini. Die genaue Ursache im Zertifikatsspeicher seines Macs und der Erfolg des optionalen offiziellen Reparaturskripts dort sind noch nicht überprüft. Zertifikatsprüfung und bestehender Vertrauensspeicher wurden in der Cloud unverändert beibehalten.
+## Nicht auf echter Hardware oder live geprüft
 
-## Gespeicherte Cloud-Konfiguration
+- Native Apple-Vision-Klassifikation/OCR auf einem physischen Mac. Die öffentlichen Framework-APIs sind implementiert; Datenfluss und Nichtverfügbarkeit sind mit Testbefunden geprüft. Kein erfolgreicher Mac-Lauf wird behauptet.
+- Tatsächliche Mac-Inferenz mit dem kleinen Qwen-Modell und dem offiziellen llama.cpp-Binärpaket. Tests verwenden kontrollierte lokale Antworten; die Cloud lädt keine großen Modellgewichte.
+- Reale Mikrofone, Raumklatscher, Safari-/iOS-Spracherkennung, AirDrop und Zertifikatsfreigaben am persönlichen Gerät. Die Browser-Spracheingabe kann einen Dienst des Browseranbieters verwenden; vollständige Offline-Erkennung wird nicht zugesichert.
+- Externe Webcam-Videos und Fußballspiele. Anbieterrechte, Einbettung, Anmeldung und Standort können den Zugang begrenzen. Der Katalog enthält öffentliche Anbieterseiten, keine garantierten Direktstreams aller Spiele.
+- TikTok-Videos von Moritz Maacker. TikTok war aus der Cloud nicht erreichbar; eine Analyse sämtlicher Videos oder ein Funktionsvergleich wird nicht erfunden.
 
-`start_skill`, optionale sichere Schlüsselanforderungen für `GEMINI_API_KEY` und `ELEVENLABS_API_KEY` sowie der tatsächliche Repositorypfad sind als Entwurf gespeichert. API-Ziele `generativelanguage.googleapis.com` und `api.elevenlabs.io` wurden ergänzt. Kein Installationsskript nötig, da keine Fremdpakete benötigt werden.
-
-Entwurf speichern ist keine Veröffentlichung und wendet neue Schlüssel nicht automatisch an. In den Umgebungseinstellungen Änderungen prüfen und speichern, erneuerte Schlüssel sicher eintragen und die Umgebung bei Bedarf veröffentlichen. Eine Wiederherstellung in einer neuen Aufgabe wurde noch nicht geprüft.
-
-Der ursprüngliche GitHub-Remote war leer. Die Commit-Historie des Repositorys dokumentiert den auf GitHub verfügbaren Projektstand. API-Schlüssel und lokale Nutzungsdaten gehören nicht zum Projektcode.
-
-OpenAI-Erweiterung: separates Tageslimit, Kontext und bestätigte Aktionsvorschläge mit Testantworten geprüft; Bilder werden nicht gespeichert. Browserprüfung mit erfundenem Schlüssel und kontrollierter Chatantwort bestätigt Auswahl, verdecktes Hinterlegen, leere Browser-Speicher und bewusste Cloud-Freigabe. Keine echte OpenAI-Anfrage ausgeführt; Anbieterzugriff und Abrechnung bleiben kontospezifisch.
-
-Lokale KI: Anbindung mit kontrollierten Antworten und echtem Loopback-HTTP-Testserver geprüft. Keine API-Schlüssel oder Cloud-Aufrufe, keine Modell-Downloads und keine automatische Installation; Cloud-Modellnamen und Weiterleitungen abgewiesen. Browser bestätigt lokalen Modus, abgeschaltete Cloud-/ElevenLabs-Funktionen, klare Meldung bei fehlendem Ollama sowie Chat mit kontrollierter Testantwort. Ein echtes KI-Modell wurde in dieser Cloud nicht installiert oder ausgeführt. Bereitstellung von Ollama und Modell auf dem persönlichen Mac bleibt Voraussetzung; Offline-KI-Betrieb dort noch nicht verifiziert.
-
-Kleine KI ohne Ollama: llama.cpp-Protokoll, Anbieterauswahl, ehrlicher Fehlstatus, keine Cloud-/Ollama-Ausweichanfrage, fehlende Dateien, GGUF-Format und Obergrenze500MiB mit Testdateien geprüft. Browserprüfung bestätigt Auswahl und Chat mit kontrollierter llama.cpp-Antwort. Native Mac-Binärdatei und echtes Qwen-Modell wurden nicht heruntergeladen oder ausgeführt. Offizielle llama.cpp-Release-Seite war erreichbar; Modell-Metadaten von Hugging Face aus dieser Cloud nicht abrufbar. Die ungefähre Größe muss beim gewählten offiziellen Download geprüft werden.
-
-Einfache Einrichtung: kompletter Ablauf mit kontrollierten offiziellen Metadaten, SHA256-geprüften Test-Downloads und Archiven bis zur gespeicherten Installation geprüft. Wiederholung verwendet die geprüften Dateien ohne Netzwerk; veränderte Dateien und Architekturwechsel werden erkannt. Unsichere Archive, falsche Prüfsummen, überschrittene Größen, fehlende Prüfsummen, belegte Ports und ungültige Modellantworten verhindern einen behaupteten Erfolg. Native-curl-Aufruf erhält TLS-Prüfung und HTTPS-only-Weiterleitungen; weder curl-Konfiguration noch API-Schlüssel werden als Download-Header verwendet. Gemeinsamer Starter prüft eine Modellantwort und beendet nur seinen eigenen Prozess. Lokaler JARVIS-Start überspringt API-Schlüsselbund. Echte Release-/Modell-API-Metadaten waren aus der Cloud nicht erreichbar; reale Modell-/Binärdownloads und native Mac-Ausführung bleiben ungetestet.
-
-Release-Auswahl korrigiert: Die echte offizielle stabile Version v0.8.0 enthält nur nightly-tag.txt. Der Verweis auf b11960 und sein SHA256-Digest wurden über die offizielle GitHub-Veröffentlichung geprüft; die Dateiübersicht des referenzierten Builds bestätigt Mac-ARM64- und Mac-x64-Pakete. Der Helfer verfolgt jetzt nur diesen prüfsummenvalidierten Verweis, prüft die passende Build-Kennung und behält Paket-Architektur, Größenlimit und Artefakt-SHA256-Prüfung bei. Regressionen prüfen diese reale Veröffentlichungsstruktur sowie beschädigte/ungültige Verweise und unzulässige Builds. Keine Mac-Binärdatei oder Modelldatei wurde hierfür heruntergeladen oder ausgeführt.
+Mit nur wenig zusätzlicher Größe und ohne externen KI-Dienst enthält JARVIS keine generative Video-KI und kein großes visuelles Sprachmodell. Die Produktfilmfunktion montiert das eigene Bild mit einem lokalen KI-Skript und lokaler Spracherzeugung.

@@ -43,6 +43,7 @@ class DesktopTests(unittest.TestCase):
     def test_unstructured_or_unsupported_model_output_is_not_success(self):
         for text in ['Okay Sir, fertig!','{"unsupported":true}']:
             self.app.llamacpp.chat=lambda *a,**k:{'reply':text}
+            self.app.llamacpp.endpoint_transport=lambda *a,**k:{'choices':[{'message':{'content':text}}]}
             with self.assertRaises(ValueError):self.desktop.prepare({'goal':'Baue ein komplexes 3D-Modell'})
             self.assertEqual(self.events,[])
     def test_news_json_fallback_keeps_real_links_and_country(self):

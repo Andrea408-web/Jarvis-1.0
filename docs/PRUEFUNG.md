@@ -4,7 +4,7 @@ Stand: 3. November 2026. Linux-Cloud; der persönliche Mac und das iPhone sind n
 
 ## Verifiziert
 
-- **176 Python-Tests bestanden**, keine übersprungen. Python-Suite mit echten lokalen HTTP-/TLS-Verbindungen, Host-/Origin-/Token-Prüfung, privater Ablage, Budgetgrenzen und sicheren bestätigten Aktionen. Temporäre TLS-Zertifikate werden explizit vertraut; TLS-Prüfung wird nicht abgeschaltet.
+- **185 Python-Tests bestanden**, keine übersprungen. Python-Suite mit echten lokalen HTTP-/TLS-Verbindungen, Host-/Origin-/Token-Prüfung, privater Ablage, Budgetgrenzen und sicheren bestätigten Aktionen. Temporäre TLS-Zertifikate werden explizit vertraut; TLS-Prüfung wird nicht abgeschaltet.
 - Agentenaufträge: natürliche Formulierungen führen zu einem tatsächlichen Job. Queue, Fehler, Abbruch, Neustart und getrennte Gespräche sind getestet. Sprachmodellantworten sind hierfür kontrollierte Fixtures; daraus wird keine echte Modellqualität abgeleitet.
 - Bildanhänge: Format-/Größenprüfung, private Dateien mit Modus0600, Migration bestehender Datenbanken, Rückgabe lokaler Bildbefunde und Übergabe als Daten statt auszuführende Befehle. Auf Nicht-Macs wird kein vorhandenes Bildverständnis behauptet.
 - Eigene deutsche Stimme: echte eSpeak/meSpeak-Spracherzeugung im Browser, decodierbare PCM-Daten mit Sprachsignal und echte Web-Audio-Wiedergabe. Jeder Systemstimmen-Aufruf wird im Integrationstest als Fehler behandelt. Keine externen Sprachrequests. Die Engine ist keine neu trainierte neuronale Stimme; es handelt sich um eine mitgelieferte freie Formantengine mit eigener Konfiguration.
@@ -42,3 +42,13 @@ Der Mini-Hub ist aus der Oberfläche entfernt; sein Nachfolger ist die Weltansic
 - Backend-Prüfungen: keine Ausführung vor Start, Token/Schema/Ablaufkennung, Stop während Countdown, abgewiesene Modellkoordinaten, echte Aufrufreihenfolge des kontrollierten Treibers, Fehler statt erfundenem Erfolg sowie öffentliches Nachrichten-JSON als RSS-Fallback.
 - Additives Astra-Paket enthält keine Modelle und überspringt ausdrücklich die Stimmeninstallation. Migration von beiden zuletzt bereitgestellten Versionen und Erhalt der persönlichen Daten werden geprüft.
 - Native CoreGraphics-Maus-/Tastatureingaben, Bedienungshilfen-Freigabe und AppKit/WebKit-Fenster sind in der Linux-Cloud nicht ausgeführt. Live-Erreichbarkeit der Nachrichtenquelle ist ebenfalls nicht nachgewiesen. Kein autonomer 3D-Bildnachbau wird behauptet.
+
+## Korrekturen für Apps, Astra und Blender
+
+- Öffnen von Apps/Webseiten ohne Laden der Eingabe-Frameworks bzw. ohne AX-Berechtigung geprüft. Spotify-native/Web-Fallback und deterministische URL-Aufträge geprüft.
+- Astra-Identität bleibt in der privaten Datenbank und wird an das lokale Modell übergeben; konkrete Selbstvorstellungen werden korrigiert. Daraus wird kein allgemeines Niveau wie ChatGPT abgeleitet.
+- Popup-Prozessfehler und fehlende Ladebestätigung führen zu sichtbaren Fehlern. Browser-Popup kann dieselben privaten Steuerungen ohne URL-Token über die lokale Sitzung laden. Native AppKit-Ereignispumpe wurde korrigiert; Mac-Hardware bleibt ungeprüft.
+- Echter Blender-Lauf unter Linux: Auto (6 Meshes), Haus (5 Meshes), Roboter (8 Meshes), Dateien jeweils gespeichert und mit einem zweiten Blender-Prozess erneut geladen. Abbruch vor dem ersten Mesh verhindert Erstellung und Erfolgsmeldung. Keine Gewichtsdateien wurden geladen.
+- Freie 3D-Beschreibungen werden nur als streng validierte Grundkörperdaten an einen festen Blender-Baustein übergeben. Kein KI-generiertes Python wird ausgeführt. Grenzen, ungültige Werte und fehlender lokaler Anbieter sind geprüft. Das ist kein Nachweis für präzisen Bildnachbau oder jede beliebige Modellierungsaufgabe.
+
+Zusätzlich wurde der vollständige Desktop-Modellweg mit echtem Blender im Headless-Modus geprüft: Auftrag vorbereiten, Start, Blender-Prozess, sechs Auto-Meshes, gespeicherte und zum Download validierte `.blend`-Datei. Einzelne eindeutige App-/Webbefehle starten im Frontend jetzt direkt; die Backend-Vorbereitung allein führt weiterhin nichts aus.

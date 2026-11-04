@@ -2,6 +2,9 @@
 import ctypes
 import json
 import math
+import plistlib
+import shutil
+from urllib.parse import urlsplit
 import platform
 import re
 import secrets
@@ -11,10 +14,42 @@ import time
 from pathlib import Path
 
 from .providers import ProviderError
+from .models import recipe,validate_scene,write_scene
 
-APPS={'Safari':'com.apple.Safari','Finder':'com.apple.finder','Notizen':'com.apple.Notes','Kalender':'com.apple.iCal','Rechner':'com.apple.calculator','Musik':'com.apple.Music','Blender':'org.blenderfoundation.blender'}
+APPS={'Safari':'com.apple.Safari','Finder':'com.apple.finder','Notizen':'com.apple.Notes','Kalender':'com.apple.iCal','Rechner':'com.apple.calculator','Musik':'com.apple.Music','Blender':'org.blenderfoundation.blender','Spotify':'com.spotify.client'}
 KEYS={'enter':36,'tab':48,'escape':53,'space':49,'backspace':51,'left':123,'right':124,'down':125,'up':126,'a':0,'c':8,'v':9,'s':1,'z':6,'n':45,'o':31,'f':3}
 FLAGS={'command':1<<20,'shift':1<<17,'option':1<<19,'control':1<<18}
+
+
+def app_catalog():
+    apps={name:{'name':name,'bundle':bundle} for name,bundle in APPS.items()}
+    if platform.system()=='Darwin':
+        for root in [Path('/Applications'),Path.home()/'Applications',Path('/System/Applications')]:
+            for path in (list(root.glob('*.app'))+list(root.glob('*/*.app')))[:400]:
+                try:
+                    info=plistlib.loads((path/'Contents/Info.plist').read_bytes());bundle=info.get('CFBundleIdentifier');name=path.stem
+                    if name.casefold() in {'terminal','iterm','iterm2','script editor','skripteditor'}:continue
+                    if isinstance(bundle,str) and re.fullmatch(r'[A-Za-z0-9_.-]{3,180}',bundle):apps.setdefault(name,{'name':name,'bundle':bundle})
+                except (OSError,ValueError,TypeError):pass
+    return apps
+
+def resolve_app(value):
+    if not isinstance(value,str):raise ValueError('Bitte einen App-Namen eingeben.')
+    aliases={'notes':'Notizen','calculator':'Rechner','calendar':'Kalender','music':'Musik'}
+    value=aliases.get(value.casefold(),value)
+    for name,item in app_catalog().items():
+        if name.casefold()==value.casefold():return item
+    raise ValueError('Diese App wurde nicht gefunden. Installierte App nennen oder eine vollständige Webseitenadresse verwenden.')
+
+def website(value):
+    if not isinstance(value,str) or not 1<=len(value)<=2000:raise ValueError('Ungültige Webseitenadresse.')
+    try:
+        parsed=urlsplit(value)
+        if parsed.scheme not in {'http','https'} or not parsed.hostname or parsed.username or parsed.password or any(ord(c)<=32 for c in value):raise ValueError()
+        _=parsed.port
+    except ValueError:raise ValueError('Nur vollständige HTTP-/HTTPS-Webseiten ohne Zugangsdaten öffnen.') from None
+    return value
+
 
 def validate_steps(steps):
     if not isinstance(steps,list) or not 1<=len(steps)<=12:raise ValueError('Ein Ablauf braucht 1–12 überprüfbare Schritte.')
@@ -22,15 +57,16 @@ def validate_steps(steps):
     for step in steps:
         if not isinstance(step,dict):raise ValueError('Ungültiger Desktop-Schritt.')
         kind=step.get('type')
-        fields={'open':{'type','app'},'move':{'type','x','y'},'click':{'type','x','y'},'text':{'type','text'},'key':{'type','key','modifiers'},'wait':{'type','seconds'}}
+        fields={'open':{'type','app'},'website':{'type','url'},'move':{'type','x','y'},'click':{'type','x','y'},'text':{'type','text'},'key':{'type','key','modifiers'},'wait':{'type','seconds'}}
         if not isinstance(kind,str) or kind not in fields or set(step)!=fields[kind]:raise ValueError('Nicht unterstützter Desktop-Schritt; kein Programmcode wird ausgeführt.')
-        if kind=='open' and (not isinstance(step['app'],str) or step['app'] not in APPS):raise ValueError('Diese App ist nicht für Desktop-Abläufe eingetragen.')
+        if kind=='open':resolve_app(step['app'])
+        if kind=='website':website(step['url'])
         if kind in {'move','click'} and any(type(step[k]) not in {int,float} or not math.isfinite(step[k]) or not 0<=step[k]<=1 for k in ['x','y']):raise ValueError('Mauspositionen müssen zwischen 0 und 1 liegen.')
         if kind=='text' and (not isinstance(step['text'],str) or not 1<=len(step['text'])<=2000 or '\x00' in step['text']):raise ValueError('Ungültiger Eingabetext.')
         if kind=='key' and (not isinstance(step['key'],str) or step['key'] not in KEYS or not isinstance(step['modifiers'],list) or len(step['modifiers'])>4 or any(not isinstance(m,str) or m not in FLAGS for m in step['modifiers'])):raise ValueError('Nicht unterstützte Tastenkombination.')
         if kind=='wait' and (type(step['seconds']) not in {int,float} or not math.isfinite(step['seconds']) or not 0<=step['seconds']<=5):raise ValueError('Wartezeit höchstens 5 Sekunden.')
         result.append(dict(step))
-    if result[0]['type']!='open':raise ValueError('Der Ablauf muss mit einer ausdrücklich genannten App beginnen.')
+    if result[0]['type'] not in {'open','website'}:raise ValueError('Der Ablauf muss mit einer ausdrücklich genannten App beginnen.')
     return result
 
 class Point(ctypes.Structure):_fields_=[('x',ctypes.c_double),('y',ctypes.c_double)]
@@ -39,6 +75,11 @@ class MacInput:
     def __init__(self):
         if platform.system()!='Darwin':raise ValueError('Desktop-Steuerung benötigt Jarvis auf deinem Mac.')
         self.active_app=None
+        self.last_message=None
+        self.cg=None
+        self.cancel_event=None
+    def ensure_input(self):
+        if self.cg is not None:return
         self.cg=ctypes.CDLL('/System/Library/Frameworks/CoreGraphics.framework/CoreGraphics')
         self.cf=ctypes.CDLL('/System/Library/Frameworks/CoreFoundation.framework/CoreFoundation')
         self.ax=ctypes.CDLL('/System/Library/Frameworks/ApplicationServices.framework/ApplicationServices')
@@ -64,13 +105,22 @@ class MacInput:
         finally:self.cf.CFRelease(event)
     def execute(self,step):
         kind=step['type']
-        if kind not in {'open','wait'}:
+        if kind not in {'open','website','wait'}:
+            self.ensure_input()
             probe=subprocess.run(['/usr/bin/osascript','-l','JavaScript','-e',"ObjC.import('AppKit');ObjC.unwrap($.NSWorkspace.sharedWorkspace.frontmostApplication.bundleIdentifier);"],capture_output=True,text=True,timeout=5)
             if probe.returncode or probe.stdout.strip()!=self.active_app:raise ValueError('Die Ziel-App ist nicht mehr im Vordergrund. Ablauf gestoppt, damit keine Eingabe in eine andere App gelangt.')
         if kind=='open':
-            result=subprocess.run(['/usr/bin/open','-b',APPS[step['app']]],capture_output=True,timeout=10)
-            if result.returncode:raise ValueError('Die gewählte App ist nicht installiert oder konnte nicht geöffnet werden.')
-            self.active_app=APPS[step['app']]
+            app=resolve_app(step['app'])
+            result=subprocess.run(['/usr/bin/open','-b',app['bundle']],capture_output=True,timeout=10)
+            if result.returncode:
+                if step['app']=='Spotify':
+                    self.execute({'type':'website','url':'https://open.spotify.com'});self.last_message='Spotify als Web-App in Safari geöffnet; die native Spotify-App wurde nicht gefunden.';return
+                raise ValueError('Die gewählte App ist nicht installiert oder konnte nicht geöffnet werden.')
+            self.active_app=app['bundle']
+        elif kind=='website':
+            result=subprocess.run(['/usr/bin/open','-b','com.apple.Safari',website(step['url'])],capture_output=True,timeout=10)
+            if result.returncode:raise ValueError('Die Webseite konnte in Safari nicht geöffnet werden.')
+            self.active_app='com.apple.Safari'
         elif kind in {'move','click'}:
             point=Point(step['x']*max(1,self.width-1),step['y']*max(1,self.height-1))
             self.post(self.cg.CGEventCreateMouseEvent(None,5,point,0))
@@ -79,6 +129,7 @@ class MacInput:
         elif kind in {'key','text'}:
             chunks=[step['text'][i:i+10] for i in range(0,len(step['text']),10)] if kind=='text' else [None]
             for chunk in chunks:
+                if self.cancel_event and self.cancel_event.is_set():return
                 for down in [True,False]:
                     event=self.cg.CGEventCreateKeyboardEvent(None,KEYS[step['key']] if kind=='key' else 0,down)
                     if not event:raise ValueError('Tastaturereignis nicht verfügbar.')
@@ -90,22 +141,40 @@ class MacInput:
 
 class Desktop:
     def __init__(self,app,driver=None):
-        self.app=app;self.driver=driver or MacInput;self.lock=threading.RLock();self.cancel=threading.Event();self.plan=None;self.thread=None;self.muted=False;self.panel=None
+        self.app=app;self.driver=driver or MacInput;self.lock=threading.RLock();self.cancel=threading.Event();self.plan=None;self.thread=None;self.muted=False;self.panel=None;self.panel_state='closed';self.panel_error='';self.panel_started=0;self.model_folder=None;self.model_process=None
     def snapshot(self):
-        with self.lock:return {'supported':platform.system()=='Darwin','muted':self.muted,'plan':json.loads(json.dumps(self.plan)) if self.plan else None}
+        with self.lock:
+            if self.panel_state in {'opening','ready'} and self.panel and self.panel.poll() is not None:
+                normal=self.panel.poll()==0 and self.panel_state=='ready'
+                self.panel_state='closed' if normal else 'failed';self.panel_error='' if normal else 'Das Mac-Fenster wurde beendet. Browser-Pop-up verwenden oder erneut öffnen.'
+            if self.panel_state=='opening' and time.monotonic()-self.panel_started>10:self.panel_state='failed';self.panel_error='Das Fenster hat nicht geantwortet. Browser-Pop-up verwenden.'
+            return {'supported':platform.system()=='Darwin','muted':self.muted,'panel':{'state':self.panel_state,'error':self.panel_error},'plan':json.loads(json.dumps(self.plan)) if self.plan else None}
+
     def prepare(self,body):
-        if set(body)-{'goal','steps'}:raise ValueError('Unbekannte Desktop-Felder.')
+        if set(body)-{'goal','steps','scene'}:raise ValueError('Unbekannte Desktop-Felder.')
         goal=body.get('goal','')
         if not isinstance(goal,str) or not 1<=len(goal.strip())<=3000:raise ValueError('Bitte einen konkreten Desktop-Auftrag eingeben.')
         with self.lock:
             if self.thread and self.thread.is_alive():raise ProviderError('Ein Desktop-Ablauf läuft. Zuerst stoppen oder abwarten.',409)
+        scene=validate_scene(body['scene']) if 'scene' in body else recipe(goal) if 'steps' not in body else None
+        if scene is None and 'steps' not in body and re.search(r'\bblender\b|\b3d\b|modellier',goal,re.I):scene=self.model_scene(goal)
+        if scene:
+            with self.lock:
+                if self.thread and self.thread.is_alive():raise ProviderError('Ein Desktop-Ablauf läuft bereits.',409)
+                self.plan={'id':secrets.token_hex(16),'goal':goal.strip(),'kind':'model','scene':scene,'steps':[{'type':'model','object':p['name'],'shape':p['shape']} for p in scene['parts']],'state':'review','completed':0,'message':'Echte 3D-Grundkörper in Blender aufbauen. Eigene neue Szene; vorhandene Dateien werden nicht überschrieben.','expires':time.time()+600}
+                return self.snapshot()
         steps=body.get('steps')
         if steps is None:
             # Straightforward commands do not depend on a small model guessing JSON.
-            match=re.fullmatch(r'(?:bitte\s+)?(?:öffne|starte)\s+(?:die app\s+)?('+ '|'.join(APPS) +r')[.!]?',goal.strip(),re.I)
-            if match:
-                app=next(a for a in APPS if a.casefold()==match[1].casefold())
-                steps=[{'type':'open','app':app}]
+            command=re.sub(r'^(?:bitte\s+)?(?:öffne|starte|öffnen|starten)\s+(?:mir\s+)?(?:bitte\s+)?(?:die app\s+|die webseite\s+|die seite\s+)?','',goal.strip(),flags=re.I).strip().rstrip('.!')
+            command=re.sub(r'\s+(?:öffnen|starten)$','',command,flags=re.I)
+            command=re.sub(r'\s+bitte$','',command,flags=re.I)
+            web_names={'youtube':'https://www.youtube.com','google':'https://www.google.com','spotify im browser':'https://open.spotify.com','spotify web':'https://open.spotify.com','chatgpt':'https://chatgpt.com','tiktok':'https://www.tiktok.com'}
+            if command.casefold() in web_names:steps=[{'type':'website','url':web_names[command.casefold()]}]
+            elif re.fullmatch(r'(?:https?://)?[A-Za-z0-9][^\s]*\.[A-Za-z]{2,}(?:[/:?#][^\s]*)?',command):steps=[{'type':'website','url':website(command if '://' in command else 'https://'+command)}]
+            else:
+                try:app=resolve_app(command);steps=[{'type':'open','app':app['name']}]
+                except ValueError:pass
         if steps is None:
             if self.app.store.settings()['ai_provider'] not in {'llamacpp','ollama'}:raise ValueError('Astra-Desktopplanung benötigt deine lokale Text-KI. Kein externer KI-Dienst wird verwendet.')
             instruction='Erstelle nur JSON: {"steps":[...]}. Maximal 12 Schritte, erster Schritt open. Apps: '+', '.join(APPS)+'. Erlaubt: {"type":"open","app":"Notizen"}, {"type":"wait","seconds":1}, {"type":"key","key":"n","modifiers":["command"]}, {"type":"text","text":"Hallo"}. Keine Shell, kein Code, keine erfundenen Koordinaten. Nur einfache App-Aufgaben. Bei komplexen 3D-/Bildaufgaben: {"unsupported":true}. Du siehst keinen Bildschirm. Auftrag: '+goal
@@ -125,12 +194,17 @@ class Desktop:
     def start(self,ident):
         with self.lock:
             if not self.plan or self.plan['id']!=ident or self.plan['state']!='review' or time.time()>self.plan['expires']:raise ValueError('Dieser Ablauf ist abgelaufen oder wurde bereits gestartet.')
-            driver=self.driver() # Permission failure leaves review intact.
-            self.cancel.clear();self.plan.update(state='running',message='Start in 3 Sekunden. Aktionen stoppen beendet den Ablauf; Reden stoppen lässt ihn weiterlaufen.')
+            driver=None if self.plan.get('kind')=='model' else self.driver()
+            if self.plan.get('kind')=='model':self.blender_binary() # Validate before starting.
+            if driver is not None and isinstance(driver,MacInput):driver.cancel_event=self.cancel
+            self.start_delay=.2 if len(self.plan['steps'])==1 and self.plan['steps'][0]['type'] in {'open','website'} else 3
+            self.model_folder=None;self.cancel.clear();self.plan.update(state='running',message='Öffnen angefordert.' if self.start_delay<1 else 'Start in 3 Sekunden. Aktionen stoppen beendet den Ablauf; Reden stoppen lässt ihn weiterlaufen.')
             self.thread=threading.Thread(target=self._run,args=(driver,),daemon=True);self.thread.start();return self.snapshot()
     def _run(self,driver):
         try:
-            if self.cancel.wait(3):return
+            if self.cancel.wait(self.start_delay):return
+            if self.plan.get('kind')=='model':
+                self._run_model();return
             for step in self.plan['steps']:
                 if self.cancel.is_set():break
                 if step['type']=='wait':self.cancel.wait(step['seconds'])
@@ -138,7 +212,7 @@ class Desktop:
                 if self.cancel.is_set():break
                 with self.lock:self.plan['completed']+=1
                 if self.cancel.wait(.35):break
-            with self.lock:self.plan.update(state='stopped' if self.cancel.is_set() else 'done',message='Gestoppt.' if self.cancel.is_set() else 'Eingabeschritte ausgeführt. Das Ergebnis wurde nicht visuell überprüft.')
+            with self.lock:self.plan.update(state='stopped' if self.cancel.is_set() else 'done',message='Gestoppt.' if self.cancel.is_set() else getattr(driver,'last_message',None) or 'Eingabeschritte ausgeführt. Das Ergebnis wurde nicht visuell überprüft.')
         except Exception as error:
             with self.lock:self.plan.update(state='error',message=str(error)[:500])
         finally:
@@ -146,17 +220,90 @@ class Desktop:
                 if self.plan['state']=='running':self.plan.update(state='stopped',message='Gestoppt.')
     def stop(self):
         self.cancel.set()
+        if self.model_folder:
+            try:(self.model_folder/'cancel').touch(mode=0o600)
+            except FileNotFoundError:pass
         with self.lock:
             if self.plan and self.plan['state']=='review':self.plan.update(state='stopped',message='Verworfen.')
             return self.snapshot()
     def speech(self,muted):
         if type(muted) is not bool:raise ValueError('Ungültiger Sprachstatus.')
         with self.lock:self.muted=muted;return self.snapshot()
-    def open_panel(self,url):
-        if platform.system()!='Darwin':raise ValueError('Das schwebende Astra-Fenster benötigt macOS.')
+    def model_scene(self,goal):
+        settings=self.app.store.settings();provider=settings['ai_provider']
+        if provider not in {'llamacpp','ollama'}:raise ValueError('Für freie 3D-Entwürfe deine lokale KI auswählen. Kein externer KI-Dienst wird verwendet.')
+        example={'name':'Entwurf','parts':[{'name':'Körper','shape':'cube','location':[0,0,1],'scale':[1,1,1],'rotation':[0,0,0],'color':[.2,.5,.8]}]}
+        system='Return ONLY a JSON scene like '+json.dumps(example)+'. Make a simplified recognizable low-poly object from at most 8 primitives. Allowed shapes: cube, sphere, cylinder, cone, torus. Every part requires name, shape, location[x,y,z], scale[x,y,z] positive, rotation[x,y,z] radians and color[r,g,b] 0..1. Z is up. No Python, no tools, no explanations. Coordinates -100..100, scales .01..30. If impossible return {"unsupported":true}.'
+        messages=[{'role':'system','content':system},{'role':'user','content':goal}]
+        if provider=='llamacpp':
+            data=self.app.llamacpp.endpoint_transport('/v1/chat/completions',{'messages':messages,'stream':False,'max_tokens':1400,'temperature':.15,'response_format':{'type':'json_object'}})
+            try:raw=data['choices'][0]['message']['content']
+            except (KeyError,IndexError,TypeError):raise ValueError('Die lokale KI hat keinen 3D-Entwurf geliefert.') from None
+        else:
+            data=self.app.local_ai.transport('/api/chat',{'model':settings['local_model'],'messages':messages,'format':'json','stream':False,'options':{'num_predict':1400,'temperature':.15}})
+            raw=data.get('message',{}).get('content','')
+        try:return validate_scene(json.loads(raw))
+        except (ValueError,TypeError):raise ValueError('Die kleine KI konnte keinen gültigen Grundkörper-Entwurf erstellen. Versuche zum Beispiel Auto, Haus, Tisch, Stuhl, Rakete oder Roboter. Nichts wurde ausgeführt.') from None
+    def blender_binary(self):
+        candidates=[Path('/Applications/Blender.app/Contents/MacOS/Blender'),Path.home()/'Applications/Blender.app/Contents/MacOS/Blender']
+        for candidate in candidates:
+            if candidate.is_file():return str(candidate)
+        if platform.system()!='Darwin' and shutil.which('blender'):return shutil.which('blender')
+        raise ValueError('Blender wurde nicht gefunden. Blender muss installiert sein; es wird nichts automatisch heruntergeladen.')
+    def _run_model(self):
+        folder=self.app.store.data_dir/'models'/self.plan['id'];folder.parent.mkdir(exist_ok=True,mode=0o700)
+        self.model_folder=folder
+        if self.cancel.is_set():return
+        write_scene(folder,self.plan['scene'])
+        command=[self.blender_binary(),'--factory-startup','--python',str(Path(__file__).with_name('blender_scene.py')),'--',str(folder)]
+        with (folder/'blender.log').open('w') as log:
+            self.model_process=subprocess.Popen(command,stdout=log,stderr=subprocess.STDOUT)
+        deadline=time.monotonic()+90
+        while time.monotonic()<deadline:
+            if self.cancel.is_set():
+                (folder/'cancel').touch(mode=0o600)
+                with self.lock:self.plan.update(state='stopped',message='Modellierung gestoppt. Weitere Objekte werden nicht hinzugefügt.')
+                return
+            try:
+                data=json.loads((folder/'progress.json').read_text())
+                with self.lock:self.plan.update(completed=min(len(self.plan['steps']),int(data['completed'])),message=data['message'])
+                if data['state']=='done':
+                    output=folder/'Astra-Modell.blend'
+                    if not output.is_file() or output.stat().st_size<100 or not output.read_bytes()[:7]==b'BLENDER':raise ValueError('Blender hat keine gültige Modelldatei gespeichert.')
+                    with self.lock:self.plan.update(state='done',message='Echtes Blender-Modell gespeichert: '+str(output),artifact=str(output))
+                    return
+                if data['state'] in {'error','stopped'}:raise ValueError(data['message'])
+            except (FileNotFoundError,json.JSONDecodeError):pass
+            if self.model_process.poll() is not None:
+                try:final=json.loads((folder/'progress.json').read_text())
+                except (OSError,ValueError):final={}
+                if final.get('state')=='done':continue
+                raise ValueError('Blender wurde vor Abschluss beendet. Diagnose im Auftragsordner: blender.log')
+            self.cancel.wait(.15)
+        (folder/'cancel').touch(mode=0o600)
+        raise ValueError('Blender hat innerhalb von 90 Sekunden keinen Abschluss gemeldet. Modellierung angehalten.')
+    def model_file(self):
         with self.lock:
-            if self.panel and self.panel.poll() is None:return {'ok':True}
-            config=self.app.store.data_dir/'astra-panel-url.txt';config.write_text(url+'#'+self.app.token);config.chmod(0o600)
-            script=Path(__file__).with_name('astra_panel.js')
-            self.panel=subprocess.Popen(['/usr/bin/osascript','-l','JavaScript',str(script),str(config)],stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL)
-            return {'ok':True,'message':'Schwebendes Fenster angefordert. macOS-Ausführung auf diesem Gerät prüfen.'}
+            artifact=self.plan.get('artifact') if self.plan and self.plan.get('state')=='done' else None
+        if not artifact:raise ValueError('Noch kein abgeschlossenes Blender-Modell verfügbar.')
+        path=Path(artifact);root=self.app.store.data_dir/'models'
+        if not path.resolve().is_relative_to(root.resolve()) or path.is_symlink() or not path.is_file() or path.stat().st_size>20000000:raise ValueError('Ungültige Modelldatei.')
+        data=path.read_bytes()
+        if not data.startswith(b'BLENDER'):raise ValueError('Keine Blender-Modelldatei.')
+        return data
+    def panel_ready(self):
+        with self.lock:self.panel_state='ready';self.panel_error='';return {'ok':True}
+    def open_panel(self,url):
+        if platform.system()!='Darwin':raise ValueError('Das schwebende Astra-Fenster benötigt macOS. Das Browser-Pop-up funktioniert auch hier.')
+        with self.lock:
+            if self.panel and self.panel.poll() is None and self.panel_state in {'opening','ready'}:return {'ok':True,'state':self.panel_state}
+            if self.panel and self.panel.poll() is None:self.panel.terminate()
+            config=self.app.store.data_dir/'astra-panel-url.txt';config.write_text(url+'?native=1#'+self.app.token);config.chmod(0o600)
+            script=Path(__file__).with_name('astra_panel.js');logpath=self.app.store.data_dir/'astra-panel.log'
+            with logpath.open('w') as log:self.panel=subprocess.Popen(['/usr/bin/osascript','-l','JavaScript',str(script),str(config)],stdout=log,stderr=subprocess.STDOUT)
+            logpath.chmod(0o600);self.panel_state='opening';self.panel_started=time.monotonic();self.panel_error=''
+            time.sleep(.25)
+            if self.panel.poll() is not None:
+                self.panel_state='failed';self.panel_error='macOS konnte das Fenster nicht starten. Nutze das Browser-Pop-up. Details stehen lokal in astra-panel.log.'
+                raise ValueError(self.panel_error)
+            return {'ok':True,'state':'opening','message':'Mac-Fenster startet; die Oberfläche bestätigt das Laden separat.'}

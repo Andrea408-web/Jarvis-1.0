@@ -16,6 +16,7 @@ import zipfile
 PAYLOAD_B64='__PAYLOAD_B64__'
 PAYLOAD_SHA='__PAYLOAD_SHA__'
 ALLOWED={
+    'backend/models.py','backend/blender_scene.py','backend/persona.py','backend/local_ai.py','backend/ai.py','backend/openai_client.py',
     'README.md','docs/EINFACH-STARTEN.md','docs/PRUEFUNG.md',
     'backend/desktop.py','backend/astra_panel.js','frontend/astra.js','frontend/astra-panel.html','frontend/astra-panel.js','frontend/astra.css','frontend/world-news.js','docs/ASTRA.md',
     'backend/natural_voice.py','backend/server.py','backend/storage.py',
@@ -61,7 +62,7 @@ def choose_root(files,manifest):
         result=subprocess.run(['/usr/bin/osascript','-e','POSIX path of (choose folder with prompt "Wähle deinen vorhandenen JARVIS-Ordner. Die Text-KI bleibt erhalten.")'],capture_output=True,text=True,timeout=180,check=True)
     except (OSError,subprocess.SubprocessError):raise ValueError('Ordnerauswahl abgebrochen. Es wurde nichts geändert.') from None
     root=Path(result.stdout.strip())
-    if not compatible(root,files,manifest):raise ValueError('Dieser Ordner passt nicht zum geprüften Stimmenupdate oder Programmdateien wurden verändert. Es wurde nichts überschrieben. Unterstützt sind die bereitgestellten Versionen 232ba23 und bd17dfd; weder Jarvis noch die Text-KI werden automatisch neu geladen.')
+    if not compatible(root,files,manifest):raise ValueError('Dieser Ordner passt nicht zum geprüften Stimmenupdate oder Programmdateien wurden verändert. Es wurde nichts überschrieben. Unterstützt sind die bereitgestellten Versionen 232ba23, bd17dfd und 9bf0a4e; weder Jarvis noch die Text-KI werden automatisch neu geladen.')
     return root
 
 

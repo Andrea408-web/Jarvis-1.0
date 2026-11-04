@@ -5,6 +5,7 @@ import urllib.error
 import urllib.request
 
 from .providers import ProviderError, _NoRedirect
+from .persona import instruction as persona_instruction,correct_identity
 
 BASE = 'http://127.0.0.1:11434'
 
@@ -88,18 +89,7 @@ class LocalClient:
                 break
             remaining -= len(item['text'])
             messages.append({'role': item['role'], 'content': item['text']})
-        instruction = (
-            'Du bist JARVIS. Antworte auf Deutsch, ruhig, präzise und nützlich. '
-            'Sprich den Nutzer natürlich mit Sir an. Beantworte zuerst die konkrete Frage. '
-            'Bei Aufgaben gib konkrete Schritte oder einen fertigen Entwurf. '
-            'Wenn Informationen fehlen, stelle eine kurze gezielte Frage. '
-            'Erfinde kein Wissen und keine erledigten Aktionen. Du hast nur Text, keine Bilder oder Live-Websuche. '
-            'Die Oberfläche bietet Kamera, Globus und Agentenwerkstatt. Dafür nutze die Schaltflächen '
-            'oder sage: Zeig die Weltkarte / Öffne Kamera / Zeig meine Agenten. '
-            'Agenten erstellen lokale Textentwürfe, keine eigenständige Internetrecherche. Auf dem Mac können sie lokale Apple-Vision-Klassifikation und OCR als unsicheren Befund bekommen; keine vollständige Bild- oder Videoanalyse. '
-            'Du kannst hier keine Werkzeuge aufrufen, Nachrichten verschicken oder Geräte steuern. '
-            'Behaupte niemals, etwas ausgeführt oder gesehen zu haben.'
-        )
+        instruction=persona_instruction(self.store)
         payload = {'model': model, 'messages': [{'role': 'system', 'content': instruction}, *reversed(messages), {'role': 'user', 'content': text.strip()}],
                    'stream': False, 'options': {'num_ctx': 4096, 'num_predict': 512}, 'keep_alive': '5m'}
         result = self.transport('/api/chat', payload)
@@ -108,6 +98,7 @@ class LocalClient:
         if (result.get('done') is not True or not isinstance(reply, str) or not reply.strip()
                 or len(reply) > 24000 or message.get('tool_calls')):
             raise ProviderError('Das lokale Modell hat keine abgeschlossene Textantwort geliefert.', 502)
+        reply=correct_identity(reply,self.store)
         self.store.append('user', text.strip(), conversation)
         self.store.append('assistant', reply, conversation)
         return {'reply': reply, 'proposed_actions': [], 'conversation': conversation}

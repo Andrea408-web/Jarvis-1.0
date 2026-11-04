@@ -104,6 +104,9 @@ class Application:
     def chat(self, text):
         if not isinstance(text, str) or not text.strip() or len(text) > 12000:
             raise ValueError('Bitte eine Nachricht mit 1 bis 12.000 Zeichen eingeben.')
+        if re.fullmatch(r'(?:wie (?:heißt|heisst) du|wer bist du|wie ist dein name)[?!. ]*',text.strip(),re.I):
+            from .persona import name
+            return {'reply':'Ich bin '+name(self.store)+', Sir.','proposals':[]}
         routed=self.dispatch_agent(text)
         if routed:return routed
         if re.search(r'\bagent(?:en)?\b|werkstatt',text,re.I):
@@ -322,6 +325,8 @@ class Handler(BaseHTTPRequestHandler):
             if re.fullmatch(r'/api/agents/[0-9a-f]{32}/image',path):
                 data,mime=app.office.image(path.split('/')[3]);self._headers(200,mime,len(data));return self.wfile.write(data)
             if path == '/api/hub':return self._json(app.hub.snapshot())
+            if path == '/api/desktop/model':
+                data=app.desktop.model_file();self._headers(200,'application/octet-stream',len(data));return self.wfile.write(data)
             if path == '/api/desktop':return self._json(app.desktop.snapshot())
             if path == '/api/natural-voice/status':
                 return self._json(app.natural_voice.status())
@@ -368,6 +373,7 @@ class Handler(BaseHTTPRequestHandler):
                     if set(body)!={'muted'}:raise ValueError('Ungültiger Sprachstatus.')
                     return self._json(app.desktop.speech(body['muted']))
                 if body:raise ValueError('Diese Desktop-Aktion braucht keine Parameter.')
+                if path=='/api/desktop/panel-ready':return self._json(app.desktop.panel_ready())
                 if path=='/api/desktop/stop':return self._json(app.desktop.stop())
                 if path=='/api/desktop/panel':
                     port=self.server.server_port

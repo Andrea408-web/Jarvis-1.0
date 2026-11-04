@@ -4,6 +4,7 @@ import json
 import os
 import re
 
+from .persona import instruction as persona_instruction
 from .ai import GeminiClient, FUNCTIONS, SYSTEM_INSTRUCTION, _validated_proposal
 from .providers import ProviderError, request_json, reserve
 
@@ -45,7 +46,7 @@ class OpenAIClient(GeminiClient):
         if image is not None:
             encoded = base64.b64encode(image[0]).decode('ascii')
             content = [{'type': 'text', 'text': content}, {'type': 'image_url', 'image_url': {'url': f'data:{image[1]};base64,{encoded}'}}]
-        payload = {'model': model, 'messages': [{'role': 'system', 'content': SYSTEM_INSTRUCTION}, *reversed(context), {'role': 'user', 'content': content}],
+        payload = {'model': model, 'messages': [{'role': 'system', 'content': SYSTEM_INSTRUCTION.replace('Du bist JARVIS','Du bist ASTRA' if self.store.settings().get('assistant_identity')=='astra' else 'Du bist JARVIS')+'\n'+persona_instruction(self.store)}, *reversed(context), {'role': 'user', 'content': content}],
                    'max_completion_tokens': 1536, 'store': False}
         if image is None:
             payload['tools'] = [{'type': 'function', 'function': _schema(f)} for f in FUNCTIONS]

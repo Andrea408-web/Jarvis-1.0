@@ -3,6 +3,7 @@
 import base64
 import os
 import re
+from .persona import instruction as persona_instruction
 
 from .providers import ProviderError, provider_status, request_json, reserve
 
@@ -141,7 +142,7 @@ class GeminiClient:
             }})
         contents.append({"role": "user", "parts": current_parts})
         payload = {
-            "systemInstruction": {"parts": [{"text": SYSTEM_INSTRUCTION}]},
+            "systemInstruction": {"parts": [{"text": SYSTEM_INSTRUCTION.replace("Du bist JARVIS", "Du bist ASTRA" if self.store.settings().get("assistant_identity")=="astra" else "Du bist JARVIS")+"\n"+persona_instruction(self.store)}]},
             "contents": contents,
             "generationConfig": {"temperature": 0.65, "maxOutputTokens": 1536},
         }

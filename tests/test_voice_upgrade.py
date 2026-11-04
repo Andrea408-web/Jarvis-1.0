@@ -75,14 +75,15 @@ class AstraPackageTests(unittest.TestCase):
         for node in ast.parse(source).body:
             if isinstance(node,ast.Assign) and len(node.targets)==1 and isinstance(node.targets[0],ast.Name) and node.targets[0].id in {'PAYLOAD_B64','PAYLOAD_SHA'}:values[node.targets[0].id]=ast.literal_eval(node.value)
         files,manifest=upgrade.payload_files(values['PAYLOAD_B64'],values['PAYLOAD_SHA'])
-        with tempfile.TemporaryDirectory() as folder:
-            target=Path(folder)
-            for name in files:
-                old=subprocess.run(['git','show','bd17dfd:'+name],cwd=root,capture_output=True)
-                if old.returncode==0:
-                    path=target/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(old.stdout)
-            self.assertTrue(upgrade.compatible(target,files,manifest))
-            upgrade.apply(target,files,manifest,lambda root:None)
-            for name,data in files.items():self.assertEqual((target/name).read_bytes(),data)
+        for ref in ['bd17dfd','9bf0a4e']:
+            with self.subTest(ref=ref),tempfile.TemporaryDirectory() as folder:
+                target=Path(folder)
+                for name in files:
+                    old=subprocess.run(['git','show',ref+':'+name],cwd=root,capture_output=True)
+                    if old.returncode==0:
+                        path=target/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(old.stdout)
+                self.assertTrue(upgrade.compatible(target,files,manifest))
+                upgrade.apply(target,files,manifest,lambda root:None)
+                for name,data in files.items():self.assertEqual((target/name).read_bytes(),data)
         with zipfile.ZipFile(root/'updates/JARVIS-Astra-Update.zip') as archive:
             self.assertEqual(archive.read('JARVIS-Astra-aktualisieren.command'),script.encode());self.assertLess(sum(i.file_size for i in archive.infolist()),200000)

@@ -22,7 +22,7 @@ ROLES = {
 class AgentOffice:
     def __init__(self, app):
         self.app=app
-        self.lock=threading.Lock()
+        self.lock=threading.RLock()
         self.wake=threading.Event()
         self.closed=threading.Event()
         self.thread=None
@@ -45,7 +45,7 @@ class AgentOffice:
         return {'roles':[{ 'id':key,'name':value['name'],'title':value['title']} for key,value in ROLES.items()],
                 'jobs':jobs,'native_vision':platform.system()=='Darwin','execution':'Ein lokales Textmodell; Aufträge werden nacheinander verarbeitet. Keine Websuche oder Geräteaktionen.'}
 
-    def submit(self, body):
+    def submit(self, body, capacity=8):
         if not isinstance(body,dict) or not {'role','task'}<=set(body) or set(body)-{'role','task','image','mime'}:
             raise ValueError('Bitte Agent und Auftrag angeben.')
         role,task=body['role'],body['task']
@@ -64,7 +64,7 @@ class AgentOffice:
         with self.lock:
             if self.closed.is_set():raise ProviderError('Die Agentenwerkstatt wird beendet.',409)
             with self.app.store._connect() as db:
-                if db.execute("SELECT count(*) FROM agent_jobs WHERE status IN ('queued','running')").fetchone()[0]>=8:
+                if db.execute("SELECT count(*) FROM agent_jobs WHERE status IN ('queued','running')").fetchone()[0]>=capacity:
                     raise ProviderError('Die Warteschlange ist voll. Bitte einen Auftrag abwarten oder abbrechen.',409)
                 identifier=uuid.uuid4().hex;now=utc_now()
                 if image:
@@ -77,6 +77,17 @@ class AgentOffice:
             self.wake.set()
         return {'id':identifier,'status':'queued'}
 
+    def submit_group(self,body):
+        if set(body)!={'task','count'} or type(body['count']) is not int or not 1<=body['count']<=40 or not isinstance(body['task'],str) or not 1<=len(body['task'].strip())<=2600:raise ValueError('Bitte Auftrag und 1–40 Teilaufträge angeben.')
+        with self.lock:
+            with self.app.store._connect() as db:
+                active=db.execute("SELECT count(*) FROM agent_jobs WHERE status IN ('queued','running')").fetchone()[0]
+            if active+body['count']>40:raise ProviderError('Maximal 40 offene Teilaufträge. Bitte zuerst abwarten oder abbrechen.',409)
+            jobs=[];roles=list(ROLES)
+            for index in range(body['count']):
+                task='Teilauftrag '+str(index+1)+' von '+str(body['count'])+'. Bearbeite einen eigenen konkreten Aspekt, keine erledigten Aktionen erfinden. Gesamtziel: '+body['task']
+                jobs.append(self.submit({'role':roles[index%len(roles)],'task':task},capacity=40))
+            return {'jobs':jobs,'execution':'Teilaufträge laufen nacheinander auf demselben lokalen Modell. Kein fertiger Film wird durch Text allein erzeugt.'}
     def image(self,identifier):
         if not isinstance(identifier,str) or not re.fullmatch(r'[0-9a-f]{32}',identifier):raise ValueError('Ungültige Bildkennung.')
         with self.app.store._connect() as db:row=db.execute('SELECT image_mime FROM agent_jobs WHERE id=?',(identifier,)).fetchone()

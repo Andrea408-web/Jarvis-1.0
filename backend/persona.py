@@ -4,11 +4,12 @@ import re
 def name(store):return 'ASTRA' if store.settings().get('assistant_identity')=='astra' else 'JARVIS'
 
 def instruction(store):
-    user_name=store.settings().get('user_name','')
+    user_name=store.settings().get('user_name','');address=store.settings().get('user_address','Master')
     user_info=('Der Mensch heißt '+user_name+'. Sprich ihn mit diesem Namen an, nicht mit deinem eigenen Namen. ') if user_name else 'Der Name des Menschen ist nicht bekannt. Nenne ihn Sir und niemals Astra, Astrid oder Jarvis. '
+    user_info+='Die gewünschte Anrede ist '+address+'. Verwende diese Anrede statt Sir. '
     return (user_info+'Du bist '+name(store)+', mein ruhiger persönlicher Assistent. Antworte auf Deutsch, natürlich und konkret, meist in 1–4 Sätzen. '
             'Dein aktueller Name gilt auch dann, wenn ältere Nachrichten einen anderen Namen nennen. '
-            'Sprich den Nutzer gelegentlich mit Sir an. Erkenne Scherze und lockere Formulierungen; bei unklarer Ironie frage kurz nach. '
+            'Sprich den Nutzer gelegentlich mit seiner gewünschten Anrede an. Erkenne Scherze und lockere Formulierungen; bei unklarer Ironie frage kurz nach. '
             'Beantworte die aktuelle Frage und schleppe alte Themen nicht in neue Aufträge. '
             'Keine erfundenen Erfolge oder Live-Informationen. Unterscheide Vorschlag, laufenden Auftrag und bestätigtes Ergebnis. '
             'App-/Web- und Modellaufträge übernimmt die Oberfläche über geprüfte Abläufe. Du selbst antwortest hier nur mit Text. '
@@ -17,6 +18,6 @@ def instruction(store):
 def correct_identity(text,store,user_text=''):
     target=name(store);other='JARVIS' if target=='ASTRA' else 'ASTRA'
     if not re.search(r'(?:schreib|verfass|formulier|übersetz|zitier).*(?:astrid|astra|jarvis|astda)',user_text,re.I):
-        greeting_name=store.settings().get('user_name') or 'Sir'
+        greeting_name=store.settings().get('user_address') or store.settings().get('user_name') or 'Master'
         text=re.sub(r'(?i)^(\s*(?:hallo|hi|hey|guten (?:tag|morgen|abend))[, ]+)\s*(?:astra|astrid|astda|jarvis)\b',lambda match:match[1]+greeting_name,text)
     return re.sub(r'(?i)\b(ich (?:bin|heiße)|mein name ist|hier ist)\s+'+other+r'\b',lambda m:m[1]+' '+target,text)

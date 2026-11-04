@@ -4,7 +4,7 @@ Stand: 3. November 2026. Linux-Cloud; der persönliche Mac und das iPhone sind n
 
 ## Verifiziert
 
-- **190 Python-Tests bestanden**, keine übersprungen. Python-Suite mit echten lokalen HTTP-/TLS-Verbindungen, Host-/Origin-/Token-Prüfung, privater Ablage, Budgetgrenzen und sicheren bestätigten Aktionen. Temporäre TLS-Zertifikate werden explizit vertraut; TLS-Prüfung wird nicht abgeschaltet.
+- **193 Python-Tests bestanden**, keine übersprungen. Python-Suite mit echten lokalen HTTP-/TLS-Verbindungen, Host-/Origin-/Token-Prüfung, privater Ablage, Budgetgrenzen und sicheren bestätigten Aktionen. Temporäre TLS-Zertifikate werden explizit vertraut; TLS-Prüfung wird nicht abgeschaltet.
 - Agentenaufträge: natürliche Formulierungen führen zu einem tatsächlichen Job. Queue, Fehler, Abbruch, Neustart und getrennte Gespräche sind getestet. Sprachmodellantworten sind hierfür kontrollierte Fixtures; daraus wird keine echte Modellqualität abgeleitet.
 - Bildanhänge: Format-/Größenprüfung, private Dateien mit Modus0600, Migration bestehender Datenbanken, Rückgabe lokaler Bildbefunde und Übergabe als Daten statt auszuführende Befehle. Auf Nicht-Macs wird kein vorhandenes Bildverständnis behauptet.
 - Eigene deutsche Stimme: echte eSpeak/meSpeak-Spracherzeugung im Browser, decodierbare PCM-Daten mit Sprachsignal und echte Web-Audio-Wiedergabe. Jeder Systemstimmen-Aufruf wird im Integrationstest als Fehler behandelt. Keine externen Sprachrequests. Die Engine ist keine neu trainierte neuronale Stimme; es handelt sich um eine mitgelieferte freie Formantengine mit eigener Konfiguration.
@@ -56,3 +56,5 @@ Zusätzlich wurde der vollständige Desktop-Modellweg mit echtem Blender im Head
 Blender-Erkennung: versioniertes App-Bundle im Downloadordner, Start über den tatsächlichen Pfad nach gescheiterter Bundle-Suche und Auffinden der Blender-Programmdatei sind mit realen Plist-Dateien in Testordnern geprüft. Nutzername wird separat dauerhaft gespeichert; direkte Namensabfrage und falsche Selbstnamen als Begrüßung sind geprüft. Native Mac-Ausführung bleibt hier ungeprüft.
 
 Regression geprüft: „Öffne Blender“ und „Kannst du Blender öffnen?“ werden als App-Start und nicht als Modellierungsauftrag verarbeitet. Anrede „Astrid“ wird akzeptiert; persönliche Angaben mit vorangestellter Assistentenanrede werden nicht mehr als Desktop-Aufträge abgefangen.
+
+Stimme/Companion: gezielter Abbruch neuronaler Ausgabe, frei werdende Engine-Sperre, Companion-Heartbeat und zustellbare UI-Aufträge sowie 40 reale Team-Teilaufträge getestet. Browser: tatsächliche neuronale Thorsten-Ausgabe, Astra-Abläufe und Hintergrundton nach Stummschaltung bestanden. Blender-CPU-Rendering mit Kamera/Licht erzeugt ein echtes PNG (400305 Bytes im Prüflauf). Mac-Mikrofon, native Maus und AppKit bleiben hier ungeprüft; Browser-Hintergrund-ASR kann eingeschränkt sein. Kein autonomer Videoschnitt oder vollständiger 3D-Fotonachbau wird behauptet.

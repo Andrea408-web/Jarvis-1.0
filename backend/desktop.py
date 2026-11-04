@@ -143,7 +143,13 @@ class MacInput:
             self.active_app='com.apple.Safari'
         elif kind in {'move','click'}:
             point=Point(step['x']*max(1,self.width-1),step['y']*max(1,self.height-1))
-            self.post(self.cg.CGEventCreateMouseEvent(None,5,point,0))
+            self.cg.CGEventCreate.argtypes=[ctypes.c_void_p];self.cg.CGEventCreate.restype=ctypes.c_void_p
+            self.cg.CGEventGetLocation.argtypes=[ctypes.c_void_p];self.cg.CGEventGetLocation.restype=Point
+            event=self.cg.CGEventCreate(None);origin=self.cg.CGEventGetLocation(event);self.cf.CFRelease(event)
+            for index in range(1,26):
+                if self.cancel_event and self.cancel_event.is_set():return
+                t=index/25;t=t*t*(3-2*t);position=Point(origin.x+(point.x-origin.x)*t,origin.y+(point.y-origin.y)*t)
+                self.post(self.cg.CGEventCreateMouseEvent(None,5,position,0));time.sleep(.016)
             if kind=='click':
                 for event in [1,2]:self.post(self.cg.CGEventCreateMouseEvent(None,event,point,0))
         elif kind in {'key','text'}:
@@ -161,17 +167,18 @@ class MacInput:
 
 class Desktop:
     def __init__(self,app,driver=None):
-        self.app=app;self.driver=driver or MacInput;self.lock=threading.RLock();self.cancel=threading.Event();self.plan=None;self.thread=None;self.muted=False;self.panel=None;self.panel_state='closed';self.panel_error='';self.panel_started=0;self.model_folder=None;self.model_process=None
+        self.app=app;self.driver=driver or MacInput;self.lock=threading.RLock();self.cancel=threading.Event();self.plan=None;self.thread=None;self.muted=False;self.panel=None;self.panel_state='closed';self.panel_error='';self.panel_started=0;self.model_folder=None;self.model_process=None;self.companion_seen=0;self.commands=[];self.ui_state={}
     def snapshot(self):
         with self.lock:
             if self.panel_state in {'opening','ready'} and self.panel and self.panel.poll() is not None:
                 normal=self.panel.poll()==0 and self.panel_state=='ready'
                 self.panel_state='closed' if normal else 'failed';self.panel_error='' if normal else 'Das Mac-Fenster wurde beendet. Browser-Pop-up verwenden oder erneut öffnen.'
             if self.panel_state=='opening' and time.monotonic()-self.panel_started>10:self.panel_state='failed';self.panel_error='Das Fenster hat nicht geantwortet. Browser-Pop-up verwenden.'
-            return {'supported':platform.system()=='Darwin','muted':self.muted,'panel':{'state':self.panel_state,'error':self.panel_error},'plan':json.loads(json.dumps(self.plan)) if self.plan else None}
+            return {'supported':platform.system()=='Darwin','muted':self.muted,'panel':{'state':self.panel_state,'error':self.panel_error},'companion_active':time.monotonic()-self.companion_seen<6,'ui':dict(self.ui_state),'plan':json.loads(json.dumps(self.plan)) if self.plan else None}
 
     def prepare(self,body):
-        if set(body)-{'goal','steps','scene'}:raise ValueError('Unbekannte Desktop-Felder.')
+        if set(body)-{'goal','steps','scene','render'}:raise ValueError('Unbekannte Desktop-Felder.')
+        if 'render' in body and type(body['render']) is not bool:raise ValueError('Ungültige Render-Option.')
         goal=body.get('goal','')
         if not isinstance(goal,str) or not 1<=len(goal.strip())<=3000:raise ValueError('Bitte einen konkreten Desktop-Auftrag eingeben.')
         with self.lock:
@@ -182,7 +189,7 @@ class Desktop:
         if scene:
             with self.lock:
                 if self.thread and self.thread.is_alive():raise ProviderError('Ein Desktop-Ablauf läuft bereits.',409)
-                self.plan={'id':secrets.token_hex(16),'goal':goal.strip(),'kind':'model','scene':scene,'steps':[{'type':'model','object':p['name'],'shape':p['shape']} for p in scene['parts']],'state':'review','completed':0,'message':'Echte 3D-Grundkörper in Blender aufbauen. Eigene neue Szene; vorhandene Dateien werden nicht überschrieben.','expires':time.time()+600}
+                self.plan={'id':secrets.token_hex(16),'goal':goal.strip(),'kind':'model','render':body.get('render',False),'scene':scene,'steps':[{'type':'model','object':p['name'],'shape':p['shape']} for p in scene['parts']],'state':'review','completed':0,'message':'Echte 3D-Grundkörper in Blender aufbauen. Eigene neue Szene; vorhandene Dateien werden nicht überschrieben.','expires':time.time()+600}
                 return self.snapshot()
         steps=body.get('steps')
         if steps is None:
@@ -297,7 +304,8 @@ class Desktop:
                 if data['state']=='done':
                     output=folder/'Astra-Modell.blend'
                     if not output.is_file() or output.stat().st_size<100 or not output.read_bytes()[:7]==b'BLENDER':raise ValueError('Blender hat keine gültige Modelldatei gespeichert.')
-                    with self.lock:self.plan.update(state='done',message='Echtes Blender-Modell gespeichert: '+str(output),artifact=str(output))
+                    if self.plan.get('render'):self.render_model(folder,output)
+                    with self.lock:self.plan.update(state='stopped' if self.cancel.is_set() else 'done',message='Gestoppt.' if self.cancel.is_set() else 'Echtes Blender-Modell gespeichert: '+str(output),artifact=str(output),rendered=(folder/'Vorschau.png').is_file())
                     return
                 if data['state'] in {'error','stopped'}:raise ValueError(data['message'])
             except (FileNotFoundError,json.JSONDecodeError):pass
@@ -309,6 +317,19 @@ class Desktop:
             self.cancel.wait(.15)
         (folder/'cancel').touch(mode=0o600)
         raise ValueError('Blender hat innerhalb von 90 Sekunden keinen Abschluss gemeldet. Modellierung angehalten.')
+    def render_model(self,folder,output):
+        with self.lock:self.plan['message']='Blender rendert ein echtes Vorschaubild …'
+        with (folder/'render.log').open('w') as log:
+            process=subprocess.Popen([self.blender_binary(),'--background',str(output),'--python',str(Path(__file__).with_name('render_scene.py')),'--',str(folder)],stdout=log,stderr=subprocess.STDOUT)
+        deadline=time.monotonic()+180
+        while process.poll() is None:
+            if self.cancel.wait(.15) or time.monotonic()>deadline:
+                process.terminate()
+                try:process.wait(timeout=3)
+                except subprocess.TimeoutExpired:process.kill();process.wait()
+                if self.cancel.is_set():return
+                raise ValueError('Rendering hat zu lange gebraucht. Modelldatei bleibt im Auftragsordner.')
+        if process.returncode or not (folder/'Vorschau.png').is_file():raise ValueError('Rendering fehlgeschlagen; Details stehen im Auftragsordner in render.log.')
     def model_file(self):
         with self.lock:
             artifact=self.plan.get('artifact') if self.plan and self.plan.get('state')=='done' else None
@@ -318,6 +339,26 @@ class Desktop:
         data=path.read_bytes()
         if not data.startswith(b'BLENDER'):raise ValueError('Keine Blender-Modelldatei.')
         return data
+    def companion(self,body):
+        if set(body)-{'command','text'}:raise ValueError('Ungültiger Begleitfenster-Auftrag.')
+        with self.lock:
+            self.companion_seen=time.monotonic()
+            if body:
+                command=body.get('command')
+                if command not in {'talk','end','send'}:raise ValueError('Unbekannte Gesprächsaktion.')
+                text=body.get('text','')
+                if not isinstance(text,str) or len(text)>6000 or (command=='send' and not text.strip()):raise ValueError('Bitte einen kurzen Auftrag eingeben.')
+                if len(self.commands)>=8:raise ValueError('Bitte den letzten Auftrag abwarten.')
+                self.commands.append({'command':command,'text':text})
+            return {'ok':True,'ui':dict(self.ui_state)}
+    def sync_ui(self,body):
+        if set(body)-{'busy','mode','conversation','error','reply'}:raise ValueError('Ungültiger Gesprächsstatus.')
+        if type(body.get('busy')) is not bool or type(body.get('conversation')) is not bool or body.get('mode') not in {'idle','listening','thinking','speaking','error'}:raise ValueError('Ungültiger Gesprächsstatus.')
+        with self.lock:
+            self.ui_state={'busy':body['busy'],'mode':body['mode'],'conversation':body['conversation'],'error':str(body.get('error',''))[:300],'reply':str(body.get('reply',''))[:3000],'seen':time.time()}
+            index=next((i for i,c in enumerate(self.commands) if not body['busy'] or c['command']!='send'),None)
+            commands=[] if index is None else [self.commands.pop(index)]
+            return {'commands':commands}
     def panel_ready(self):
         with self.lock:self.panel_state='ready';self.panel_error='';return {'ok':True}
     def open_panel(self,url):

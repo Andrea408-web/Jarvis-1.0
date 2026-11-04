@@ -335,6 +335,13 @@ class Handler(BaseHTTPRequestHandler):
             if re.fullmatch(r'/api/agents/[0-9a-f]{32}/image',path):
                 data,mime=app.office.image(path.split('/')[3]);self._headers(200,mime,len(data));return self.wfile.write(data)
             if path == '/api/hub':return self._json(app.hub.snapshot())
+            if path=='/api/desktop/render':
+                app.desktop.model_file()
+                image=Path(app.desktop.snapshot()['plan']['artifact']).parent/'Vorschau.png'
+                if not image.is_file() or image.stat().st_size>10000000:raise ValueError('Noch kein Renderbild vorhanden.')
+                data=image.read_bytes()
+                if not data.startswith(b'\x89PNG\r\n\x1a\n'):raise ValueError('Ungültiges Renderbild.')
+                self._headers(200,'image/png',len(data));return self.wfile.write(data)
             if path == '/api/desktop/model':
                 data=app.desktop.model_file();self._headers(200,'application/octet-stream',len(data));return self.wfile.write(data)
             if path == '/api/desktop':return self._json(app.desktop.snapshot())
@@ -375,6 +382,8 @@ class Handler(BaseHTTPRequestHandler):
             body = self._body()
             if method=='POST' and path.startswith('/api/desktop/'):
                 if self.server.device_auth:raise ValueError('Desktop-Steuerung ist nur direkt am Mac verfügbar, nicht über die Handy-Kopplung.')
+                if path=='/api/desktop/companion':return self._json(app.desktop.companion(body))
+                if path=='/api/desktop/sync':return self._json(app.desktop.sync_ui(body))
                 if path=='/api/desktop/prepare':return self._json(app.desktop.prepare(body))
                 if path=='/api/desktop/start':
                     if set(body)!={'id'}:raise ValueError('Nur die geprüfte Ablaufkennung angeben.')
@@ -391,9 +400,12 @@ class Handler(BaseHTTPRequestHandler):
             if method=='POST' and path in {'/api/hub/news','/api/hub/channels'}:
                 if body:raise ValueError('Keine Parameter für die Hub-Aktualisierung erforderlich.')
                 return self._json(app.hub.news() if path.endswith('/news') else app.hub.channels())
+            if method=='POST' and path=='/api/natural-voice/cancel':
+                if set(body)!={'id'}:raise ValueError('Nur die Sprachkennung angeben.')
+                return self._json(app.natural_voice.cancel(body['id']))
             if method == 'POST' and path == '/api/natural-voice/speak':
-                if set(body)-{'text','preset'}:raise ValueError('Unbekannte Sprachfelder.')
-                audio=app.natural_voice.synthesize(body.get('text'),body.get('preset','jarvis'))
+                if set(body)-{'text','preset','id','background'}:raise ValueError('Unbekannte Sprachfelder.')
+                audio=app.natural_voice.synthesize(body.get('text'),body.get('preset','jarvis'),request_id=body.get('id'),background=body.get('background',False)) if 'id' in body or 'background' in body else app.natural_voice.synthesize(body.get('text'),body.get('preset','jarvis'))
                 self._headers(200,'audio/wav',len(audio))
                 return self.wfile.write(audio)
             if method == 'POST' and path == '/api/agents/dispatch':
@@ -401,6 +413,7 @@ class Handler(BaseHTTPRequestHandler):
                 routed=app.dispatch_agent(body.get('text'),{key:body[key] for key in ('image','mime') if key in body})
                 if not routed:raise ValueError('Bitte einen konkreten Agentenauftrag formulieren.')
                 return self._json(routed)
+            if method=='POST' and path=='/api/agents/group':return self._json(app.office.submit_group(body),202)
             if method == 'POST' and path == '/api/agents':
                 return self._json(app.office.submit(body),202)
             if method == 'POST' and path == '/api/agents/cancel':

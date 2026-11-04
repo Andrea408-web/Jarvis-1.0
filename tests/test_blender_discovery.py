@@ -48,7 +48,7 @@ class ProfileTests(unittest.TestCase):
                 seen=[]
                 def transport(path,payload):seen.append(payload);return {'done':True,'message':{'content':'Hallo Astrid, wie geht es dir?'}}
                 client=LocalClient(app.store,transport)
-                self.assertEqual(client.chat('Hallo')['reply'],'Hallo Maxine, wie geht es dir?')
+                self.assertEqual(client.chat('Hallo')['reply'],'Hallo Master, wie geht es dir?')
                 self.assertIn('Der Mensch heißt Maxine',seen[0]['messages'][0]['content'])
                 self.assertIn('Du bist ASTRA',seen[0]['messages'][0]['content'])
                 self.assertEqual(client.chat('Schreib einen Brief an Astrid')['reply'],'Hallo Astrid, wie geht es dir?')

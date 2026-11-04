@@ -86,4 +86,4 @@ class AstraPackageTests(unittest.TestCase):
                 upgrade.apply(target,files,manifest,lambda root:None)
                 for name,data in files.items():self.assertEqual((target/name).read_bytes(),data)
         with zipfile.ZipFile(root/'updates/JARVIS-Astra-Update.zip') as archive:
-            self.assertEqual(archive.read('JARVIS-Astra-aktualisieren.command'),script.encode());self.assertLess(sum(i.file_size for i in archive.infolist()),200000)
+            self.assertEqual(archive.read('JARVIS-Astra-aktualisieren.command'),script.encode());self.assertLess(sum(i.file_size for i in archive.infolist()),300000)

@@ -47,3 +47,15 @@ Die Erkennung berücksichtigt jetzt auch Downloads, den Schreibtisch und geöffn
 Eine heruntergeladene ZIP-/DMG-Datei allein ist noch keine startbare App. Auf dem Mac die Blender-DMG öffnen, `Blender.app` nach **Programme** ziehen und Blender einmal normal öffnen. Keine erneute Jarvis- oder KI-Installation erforderlich; macOS-Sicherheitsprüfungen werden nicht umgangen.
 
 „Astrid“ wird als Spracherkennungsvariante von „Astra“ akzeptiert. Der Nutzername ist davon getrennt: **„Ich heiße Maxine“** speichert diesen Namen lokal dauerhaft; **„Wie heiße ich?“** liest ihn ohne KI-Raten aus. Der öffentliche Programmcode enthält keinen persönlichen Standardnamen.
+
+## Stimme, Companion und Rendering
+
+Antworten haben **Antwort anhören**. Gespräch beenden blockiert spätere Antworten nicht mehr dauerhaft. Explizites Stummschalten bleibt davon getrennt. Abgebrochene neuronale Spracherzeugung wird gezielt beendet; Filmexport-Ton wird davon nicht abgebrochen. Browser können Audio weiterhin blockieren; ein Klick auf Antwort anhören entsperrt es.
+
+Das Begleitfenster hat Gespräch starten/beenden sowie ein Texteingabefeld. Die Bedienung wird an das geöffnete Hauptfenster übertragen. Dort müssen Mikrofon und Audio zuerst freigegeben sein. Das Gespräch darf weiterlaufen, solange das Begleitfenster aktiv meldet; Browser können Hintergrund-Spracherkennung trotzdem pausieren. Kein eigener nativer Spracherkenner wird behauptet.
+
+**Vorschaubild rendern** vor dem Modellstart aktivieren: Blender erzeugt mit Kamera, Licht und CPU-Rendering eine PNG-Vorschau. **Renderbild anzeigen** zeigt das echte Ergebnis. Aktionen stoppen beendet den separaten Renderprozess. Sichtbare Mausbewegungen vorhandener move/click-Schritte verlaufen jetzt tatsächlich gleichmäßig und sind abbrechbar. Das ist weiterhin keine allgemeine autonome Bildschirmbedienung.
+
+In der Werkstatt gibt es **Teamauftrag** mit 1–40 tatsächlichen Teilaufträgen. Ein lokales Modell verarbeitet sie nacheinander. Dies erzeugt Textentwürfe mit getrenntem Status; es sind keine 40 gleichzeitig rechnenden Modelle. Vollständige autonome Filmproduktion, allgemeiner Videoschnitt und vollständiger 3D-Fotonachbau sind in diesem Update nicht enthalten. Für den gewünschten Filmstil liegt bisher nur der Kanal @moritz.maaker vor; seine Videos wurden hier nicht überprüft.
+
+Die gewünschte Anrede ist jetzt Master. Es werden keine neuen Modellgewichte heruntergeladen.

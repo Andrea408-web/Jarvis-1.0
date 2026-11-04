@@ -35,7 +35,7 @@ with tempfile.TemporaryDirectory() as folder:
             assert [e['type'] for e in events]==['open','text'];assert app.desktop.snapshot()['muted']
             page.get_by_role('button',name='Wieder reden',exact=True).click();page.wait_for_function("()=>window.JarvisDesktopMuted===false")
             page.locator('#astra-desktop').get_by_role('button',name='Schließen',exact=True).click()
-            page.evaluate("()=>JarvisBridge.sendMessage('Wie heißt du?')");page.get_by_text('Ich bin ASTRA, Sir.',exact=True).wait_for()
+            page.evaluate("()=>JarvisBridge.sendMessage('Wie heißt du?')");page.get_by_text('Ich bin ASTRA, Master.',exact=True).wait_for()
             page.evaluate("()=>JarvisBridge.sendMessage('Astrid, öffne Spotify')");page.locator('#astra-steps').get_by_text('Spotify öffnen',exact=True).wait_for();page.wait_for_function("()=>document.getElementById('astra-desktop-status').textContent.startsWith('done')");assert any(e.get('app')=='Spotify' for e in events)
             with page.expect_popup() as popup_event:page.get_by_role('button',name='Browser-Pop-up',exact=True).click()
             popup=popup_event.value;popup.locator('#status').get_by_text('done',exact=False).wait_for();popup.get_by_role('button',name='Reden stoppen',exact=True).click();popup.wait_for_function("()=>document.getElementById('mute').disabled");assert app.desktop.snapshot()['muted'];popup.close()

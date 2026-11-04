@@ -10,7 +10,7 @@ runtime=next((root/'linux-extracted').iterdir());model=next((root/'voice-extract
 with tempfile.TemporaryDirectory() as folder:
     app=Application(folder);app.store.update_settings({'ai_provider':'llamacpp','voice_engine':'natural','voice_enabled':False})
     app.natural_voice.status=lambda:{'installed':True,'name':'Thorsten'}
-    def synthesize(text,preset):
+    def synthesize(text,preset,**kwargs):
         return generate(runtime/'bin/sherpa-onnx-offline-tts',model/'de_DE-thorsten-medium.onnx',model/'tokens.txt',model/'espeak-ng-data',text,Path(folder)/'speech.wav',preset)
     app.natural_voice.synthesize=synthesize
     server=JarvisServer(('127.0.0.1',0),app);thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()

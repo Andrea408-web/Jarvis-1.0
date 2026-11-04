@@ -10,6 +10,7 @@ import subprocess
 import tarfile
 import tempfile
 import threading
+import time
 import uuid
 import wave
 
@@ -114,7 +115,7 @@ def wave_bytes(path):
     return Path(path).read_bytes()
 
 
-def generate(executable,model,tokens,data_dir,text,output,preset='jarvis'):
+def generate(executable,model,tokens,data_dir,text,output,preset='jarvis',cancel_event=None):
     if not isinstance(text,str) or not text.strip() or len(text)>1800:raise ValueError('Bitte 1 bis 1.800 Zeichen zum Sprechen senden.')
     if preset not in {'jarvis','clear','system'}:raise ValueError('Unbekanntes Stimmprofil.')
     env=dict(os.environ)
@@ -124,7 +125,22 @@ def generate(executable,model,tokens,data_dir,text,output,preset='jarvis'):
     env['DYLD_LIBRARY_PATH' if platform.system()=='Darwin' else 'LD_LIBRARY_PATH']=str(lib)
     command=[str(executable),'--vits-model='+str(model),'--vits-tokens='+str(tokens),'--vits-data-dir='+str(data_dir),'--provider=cpu','--num-threads=2','--vits-length-scale='+({'jarvis':'1.0','clear':'.94','system':'1.06'}[preset]),'--output-filename='+str(output),'--',text.strip()]
     try:
-        result=subprocess.run(command,stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,timeout=90,env=env,cwd=str(Path(executable).parent))
+        if cancel_event is None:
+            result=subprocess.run(command,stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.PIPE,timeout=90,env=env,cwd=str(Path(executable).parent))
+        else:
+            process=subprocess.Popen(command,stdin=subprocess.DEVNULL,stdout=subprocess.DEVNULL,stderr=subprocess.DEVNULL,env=env,cwd=str(Path(executable).parent))
+            try:
+                deadline=time.monotonic()+90
+                while process.poll() is None:
+                    if cancel_event.wait(.1):raise ValueError('Sprachausgabe gestoppt.')
+                    if time.monotonic()>deadline:raise ValueError('Die Sprachengine hat nicht rechtzeitig geantwortet.')
+                result=process
+            finally:
+                if process.poll() is None:
+                    process.terminate()
+                    try:process.wait(timeout=2)
+                    except subprocess.TimeoutExpired:process.kill();process.wait()
+
         if result.returncode:raise ValueError('Die neuronale Stimme konnte nicht sprechen. Bitte das Sprachpaket und eventuelle macOS-Sicherheitsmeldungen prüfen. Es wird keine Roboter- oder Systemstimme eingeschaltet.')
         return wave_bytes(output)
     except (OSError,subprocess.SubprocessError):raise ValueError('Die neuronale Sprachengine konnte nicht gestartet werden. Es wird keine andere Stimme verwendet.') from None
@@ -133,7 +149,7 @@ def generate(executable,model,tokens,data_dir,text,output,preset='jarvis'):
 class NaturalVoice:
     def __init__(self,data_dir=None):
         self.root=(Path(data_dir) if data_dir is not None else default_data_dir())/'natural-voice'
-        self.lock=threading.Lock();self.record=None;self.signatures=None
+        self.lock=threading.Lock();self.record=None;self.signatures=None;self.waiters=threading.BoundedSemaphore(4);self.events={};self.event_lock=threading.Lock()
     def _inside(self,relative):
         if not isinstance(relative,str) or Path(relative).is_absolute():raise ValueError('Ungültiger Sprachpfad.')
         path=(self.root/relative).resolve()
@@ -159,20 +175,40 @@ class NaturalVoice:
             if self.record is None:self.verify()
             return {'installed':True,'name':'Thorsten · natürliche deutsche Offline-Stimme','message':'Neuronale Stimme eingerichtet. Kein Konto und kein externer Sprachdienst.'}
         except (OSError,ValueError,TypeError,KeyError,RuntimeError):return {'installed':False,'name':'Thorsten','message':'Natürliche Stimme noch nicht eingerichtet oder beschädigt. Separaten Nachrüsthelfer verwenden.'}
-    def synthesize(self,text,preset='jarvis'):
+    def cancel(self,request_id):
+        if not isinstance(request_id,str) or not 1<=len(request_id)<=80:raise ValueError('Ungültige Sprachkennung.')
+        with self.event_lock:
+            event=self.events.get(request_id)
+            if event:event.set()
+        return {'ok':True}
+    def synthesize(self,text,preset='jarvis',request_id=None,background=False):
         if not isinstance(text,str) or not text.strip() or len(text)>1800:raise ValueError('Bitte 1 bis 1.800 Zeichen zum Sprechen senden.')
         if not isinstance(preset,str) or preset not in {'jarvis','clear','system'}:raise ValueError('Unbekanntes Stimmprofil.')
-        if not self.lock.acquire(timeout=3):raise ProviderError('Die Sprachengine verarbeitet noch eine andere Ausgabe. Bitte kurz warten.',409)
+        if type(background) is not bool or (request_id is not None and (not isinstance(request_id,str) or not 1<=len(request_id)<=80)):raise ValueError('Ungültige Sprachoptionen.')
+        if not self.waiters.acquire(blocking=False):raise ProviderError('Die Sprachwarteschlange ist voll. Bitte die Antwort erneut anhören.',429)
+        event=threading.Event();acquired=False
+        if request_id and not background:
+            with self.event_lock:self.events[request_id]=event
         try:
+            deadline=time.monotonic()+90
+            while not acquired:
+                if event.is_set():raise ValueError('Sprachausgabe gestoppt.')
+                acquired=self.lock.acquire(timeout=.1)
+                if time.monotonic()>deadline:raise ValueError('Sprachwarteschlange wartet zu lange. Bitte erneut anhören.')
+
             if self.record is None:self.verify()
             for relative,signature in self.signatures.items():
                 stat=self._inside(relative).stat()
                 if (stat.st_size,stat.st_mtime_ns)!=signature:self.verify();break
             record=self.record
             with tempfile.TemporaryDirectory(prefix='speech-',dir=self.root) as folder:
-                return generate(self._inside(record['executable']),self._inside(record['model']),self._inside(record['tokens']),self._inside(record['data_dir']),text,Path(folder)/'speech.wav',preset)
+                return generate(self._inside(record['executable']),self._inside(record['model']),self._inside(record['tokens']),self._inside(record['data_dir']),text,Path(folder)/'speech.wav',preset,cancel_event=event)
         except (OSError,ValueError,TypeError,KeyError,RuntimeError) as error:raise ProviderError(str(error) if isinstance(error,ValueError) else 'Die natürliche Stimme ist nicht verfügbar. Bitte den Nachrüsthelfer prüfen.',503) from None
-        finally:self.lock.release()
+        finally:
+            if acquired:self.lock.release()
+            with self.event_lock:
+                if request_id:self.events.pop(request_id,None)
+            self.waiters.release()
 
 
 def install(data_dir=None):

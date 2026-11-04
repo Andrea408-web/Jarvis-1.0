@@ -8,13 +8,13 @@
     render(text,preset='jarvis',options={}){
       const background=options.background===true;
       if(window.JarvisBridge?.getSettings().voice_engine==='natural'){
-        const request={controller:new AbortController(),background};naturalRequests.add(request);
-        return window.JarvisBridge.api('/api/natural-voice/speak',{method:'POST',body:JSON.stringify({text:text.slice(0,1800),preset}),signal:request.controller.signal}).then(blob=>blob.arrayBuffer()).finally(()=>naturalRequests.delete(request));
+        const request={controller:new AbortController(),background,id:crypto.randomUUID()};naturalRequests.add(request);
+        return window.JarvisBridge.api('/api/natural-voice/speak',{method:'POST',body:JSON.stringify({text:text.slice(0,1800),preset,id:request.id,background}),signal:request.controller.signal}).then(blob=>blob.arrayBuffer()).finally(()=>naturalRequests.delete(request));
       }
       return new Promise((resolve,reject)=>{const id=++sequence;const timer=setTimeout(()=>{pending.delete(id);reject(new Error('Die Offline-Spracherzeugung braucht zu lange.'));},25000);pending.set(id,{resolve,reject,timer,background});try{engine().postMessage({id,text:text.slice(0,1800),preset});}catch(error){clearTimeout(timer);pending.delete(id);reject(error);}});
     },
     cancel(){
-      for(const request of naturalRequests){if(!request.background){request.controller.abort();naturalRequests.delete(request);}}
+      for(const request of naturalRequests){if(!request.background){request.controller.abort();window.JarvisBridge.api('/api/natural-voice/cancel',{method:'POST',body:JSON.stringify({id:request.id})}).catch(()=>{});naturalRequests.delete(request);}}
       for(const [id,request] of pending){if(!request.background){clearTimeout(request.timer);request.reject(new DOMException('Gestoppt','AbortError'));pending.delete(id);}}
     },
     destroy(){for(const request of naturalRequests)request.controller.abort();naturalRequests.clear();fail(new DOMException('Beendet','AbortError'));}

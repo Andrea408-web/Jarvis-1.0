@@ -17,6 +17,7 @@ from pathlib import Path
 
 DEFAULT_SETTINGS = {
     "assistant_identity": "jarvis",
+    "user_name": "",
     "ai_provider": "gemini",
     "local_model": "qwen2.5:1.5b",
     "openai_model": "gpt-4o-mini",
@@ -115,6 +116,8 @@ class Store:
             if key in {"cloud_enabled", "elevenlabs_enabled", "voice_enabled", "speech_auto_send", "camera_enabled"}:
                 if type(value) is not bool:
                     raise ValueError("Diese Einstellung muss ein Wahrheitswert sein.")
+            elif key == "user_name":
+                if not isinstance(value,str) or len(value)>60 or (value and not all(char.isalpha() or char in " -’\'" for char in value)):raise ValueError("Bitte nur einen kurzen Namen eingeben.")
             elif key == "assistant_identity":
                 if not isinstance(value,str) or value not in {"jarvis","astra"}:raise ValueError("Bitte Jarvis oder Astra auswählen.")
             elif key == "ai_provider":

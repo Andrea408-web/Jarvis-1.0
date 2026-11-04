@@ -104,6 +104,16 @@ class Application:
     def chat(self, text):
         if not isinstance(text, str) or not text.strip() or len(text) > 12000:
             raise ValueError('Bitte eine Nachricht mit 1 bis 12.000 Zeichen eingeben.')
+        text=re.sub(r'^(?:astra|asta|astda|astrid|jarvis)[,: ]+(?=(?:ich|mein|wie|wer|was|wo|wann|warum|wieso|kannst|könntest|würdest|öffne|starte|mach|erstelle|baue|modelliere|bitte|hallo|hi|danke|erklär|sag|zeig|nenne)\b)','',text.strip(),flags=re.I)
+        user_name=re.fullmatch(r'(?:ich heiße|ich heisse|mein name ist|nenne mich)\s+([A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ ’\'-]{0,59})[.!]?',text.strip(),re.I)
+        if user_name:
+            value=user_name[1].strip();self.store.update_settings({'user_name':value})
+            reply='Ich merke mir deinen Namen: '+value+'.'
+            self.store.append('user',text);self.store.append('assistant',reply)
+            return {'reply':reply,'proposals':[]}
+        if re.fullmatch(r'(?:wie heiße ich|wie heisse ich|wie ist mein name)[?!. ]*',text.strip(),re.I):
+            value=self.store.settings().get('user_name')
+            return {'reply':'Du heißt '+value+'.' if value else 'Deinen Namen habe ich noch nicht gespeichert. Wie heißt du?','proposals':[]}
         if re.fullmatch(r'(?:wie (?:heißt|heisst) du|wer bist du|wie ist dein name)[?!. ]*',text.strip(),re.I):
             from .persona import name
             return {'reply':'Ich bin '+name(self.store)+', Sir.','proposals':[]}

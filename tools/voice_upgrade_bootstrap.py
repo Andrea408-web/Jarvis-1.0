@@ -62,7 +62,7 @@ def choose_root(files,manifest):
         result=subprocess.run(['/usr/bin/osascript','-e','POSIX path of (choose folder with prompt "Wähle deinen vorhandenen JARVIS-Ordner. Die Text-KI bleibt erhalten.")'],capture_output=True,text=True,timeout=180,check=True)
     except (OSError,subprocess.SubprocessError):raise ValueError('Ordnerauswahl abgebrochen. Es wurde nichts geändert.') from None
     root=Path(result.stdout.strip())
-    if not compatible(root,files,manifest):raise ValueError('Dieser Ordner passt nicht zum geprüften Stimmenupdate oder Programmdateien wurden verändert. Es wurde nichts überschrieben. Unterstützt sind die bereitgestellten Versionen 232ba23, bd17dfd und 9bf0a4e; weder Jarvis noch die Text-KI werden automatisch neu geladen.')
+    if not compatible(root,files,manifest):raise ValueError('Dieser Ordner passt nicht zum geprüften Stimmenupdate oder Programmdateien wurden verändert. Es wurde nichts überschrieben. Unterstützt sind die bereitgestellten Versionen 232ba23, bd17dfd, 9bf0a4e und 539bd30; weder Jarvis noch die Text-KI werden automatisch neu geladen.')
     return root
 
 

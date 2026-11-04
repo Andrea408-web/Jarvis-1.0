@@ -75,7 +75,7 @@ class AstraPackageTests(unittest.TestCase):
         for node in ast.parse(source).body:
             if isinstance(node,ast.Assign) and len(node.targets)==1 and isinstance(node.targets[0],ast.Name) and node.targets[0].id in {'PAYLOAD_B64','PAYLOAD_SHA'}:values[node.targets[0].id]=ast.literal_eval(node.value)
         files,manifest=upgrade.payload_files(values['PAYLOAD_B64'],values['PAYLOAD_SHA'])
-        for ref in ['bd17dfd','9bf0a4e']:
+        for ref in ['bd17dfd','9bf0a4e','539bd30']:
             with self.subTest(ref=ref),tempfile.TemporaryDirectory() as folder:
                 target=Path(folder)
                 for name in files:

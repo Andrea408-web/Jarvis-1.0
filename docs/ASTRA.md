@@ -39,3 +39,11 @@ Diesen Text kannst du als erste Nachricht in einem neuen Chat senden. Er gilt nu
 - Der Name Astra wird nun auch gespeichert und dem Sprachmodell übergeben, nicht nur angezeigt. Die Gesprächsanweisung wurde verkürzt und auf natürliche Antworten, aktuelle Aufträge und Umgang mit Scherzen ausgerichtet. Ein Prompt macht das kleine Textmodell nicht so leistungsfähig wie ChatGPT.
 
 Echte Blender-Modelldateien für Auto, Haus und Roboter wurden in der Linux-Cloud erstellt, erneut geladen und auf Mesh-Objekte geprüft; auch Abbruch vor dem ersten Objekt wurde mit echtem Blender geprüft. Das bestätigt die Geometrieerzeugung, nicht die macOS-Fenstersteuerung. Native Mac-Ereignisse und das AppKit-Pop-up können hier weiterhin nicht auf echter Mac-Hardware geprüft werden. Vollständiges Bildschirmverständnis und präziser 3D-Fotonachbau sind nicht enthalten.
+
+## Blender wurde heruntergeladen, wird aber nicht gefunden
+
+Die Erkennung berücksichtigt jetzt auch Downloads, den Schreibtisch und geöffnete Installationslaufwerke. Versionierte App-Namen wie `Blender 4.5.app` werden zusätzlich über ihren internen Namen erkannt. Wenn macOS die App noch nicht registriert hat, versucht Jarvis den tatsächlichen App-Pfad. Für die Modellierung wird auch dort nach Blenders Programmdatei gesucht.
+
+Eine heruntergeladene ZIP-/DMG-Datei allein ist noch keine startbare App. Auf dem Mac die Blender-DMG öffnen, `Blender.app` nach **Programme** ziehen und Blender einmal normal öffnen. Keine erneute Jarvis- oder KI-Installation erforderlich; macOS-Sicherheitsprüfungen werden nicht umgangen.
+
+„Astrid“ wird als Spracherkennungsvariante von „Astra“ akzeptiert. Der Nutzername ist davon getrennt: **„Ich heiße Maxine“** speichert diesen Namen lokal dauerhaft; **„Wie heiße ich?“** liest ihn ohne KI-Raten aus. Der öffentliche Programmcode enthält keinen persönlichen Standardnamen.

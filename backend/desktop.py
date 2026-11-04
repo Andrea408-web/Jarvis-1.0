@@ -21,25 +21,40 @@ KEYS={'enter':36,'tab':48,'escape':53,'space':49,'backspace':51,'left':123,'righ
 FLAGS={'command':1<<20,'shift':1<<17,'option':1<<19,'control':1<<18}
 
 
-def app_catalog():
+def app_catalog(include_downloads=False):
     apps={name:{'name':name,'bundle':bundle} for name,bundle in APPS.items()}
     if platform.system()=='Darwin':
-        for root in [Path('/Applications'),Path.home()/'Applications',Path('/System/Applications')]:
-            for path in (list(root.glob('*.app'))+list(root.glob('*/*.app')))[:400]:
+        roots=[Path('/Applications'),Path.home()/'Applications',Path('/System/Applications')]
+        if include_downloads:
+            roots.extend([Path.home()/'Downloads',Path.home()/'Desktop'])
+            try:roots.extend(path for path in list(Path('/Volumes').iterdir())[:30] if path.is_dir())
+            except OSError:pass
+        for root in roots:
+            try:paths=(list(root.glob('*.app'))+list(root.glob('*/*.app')))[:400]
+            except OSError:continue
+            for path in paths:
                 try:
                     info=plistlib.loads((path/'Contents/Info.plist').read_bytes());bundle=info.get('CFBundleIdentifier');name=path.stem
                     if name.casefold() in {'terminal','iterm','iterm2','script editor','skripteditor'}:continue
-                    if isinstance(bundle,str) and re.fullmatch(r'[A-Za-z0-9_.-]{3,180}',bundle):apps.setdefault(name,{'name':name,'bundle':bundle})
+                    if isinstance(bundle,str) and re.fullmatch(r'[A-Za-z0-9_.-]{3,180}',bundle):
+                        item={'name':name,'bundle':bundle,'path':str(path.resolve())}
+                        if name not in apps or apps[name]['bundle']==bundle and 'path' not in apps[name]:apps[name]=item
+                        for alias in [info.get('CFBundleDisplayName'),info.get('CFBundleName')]:
+                            if isinstance(alias,str) and 1<=len(alias)<=100:
+                                if alias not in apps or apps[alias]['bundle']==bundle and 'path' not in apps[alias]:apps[alias]=item
                 except (OSError,ValueError,TypeError):pass
     return apps
 
-def resolve_app(value):
+def resolve_app(value,include_downloads=False):
     if not isinstance(value,str):raise ValueError('Bitte einen App-Namen eingeben.')
     aliases={'notes':'Notizen','calculator':'Rechner','calendar':'Kalender','music':'Musik'}
+    value=value.strip()
+    if value.casefold().endswith('.app'):value=value[:-4]
     value=aliases.get(value.casefold(),value)
-    for name,item in app_catalog().items():
+    for name,item in app_catalog(include_downloads).items():
         if name.casefold()==value.casefold():return item
-    raise ValueError('Diese App wurde nicht gefunden. Installierte App nennen oder eine vollständige Webseitenadresse verwenden.')
+    if not include_downloads:return resolve_app(value,True)
+    raise ValueError('Diese App wurde nicht in Programme, Downloads, auf dem Schreibtisch oder einem geöffneten Installationslaufwerk gefunden. Eine ZIP-/DMG-Datei allein ist noch keine startbare App. Bitte den genauen App-Namen prüfen.')
 
 def website(value):
     if not isinstance(value,str) or not 1<=len(value)<=2000:raise ValueError('Ungültige Webseitenadresse.')
@@ -111,7 +126,12 @@ class MacInput:
             if probe.returncode or probe.stdout.strip()!=self.active_app:raise ValueError('Die Ziel-App ist nicht mehr im Vordergrund. Ablauf gestoppt, damit keine Eingabe in eine andere App gelangt.')
         if kind=='open':
             app=resolve_app(step['app'])
-            result=subprocess.run(['/usr/bin/open','-b',app['bundle']],capture_output=True,timeout=10)
+            command=['/usr/bin/open','-a',app['path']] if app.get('path') else ['/usr/bin/open','-b',app['bundle']]
+            result=subprocess.run(command,capture_output=True,timeout=10)
+            if result.returncode and not app.get('path'):
+                downloaded=resolve_app(step['app'],True)
+                if downloaded.get('path'):
+                    app=downloaded;result=subprocess.run(['/usr/bin/open','-a',app['path']],capture_output=True,timeout=10)
             if result.returncode:
                 if step['app']=='Spotify':
                     self.execute({'type':'website','url':'https://open.spotify.com'});self.last_message='Spotify als Web-App in Safari geöffnet; die native Spotify-App wurde nicht gefunden.';return
@@ -156,8 +176,9 @@ class Desktop:
         if not isinstance(goal,str) or not 1<=len(goal.strip())<=3000:raise ValueError('Bitte einen konkreten Desktop-Auftrag eingeben.')
         with self.lock:
             if self.thread and self.thread.is_alive():raise ProviderError('Ein Desktop-Ablauf läuft. Zuerst stoppen oder abwarten.',409)
-        scene=validate_scene(body['scene']) if 'scene' in body else recipe(goal) if 'steps' not in body else None
-        if scene is None and 'steps' not in body and re.search(r'\bblender\b|\b3d\b|modellier',goal,re.I):scene=self.model_scene(goal)
+        model_intent=bool(re.search(r'\b3d\b|modellier|(?:erstell|baue?|mach|kreier).*(?:modell|\bblender\b)',goal,re.I))
+        scene=validate_scene(body['scene']) if 'scene' in body else recipe(goal) if 'steps' not in body and model_intent else None
+        if scene is None and 'steps' not in body and model_intent:scene=self.model_scene(goal)
         if scene:
             with self.lock:
                 if self.thread and self.thread.is_alive():raise ProviderError('Ein Desktop-Ablauf läuft bereits.',409)
@@ -166,7 +187,8 @@ class Desktop:
         steps=body.get('steps')
         if steps is None:
             # Straightforward commands do not depend on a small model guessing JSON.
-            command=re.sub(r'^(?:bitte\s+)?(?:öffne|starte|öffnen|starten)\s+(?:mir\s+)?(?:bitte\s+)?(?:die app\s+|die webseite\s+|die seite\s+)?','',goal.strip(),flags=re.I).strip().rstrip('.!')
+            command=re.sub(r'^(?:bitte\s+)?(?:öffne|starte|öffnen|starten)\s+(?:mir\s+)?(?:bitte\s+)?(?:die app\s+|die webseite\s+|die seite\s+)?','',goal.strip(),flags=re.I).strip().rstrip('.!?')
+            command=re.sub(r'^(?:kannst|könntest|würdest)\s+du\s+(?:mir\s+)?(?:bitte\s+)?','',command,flags=re.I)
             command=re.sub(r'\s+(?:öffnen|starten)$','',command,flags=re.I)
             command=re.sub(r'\s+bitte$','',command,flags=re.I)
             web_names={'youtube':'https://www.youtube.com','google':'https://www.google.com','spotify im browser':'https://open.spotify.com','spotify web':'https://open.spotify.com','chatgpt':'https://chatgpt.com','tiktok':'https://www.tiktok.com'}
@@ -248,6 +270,11 @@ class Desktop:
         candidates=[Path('/Applications/Blender.app/Contents/MacOS/Blender'),Path.home()/'Applications/Blender.app/Contents/MacOS/Blender']
         for candidate in candidates:
             if candidate.is_file():return str(candidate)
+        if platform.system()=='Darwin':
+            entry=resolve_app('Blender',True)
+            if entry.get('path'):
+                binary=Path(entry['path'])/'Contents/MacOS/Blender'
+                if binary.is_file():return str(binary)
         if platform.system()!='Darwin' and shutil.which('blender'):return shutil.which('blender')
         raise ValueError('Blender wurde nicht gefunden. Blender muss installiert sein; es wird nichts automatisch heruntergeladen.')
     def _run_model(self):

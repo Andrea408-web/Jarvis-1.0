@@ -98,7 +98,7 @@ class LocalClient:
         if (result.get('done') is not True or not isinstance(reply, str) or not reply.strip()
                 or len(reply) > 24000 or message.get('tool_calls')):
             raise ProviderError('Das lokale Modell hat keine abgeschlossene Textantwort geliefert.', 502)
-        reply=correct_identity(reply,self.store)
+        reply=correct_identity(reply,self.store,text)
         self.store.append('user', text.strip(), conversation)
         self.store.append('assistant', reply, conversation)
         return {'reply': reply, 'proposed_actions': [], 'conversation': conversation}

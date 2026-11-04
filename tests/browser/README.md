@@ -18,9 +18,11 @@ The navigation check verifies the narrow mobile layout, Germany filter, sports s
 Additional checks:
 
 ```
-python tests/browser/hub.py
+python tests/browser/astra.py
 python tests/browser/voice_cancellation.py
 python tests/browser/natural_voice.py
 ```
 
 The hub uses controlled public-provider fixtures and verifies persistence, planner, country filters, real job state and mobile layout. Voice cancellation verifies that muting conversational speech leaves background export rendering intact. The natural voice check requires the separately downloaded and checksum-verified Linux runtime/model under `/tmp/jarvis-natural-test`; unlike the other browser checks it uses actual neural model weights. Those files are development artifacts and are not included in the update ZIP. Native macOS inference and live provider availability are not established by these checks.
+
+The former hub browser check now runs its Astra/world replacement. Astra verifies text-triggered identity animation, country news, plan review, actual driver calls using a controlled driver, independent mute, popup web controls and mobile layout. Native CoreGraphics events, AppKit panel creation and macOS accessibility permission are not verified on Linux.

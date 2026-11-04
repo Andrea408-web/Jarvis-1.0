@@ -4,7 +4,7 @@ Stand: 3. November 2026. Linux-Cloud; der persönliche Mac und das iPhone sind n
 
 ## Verifiziert
 
-- **165 Python-Tests bestanden**, keine übersprungen. Python-Suite mit echten lokalen HTTP-/TLS-Verbindungen, Host-/Origin-/Token-Prüfung, privater Ablage, Budgetgrenzen und sicheren bestätigten Aktionen. Temporäre TLS-Zertifikate werden explizit vertraut; TLS-Prüfung wird nicht abgeschaltet.
+- **176 Python-Tests bestanden**, keine übersprungen. Python-Suite mit echten lokalen HTTP-/TLS-Verbindungen, Host-/Origin-/Token-Prüfung, privater Ablage, Budgetgrenzen und sicheren bestätigten Aktionen. Temporäre TLS-Zertifikate werden explizit vertraut; TLS-Prüfung wird nicht abgeschaltet.
 - Agentenaufträge: natürliche Formulierungen führen zu einem tatsächlichen Job. Queue, Fehler, Abbruch, Neustart und getrennte Gespräche sind getestet. Sprachmodellantworten sind hierfür kontrollierte Fixtures; daraus wird keine echte Modellqualität abgeleitet.
 - Bildanhänge: Format-/Größenprüfung, private Dateien mit Modus0600, Migration bestehender Datenbanken, Rückgabe lokaler Bildbefunde und Übergabe als Daten statt auszuführende Befehle. Auf Nicht-Macs wird kein vorhandenes Bildverständnis behauptet.
 - Eigene deutsche Stimme: echte eSpeak/meSpeak-Spracherzeugung im Browser, decodierbare PCM-Daten mit Sprachsignal und echte Web-Audio-Wiedergabe. Jeder Systemstimmen-Aufruf wird im Integrationstest als Fehler behandelt. Keine externen Sprachrequests. Die Engine ist keine neu trainierte neuronale Stimme; es handelt sich um eine mitgelieferte freie Formantengine mit eigener Konfiguration.
@@ -33,3 +33,12 @@ Mit nur wenig zusätzlicher Größe und ohne externen KI-Dienst enthält JARVIS 
 - Hub-Browserprüfung mit kontrollierten RSS-/Plattformdaten: Länderfilter, gespeicherte Kanalnamen, Planer, Systemanzeige, laufender Agentenauftrag und schmales Layout. Das belegt keine Live-Verfügbarkeit von tagesschau.de, YouTube oder TikTok; deren Abruf ist in dieser Cloud eingeschränkt.
 - Gesprächsprüfung umfasst Doppelklatschen während einer Antwort, Schlafen und Aufwecken. Eine zusätzliche Prüfung trennt das Abbrechen der Gesprächsausgabe von weiterlaufender Tonerzeugung für Hintergrundexporte.
 - Additives Update von Basis 232ba23 geprüft: vorhandene Einstellungen, Verlauf, Planer und Textmodell bleiben erhalten. Prüfsummen, unbekannte Änderungen und Rollback werden geprüft. Der kleine ZIP-Helfer enthält keine Modellgewichte.
+
+## Astra-Update · 4. November 2026
+
+Der Mini-Hub ist aus der Oberfläche entfernt; sein Nachfolger ist die Weltansicht mit Länderfilter und öffentlichen Nachrichten. Die Desktop-Funktionen ergänzen überprüfbare Eingabeabläufe; sie sind kein allgemeiner Computer-Agent.
+
+- Browserprüfung: Astra per gesprochenem Text aktivieren, Partikelansicht, Rückkehr zu Jarvis, Welt-Nachrichtenfilter, geprüfte Desktop-Schritte mit kontrolliertem Eingabetreiber, unabhängiges Stummschalten, Popup-Websteuerung und mobiles Layout.
+- Backend-Prüfungen: keine Ausführung vor Start, Token/Schema/Ablaufkennung, Stop während Countdown, abgewiesene Modellkoordinaten, echte Aufrufreihenfolge des kontrollierten Treibers, Fehler statt erfundenem Erfolg sowie öffentliches Nachrichten-JSON als RSS-Fallback.
+- Additives Astra-Paket enthält keine Modelle und überspringt ausdrücklich die Stimmeninstallation. Migration von beiden zuletzt bereitgestellten Versionen und Erhalt der persönlichen Daten werden geprüft.
+- Native CoreGraphics-Maus-/Tastatureingaben, Bedienungshilfen-Freigabe und AppKit/WebKit-Fenster sind in der Linux-Cloud nicht ausgeführt. Live-Erreichbarkeit der Nachrichtenquelle ist ebenfalls nicht nachgewiesen. Kein autonomer 3D-Bildnachbau wird behauptet.

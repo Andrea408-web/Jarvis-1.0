@@ -64,3 +64,25 @@ class GeneratedPackageTests(unittest.TestCase):
         with zipfile.ZipFile(root/'updates/JARVIS-Stimme-Nachruestung.zip') as archive:
             self.assertEqual(archive.read('JARVIS-Stimme-nachruesten.command'),script.encode())
             self.assertFalse(any(name.endswith(('.onnx','.gguf')) for name in archive.namelist()))
+
+
+class AstraPackageTests(unittest.TestCase):
+    def test_astra_package_disables_downloads_and_accepts_last_shipped_version(self):
+        import ast,zipfile,subprocess
+        root=Path(__file__).resolve().parents[1];script=(root/'JARVIS-Astra-aktualisieren.command').read_text()
+        self.assertIn('JARVIS_ASTRA_ONLY=1 JARVIS_VOICE_HELPER_DIR=',script)
+        source=script.split("<<'JARVIS_VOICE_PYTHON'\n",1)[1].split('\nJARVIS_VOICE_PYTHON\n',1)[0];values={}
+        for node in ast.parse(source).body:
+            if isinstance(node,ast.Assign) and len(node.targets)==1 and isinstance(node.targets[0],ast.Name) and node.targets[0].id in {'PAYLOAD_B64','PAYLOAD_SHA'}:values[node.targets[0].id]=ast.literal_eval(node.value)
+        files,manifest=upgrade.payload_files(values['PAYLOAD_B64'],values['PAYLOAD_SHA'])
+        with tempfile.TemporaryDirectory() as folder:
+            target=Path(folder)
+            for name in files:
+                old=subprocess.run(['git','show','bd17dfd:'+name],cwd=root,capture_output=True)
+                if old.returncode==0:
+                    path=target/name;path.parent.mkdir(parents=True,exist_ok=True);path.write_bytes(old.stdout)
+            self.assertTrue(upgrade.compatible(target,files,manifest))
+            upgrade.apply(target,files,manifest,lambda root:None)
+            for name,data in files.items():self.assertEqual((target/name).read_bytes(),data)
+        with zipfile.ZipFile(root/'updates/JARVIS-Astra-Update.zip') as archive:
+            self.assertEqual(archive.read('JARVIS-Astra-aktualisieren.command'),script.encode());self.assertLess(sum(i.file_size for i in archive.infolist()),200000)

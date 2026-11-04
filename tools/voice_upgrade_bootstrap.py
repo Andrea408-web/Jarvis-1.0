@@ -16,6 +16,8 @@ import zipfile
 PAYLOAD_B64='__PAYLOAD_B64__'
 PAYLOAD_SHA='__PAYLOAD_SHA__'
 ALLOWED={
+    'README.md','docs/EINFACH-STARTEN.md','docs/PRUEFUNG.md',
+    'backend/desktop.py','backend/astra_panel.js','frontend/astra.js','frontend/astra-panel.html','frontend/astra-panel.js','frontend/astra.css','frontend/world-news.js','docs/ASTRA.md',
     'backend/natural_voice.py','backend/server.py','backend/storage.py',
     'frontend/app.js','frontend/jarvis-voice.js','docs/NATUERLICHE-STIMME.md',
     'frontend/artifacts.js','backend/hub.py','frontend/mini-hub.js','frontend/index.html','frontend/extras.js','frontend/extras.css','frontend/conversation.js',
@@ -42,7 +44,7 @@ def compatible(root,files,manifest):
         path=root/name
         if path.is_symlink() or not path.resolve().is_relative_to(root.resolve()):return False
         if path.exists():
-            if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() not in {manifest[name]['before'],manifest[name]['after']}:return False
+            if not path.is_file() or hashlib.sha256(path.read_bytes()).hexdigest() not in ({manifest[name]['before'],manifest[name]['after']}|set(manifest[name].get('accepted_before',[]))):return False
         elif manifest[name]['before'] is not None:return False
     return True
 
@@ -59,7 +61,7 @@ def choose_root(files,manifest):
         result=subprocess.run(['/usr/bin/osascript','-e','POSIX path of (choose folder with prompt "Wähle deinen vorhandenen JARVIS-Ordner. Die Text-KI bleibt erhalten.")'],capture_output=True,text=True,timeout=180,check=True)
     except (OSError,subprocess.SubprocessError):raise ValueError('Ordnerauswahl abgebrochen. Es wurde nichts geändert.') from None
     root=Path(result.stdout.strip())
-    if not compatible(root,files,manifest):raise ValueError('Dieser Ordner passt nicht zum geprüften Stimmenupdate oder Programmdateien wurden verändert. Es wurde nichts überschrieben. Benötigt wird die zuletzt bereitgestellte Version 232ba23; weder Jarvis noch die Text-KI werden automatisch neu geladen.')
+    if not compatible(root,files,manifest):raise ValueError('Dieser Ordner passt nicht zum geprüften Stimmenupdate oder Programmdateien wurden verändert. Es wurde nichts überschrieben. Unterstützt sind die bereitgestellten Versionen 232ba23 und bd17dfd; weder Jarvis noch die Text-KI werden automatisch neu geladen.')
     return root
 
 
@@ -106,8 +108,9 @@ def main():
     if sys.version_info<(3,10):raise ValueError('Bitte denselben Python-3.10+-Interpreter wie für dein vorhandenes Jarvis verwenden.')
     files,manifest=payload_files();root=choose_root(files,manifest)
     print('Gefundenes Jarvis:',root,flush=True)
-    print('Es werden Mini-Hub und Stimmen-Einbindung ergänzt. Deine Text-KI, Gespräche und Schlüssel bleiben erhalten.',flush=True)
+    print('Es werden Astra, Weltansicht und Desktop-Abläufe aktualisiert. Deine Text-KI, Gespräche und Schlüssel bleiben erhalten.',flush=True)
     def install_voice(project):
+        if os.environ.get('JARVIS_ASTRA_ONLY')=='1':return
         sys.path.insert(0,str(project));os.chdir(project)
         from backend.natural_voice import install
         from backend.storage import Store
@@ -115,7 +118,7 @@ def main():
         if not voice.status()['installed']:raise ValueError('Die Sprachprobe war nicht erfolgreich. Die bisherige Einrichtung bleibt erhalten.')
         store=Store();store.update_settings({'voice_engine':'natural','voice_preset':'jarvis','voice_enabled':True,'elevenlabs_enabled':False})
     backup=apply(root,files,manifest,install_voice)
-    print('\nFertig. Mini-Hub und natürliche Stimme sind eingerichtet. Bitte dein bisheriges JARVIS im Terminal mit Control+C beenden und normal mit 2-JARVIS-starten.command neu starten. Im Browser bei Bedarf Seite neu laden.',flush=True)
+    print('\nFertig. Das JARVIS-Update ist eingerichtet. Bitte dein bisheriges JARVIS im Terminal mit Control+C beenden und normal mit 2-JARVIS-starten.command neu starten. Im Browser bei Bedarf Seite neu laden.',flush=True)
     print('Die Text-KI muss nicht neu eingerichtet werden. Sicherung der ersetzten Programmdateien:',backup,flush=True)
 
 

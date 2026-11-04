@@ -23,6 +23,7 @@ from .ai import GeminiClient, ProviderError, provider_status
 from .voice import VoiceClient
 from .natural_voice import NaturalVoice
 from .hub import MiniHub
+from .desktop import Desktop
 from .mobile import MobileLink
 from .agents import AgentOffice
 from .task_router import task_request
@@ -58,6 +59,7 @@ class Application:
         self.mobile = MobileLink(self)
         self.office = AgentOffice(self)
         self.hub = MiniHub(self.store)
+        self.desktop = Desktop(self)
 
     def settings(self):
         values = self.store.settings()
@@ -320,6 +322,7 @@ class Handler(BaseHTTPRequestHandler):
             if re.fullmatch(r'/api/agents/[0-9a-f]{32}/image',path):
                 data,mime=app.office.image(path.split('/')[3]);self._headers(200,mime,len(data));return self.wfile.write(data)
             if path == '/api/hub':return self._json(app.hub.snapshot())
+            if path == '/api/desktop':return self._json(app.desktop.snapshot())
             if path == '/api/natural-voice/status':
                 return self._json(app.natural_voice.status())
             if path == '/api/agents':
@@ -336,7 +339,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({'reminders': app.store.reminders()})
             # Exact static allowlist: no arbitrary files, keys or directory listings.
             static = {'/': 'index.html', '/index.html': 'index.html',
-                      '/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js', '/artifacts.js':'artifacts.js', '/jarvis-voice.js':'jarvis-voice.js', '/voice-worker.js':'voice-worker.js', '/conversation.js':'conversation.js', '/mini-hub.js':'mini-hub.js'}
+                      '/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js', '/artifacts.js':'artifacts.js', '/jarvis-voice.js':'jarvis-voice.js', '/voice-worker.js':'voice-worker.js', '/conversation.js':'conversation.js', '/mini-hub.js':'mini-hub.js', '/world-news.js':'world-news.js', '/astra.js':'astra.js', '/astra.css':'astra.css', '/astra-panel.html':'astra-panel.html', '/astra-panel.js':'astra-panel.js'}
             for name in ['ESpeak.js','mespeak.js','config.json','jarvis-de.json','de.json','COPYING','NOTICE.txt','UPSTREAM-README.md','mespeak-2.0.2-source.tgz','speak-source-9c6f642.tar.gz']:
                 static['/vendor/voice/'+name]='vendor/voice/'+name
             if path in static:
@@ -355,6 +358,20 @@ class Handler(BaseHTTPRequestHandler):
             return self._json({'ok': True})
         elif method in {'POST', 'PUT', 'PATCH'}:
             body = self._body()
+            if method=='POST' and path.startswith('/api/desktop/'):
+                if self.server.device_auth:raise ValueError('Desktop-Steuerung ist nur direkt am Mac verfügbar, nicht über die Handy-Kopplung.')
+                if path=='/api/desktop/prepare':return self._json(app.desktop.prepare(body))
+                if path=='/api/desktop/start':
+                    if set(body)!={'id'}:raise ValueError('Nur die geprüfte Ablaufkennung angeben.')
+                    return self._json(app.desktop.start(body['id']))
+                if path=='/api/desktop/speech':
+                    if set(body)!={'muted'}:raise ValueError('Ungültiger Sprachstatus.')
+                    return self._json(app.desktop.speech(body['muted']))
+                if body:raise ValueError('Diese Desktop-Aktion braucht keine Parameter.')
+                if path=='/api/desktop/stop':return self._json(app.desktop.stop())
+                if path=='/api/desktop/panel':
+                    port=self.server.server_port
+                    return self._json(app.desktop.open_panel(('https' if self.server.secure else 'http')+'://127.0.0.1:'+str(port)+'/astra-panel.html'))
             if method=='POST' and path in {'/api/hub/news','/api/hub/channels'}:
                 if body:raise ValueError('Keine Parameter für die Hub-Aktualisierung erforderlich.')
                 return self._json(app.hub.news() if path.endswith('/news') else app.hub.channels())
@@ -562,6 +579,9 @@ def main(argv=None):
         pass
     finally:
         try:
+            app.desktop.stop()
+            if app.desktop.thread:app.desktop.thread.join(timeout=2)
+            if app.desktop.panel and app.desktop.panel.poll() is None:app.desktop.panel.terminate()
             app.office.stop()
             app.mobile.stop()
         finally:

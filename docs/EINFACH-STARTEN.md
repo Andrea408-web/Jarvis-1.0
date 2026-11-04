@@ -44,9 +44,9 @@ Lasse den Bereich während des Exports sichtbar geöffnet. Je nach Skript dauert
 
 **Keine generative Film-KI:** Es werden keine neuen Filmszenen aus einem Prompt erzeugt. Unter der Vorgabe „nur wenig größer, kein externer KI-Dienst“ ist diese Funktion nicht möglich. Dieser Produktfilm ist eine lokale Montage aus deinem Bild und einem KI-Skript, kein Ersatz für ein großes Videomodell. Auch die allgemeine Denkfähigkeit des kleinen Textmodells wird dadurch nicht auf ChatGPT-Niveau angehoben.
 
-## Deutschland, Kameras und Fußball
+## Welt, Nachrichten und Fußball
 
-**Welt & Kameras → Deutschland** filtert deutsche Standorte. Der Katalog enthält unter anderem Zugspitze/Panomax, München und Berlin sowie internationale Standorte. Beispiel: **„Zeig Kameras in München“**. **In Jarvis anzeigen** lädt die öffentliche Seite im Fenster. Verbietet der Anbieter die Einbettung, öffne den sichtbaren offiziellen Link. Verfügbarkeit, Aktualisierung, Cookies und etwaige Beschränkungen bestimmt der Betreiber. JARVIS durchsucht keine privaten Kameras und umgeht keine Zugangssperren.
+**Welt** öffnet den lokalen drehbaren Globus. Tippe eine Ländermarkierung an oder wähle das Land im Menü; passende öffentliche Meldungen erscheinen daneben. Ohne erreichbare Nachrichtenquelle bleiben ältere Abrufe gekennzeichnet oder die Liste leer. Die bisherigen öffentlichen Kameralinks sind entfernt. [Astra-Anleitung](ASTRA.md).
 
 **Fußball & Live** zeigt offizielle Angebote von Sportschau, ARD und ZDF, vielfach ohne Konto. Ob ein bestimmtes Spiel als freier Videostream verfügbar ist, hängt von Sendezeit, Standort und Übertragungsrechten ab. Kein vollständiger Bundesliga-Zugang wird versprochen.
 
@@ -68,6 +68,6 @@ Python- und HTTP/TLS-Tests laufen in Linux. Die Weboberfläche, echte Spracherze
 
 TikTok war aus dieser Cloud nicht erreichbar. Eine Analyse sämtlicher Videos von Moritz Maacker wird deshalb nicht behauptet.
 
-## Optional: natürliche Stimme und Mini-Hub
+## Optional: natürliche Stimme und Astra
 
-Das [kleine Nachrüst-Paket](NATUERLICHE-STIMME.md) ergänzt die natürliche Offline-Stimme und den Mini-Hub im vorhandenen Ordner. Kein erneuter Textmodell-Download. Im Hub findest du Nachrichten, gespeicherte Kanalprofile, Planer und Systemwerte; du kannst dort weiter mit Jarvis sprechen.
+Das [Stimmen-Nachrüst-Paket](NATUERLICHE-STIMME.md) ergänzt die natürliche Offline-Stimme. Das separate [Astra-Update](ASTRA.md) lädt keine neue Stimme und kein Textmodell. Der frühere Mini-Hub ist entfernt; Weltansicht und Astra ersetzen ihn.

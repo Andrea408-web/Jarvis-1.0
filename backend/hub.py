@@ -14,6 +14,7 @@ from pathlib import Path
 
 from .providers import ProviderError,_NoRedirect
 
+NEWS_API='https://www.tagesschau.de/api2u/news/'
 NEWS_URL='https://www.tagesschau.de/infoservices/alle-meldungen-100~rss2.xml'
 COUNTRIES={
     'DE':('Deutschland',51.16,10.45,['deutschland','deutsche','bundestag','berlin']),
@@ -104,6 +105,24 @@ def parse_news(raw):
         countries=[code for code,(_,_,_,names) in COUNTRIES.items() if any(re.search(r'\b'+re.escape(name),text) for name in names)]
         items.append({'id':str(index),'title':title,'summary':description,'url':url,'image':image,'countries':countries,'published':plain(item.findtext('pubDate'),100)})
     if not items:raise ValueError('Der RSS-Feed enthält keine lesbaren Meldungen.')
+    return items
+
+
+
+def parse_news_api(raw):
+    data=json.loads(raw)
+    if not isinstance(data,dict) or not isinstance(data.get('news'),list):raise ValueError('Unbekannte Nachrichtenstruktur.')
+    items=[]
+    for item in data['news'][:40]:
+        if not isinstance(item,dict):continue
+        title=plain(item.get('title'),220);url=item.get('detailsweb') or item.get('shareURL')
+        if not title or not https_url(url,{'www.tagesschau.de','tagesschau.de'}):continue
+        summary=plain(item.get('firstSentence'),450)
+        teasers=item.get('teaserImage') or {};templates=teasers.get('imageVariants',{}) if isinstance(teasers,dict) else {}
+        image=next((v for v in templates.values() if https_url(v,{'images.tagesschau.de','www.tagesschau.de','tagesschau.de'})),None) if isinstance(templates,dict) else None
+        text=(title+' '+summary).casefold();countries=[code for code,(_,_,_,names) in COUNTRIES.items() if any(re.search(r'\b'+re.escape(name),text) for name in names)]
+        items.append({'id':str(len(items)),'title':title,'summary':summary,'url':url,'image':image,'countries':countries,'published':plain(item.get('date'),100)})
+    if not items:raise ValueError('Keine lesbaren Nachrichten von der Quelle geliefert.')
     return items
 
 
@@ -208,7 +227,9 @@ class MiniHub:
         try:
             previous=self.cache.get('news',{'items':[],'updated_at':None})
             try:
-                result={'items':parse_news(self.reader(NEWS_URL)),'updated_at':datetime.now(timezone.utc).isoformat(),'error':None,'source':'tagesschau.de','stale':False}
+                try:items=parse_news(self.reader(NEWS_URL))
+                except Exception:items=parse_news_api(self.reader(NEWS_API))
+                result={'items':items,'updated_at':datetime.now(timezone.utc).isoformat(),'error':None,'source':'tagesschau.de','stale':False}
                 self.cache['news']=result;self._save();return result
             except Exception:
                 return {**previous,'stale':True,'error':'Aktuelle Nachrichten konnten nicht geladen werden. Angezeigte ältere Meldungen behalten ihren Zeitstempel; ohne Quelle wird nichts erfunden.'}

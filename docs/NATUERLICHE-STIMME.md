@@ -23,16 +23,9 @@ Die natürliche Ausgabe wird auf dem JARVIS-Mac erzeugt, auch wenn du Jarvis auf
 - Ein echter deutscher Audiotest mit diesem Modell und der entsprechenden Linux-Engine ist in der Cloud möglich. Native Mac-Ausführung muss beim Nachrüsten auf deinem Gerät bestehen, bevor die Stimme aktiviert wird. Ein Linux-Test wird nicht als erfolgreicher Mac-Test ausgegeben.
 
 
-## Mini-Hub benutzen
+## Neue Oberfläche
 
-Oben **Mini-Hub** anklicken oder **„Öffne meinen Hub“** sagen. Du kannst auch im geöffneten Hub über die Gesprächsschaltfläche mit Jarvis sprechen.
-
-- **Überblick:** Systemwerte des JARVIS-Servergeräts und ein Gehirn als stilisierte Arbeitsanzeige. Weiße Funken erscheinen bei Antworterzeugung, Sprachausgabe oder tatsächlich laufenden Agentenaufträgen. Es wird keine interne Gedanken- oder Gehirnaktivität gemessen.
-- **Nachrichten:** Aktuelle öffentliche RSS-Meldungen von tagesschau.de mit Quelle, Abrufzeitpunkt und – falls geliefert – Vorschaubild. Auf der lokalen Weltkarte kannst du nach erwähnten Ländern filtern. Die Zuordnung anhand genannter Länder/Orte ist keine exakte Geolokalisierung. Ohne erreichbare Quelle bleiben Meldungen ausdrücklich älter oder fehlen; keine erfundenen Nachrichten. „Zeig aktuelle Nachrichten“ liest drei tatsächliche Schlagzeilen vor.
-- **Meine Kanäle:** YouTube- und TikTok-Kanalnamen oder offizielle Kanallinks eintragen und **Speichern & öffentlich laden** wählen. Die Namen bleiben lokal gespeichert. Zahlen werden nur angezeigt, wenn die Plattform sie ohne Anmeldung öffentlich liefert; YouTube-Anzeigen können gerundet sein. Verborgene, gesperrte oder nicht abrufbare Zahlen sind „nicht verfügbar“, nicht automatisch null. Öffentliche Videos lassen sich im Hub einbetten, wenn der Anbieter das erlaubt; der offizielle Link bleibt vorhanden. Jarvis sammelt keine Plattform-Passwörter und umgeht keine Anmeldung oder Captchas.
-- **Planer:** Termine mit Datum und Uhrzeit speichern und als erledigt markieren. Sie verwenden deinen lokalen JARVIS-Erinnerungsspeicher. Keine garantierten OS-Alarme bei geschlossener App.
-
-Nachrichtenbilder und Videoplayer werden beim jeweiligen öffentlichen Anbieter geladen. Für aktuelle Nachrichten und Videos brauchst du Internet; der lokale Chat und die natürliche Sprachausgabe bleiben davon getrennt.
+Der frühere Mini-Hub und die öffentlichen Kameralinks wurden auf Wunsch entfernt. Die neue Weltansicht und Astra sind in der [Astra-Anleitung](ASTRA.md) beschrieben. Das separate Astra-Update behält eine vorhandene Stimme und lädt keine neuen Modelle.
 
 ## Doppelklatschen: schlafen und aufwecken
 

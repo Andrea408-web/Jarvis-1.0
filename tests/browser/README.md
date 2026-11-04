@@ -30,3 +30,5 @@ The former hub browser check now runs its Astra/world replacement. Astra verifie
 Astra now additionally checks saved backend identity, Spotify and arbitrary website requests, the token-free browser popup, spoken cancellation and a reviewed real-geometry scene plan. Run `python tests/blender_smoke.py` separately for actual installed Blender: creates and reopens car/house/robot mesh files and verifies cancellation. It downloads nothing and does not verify macOS AppKit or mouse hardware.
 
 `python tests/browser/reference_style.py` checks sleeping/running/completed clickable island desks using an actual controlled local job, then exports a procedural low-poly 720p video and verifies it with ffprobe. No image-generation model or remote assets are used.
+
+`python tests/browser/autospeech.py` verifies repeated real automatic speech under gesture-required Chromium autoplay, including after ending the conversation, without clicking replay for each reply. Safari/macOS output hardware is not emulated.

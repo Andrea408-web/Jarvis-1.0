@@ -18,7 +18,7 @@ with zipfile.ZipFile(buffer,'w',zipfile.ZIP_DEFLATED,compresslevel=9) as archive
         data=(ROOT/name).read_bytes()
         previous=subprocess.run(['git','show',BASE+':'+name],cwd=ROOT,capture_output=True)
         accepted=[]
-        for ref in ['bd17dfd','9bf0a4e','539bd30','4490b8e','9b30d32','ef0726f']:
+        for ref in ['bd17dfd','9bf0a4e','539bd30','4490b8e','9b30d32','ef0726f','2c234cb','43d6239']:
             old=subprocess.run(['git','show',ref+':'+name],cwd=ROOT,capture_output=True)
             if old.returncode==0:accepted.append(hashlib.sha256(old.stdout).hexdigest())
         manifest[name]={'accepted_before':accepted,'before':hashlib.sha256(previous.stdout).hexdigest() if previous.returncode==0 else None,'after':hashlib.sha256(data).hexdigest()}

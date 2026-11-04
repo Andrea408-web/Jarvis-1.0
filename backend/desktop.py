@@ -167,14 +167,15 @@ class MacInput:
 
 class Desktop:
     def __init__(self,app,driver=None):
-        self.app=app;self.driver=driver or MacInput;self.lock=threading.RLock();self.cancel=threading.Event();self.plan=None;self.thread=None;self.muted=False;self.panel=None;self.panel_state='closed';self.panel_error='';self.panel_started=0;self.model_folder=None;self.model_process=None;self.companion_seen=0;self.commands=[];self.ui_state={}
+        self.app=app;self.driver=driver or MacInput;self.lock=threading.RLock();self.cancel=threading.Event();self.plan=None;self.thread=None;self.muted=False;self.panel=None;self.panel_state='closed';self.panel_error='';self.panel_started=0;self.model_folder=None;self.model_process=None;self.companion_seen=0;self.commands=[];self.ui_state={};self.snapshot_sequence=0
     def snapshot(self):
         with self.lock:
             if self.panel_state in {'opening','ready'} and self.panel and self.panel.poll() is not None:
                 normal=self.panel.poll()==0 and self.panel_state=='ready'
                 self.panel_state='closed' if normal else 'failed';self.panel_error='' if normal else 'Das Mac-Fenster wurde beendet. Browser-Pop-up verwenden oder erneut öffnen.'
             if self.panel_state=='opening' and time.monotonic()-self.panel_started>10:self.panel_state='failed';self.panel_error='Das Fenster hat nicht geantwortet. Browser-Pop-up verwenden.'
-            return {'supported':platform.system()=='Darwin','muted':self.muted,'panel':{'state':self.panel_state,'error':self.panel_error},'companion_active':time.monotonic()-self.companion_seen<6,'ui':dict(self.ui_state),'plan':json.loads(json.dumps(self.plan)) if self.plan else None}
+            self.snapshot_sequence+=1
+            return {'sequence':self.snapshot_sequence,'supported':platform.system()=='Darwin','muted':self.muted,'panel':{'state':self.panel_state,'error':self.panel_error},'companion_active':time.monotonic()-self.companion_seen<6,'ui':dict(self.ui_state),'plan':json.loads(json.dumps(self.plan)) if self.plan else None}
 
     def prepare(self,body):
         if set(body)-{'goal','steps','scene','render'}:raise ValueError('Unbekannte Desktop-Felder.')

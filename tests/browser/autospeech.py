@@ -10,9 +10,9 @@ with tempfile.TemporaryDirectory() as folder:
  try:
   with sync_playwright() as pw:
    browser=pw.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox','--autoplay-policy=user-gesture-required']);page=browser.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-   page.add_init_script("window.playedSpeech=0;const original=AudioContext.prototype.createBufferSource;AudioContext.prototype.createBufferSource=function(){const source=original.call(this);const start=source.start.bind(source);source.start=function(...a){if(source.buffer?.duration>.1)window.playedSpeech++;return start(...a);};return source;};")
+   page.add_init_script("window.playedSpeech=0;document.addEventListener('playing',event=>{if(event.target.tagName==='AUDIO'&&event.target.duration>.1)window.playedSpeech++;},true);")
    page.goto('http://127.0.0.1:'+str(server.server_port));page.get_by_text('LOKALE VERBINDUNG AKTIV',exact=True).wait_for()
-   page.locator('#chat-input').fill('Hallo');page.locator('#send-button').click();page.wait_for_function('()=>window.playedSpeech===1',timeout=20000)
+   page.locator('#chat-input').fill('Hallo');page.locator('#send-button').click();page.locator('#messages .message.user').first.wait_for();page.wait_for_function('()=>window.playedSpeech===1',timeout=20000)
    page.wait_for_function("()=>JarvisBridge.interaction().mode!=='speaking'",timeout=15000)
    page.evaluate('()=>JarvisConversation.stop()')
    page.locator('#chat-input').fill('Erzähl mir etwas');page.locator('#send-button').click();page.wait_for_function('()=>window.playedSpeech===2',timeout=20000)

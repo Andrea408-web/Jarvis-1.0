@@ -28,3 +28,5 @@ The hub uses controlled public-provider fixtures and verifies persistence, plann
 The former hub browser check now runs its Astra/world replacement. Astra verifies text-triggered identity animation, country news, plan review, actual driver calls using a controlled driver, independent mute, popup web controls and mobile layout. Native CoreGraphics events, AppKit panel creation and macOS accessibility permission are not verified on Linux.
 
 Astra now additionally checks saved backend identity, Spotify and arbitrary website requests, the token-free browser popup, spoken cancellation and a reviewed real-geometry scene plan. Run `python tests/blender_smoke.py` separately for actual installed Blender: creates and reopens car/house/robot mesh files and verifies cancellation. It downloads nothing and does not verify macOS AppKit or mouse hardware.
+
+`python tests/browser/reference_style.py` checks sleeping/running/completed clickable island desks using an actual controlled local job, then exports a procedural low-poly 720p video and verifies it with ffprobe. No image-generation model or remote assets are used.

@@ -59,3 +59,9 @@ Das Begleitfenster hat Gespräch starten/beenden sowie ein Texteingabefeld. Die 
 In der Werkstatt gibt es **Teamauftrag** mit 1–40 tatsächlichen Teilaufträgen. Ein lokales Modell verarbeitet sie nacheinander. Dies erzeugt Textentwürfe mit getrenntem Status; es sind keine 40 gleichzeitig rechnenden Modelle. Vollständige autonome Filmproduktion, allgemeiner Videoschnitt und vollständiger 3D-Fotonachbau sind in diesem Update nicht enthalten. Für den gewünschten Filmstil liegt bisher nur der Kanal @moritz.maaker vor; seine Videos wurden hier nicht überprüft.
 
 Die gewünschte Anrede ist jetzt Master. Es werden keine neuen Modellgewichte heruntergeladen.
+
+## Bildvorlagen: Arbeitsplatz-Inseln und Low-Poly-Filme
+
+Die Werkstatt zeigt fünf farbige Inseln um einen zentralen Kern mit jeweils sechs anklickbaren Arbeitsplätzen. Ein unbesetzter Platz schläft. Belegte Plätze zeigen echte Auftragszustände; Anklicken öffnet Auftrag, aktuellen Schritt und Ergebnis. Bis zu 40 Teilaufträge bleiben im Verlauf sichtbar; es werden keine gleichzeitig arbeitenden Modelle erfunden.
+
+STUDIO bietet im fertigen Auftrag **Filmstil → Low-Poly · animierte 3D-Bühne**. Die Bühne zeigt einen stilisierten Charakter, einen orangefarbenen Würfel und eine violette Terminal-Figur, mit Bewegung und Kamerafahrt. Szenentexte können geändert, Vorschau und echtes Video mit optionalem Sprecher exportiert werden. Mit angehängtem Produktfoto bleibt der Fotostil voreingestellt. Alles wird lokal ohne weitere Modelle gerendert. Das ist eine feste prozedurale Szene aus 3D-Grundkörpern, kein frei aus beliebigen Prompts generierter KI-Film und kein Nachbau der konkreten Figuren aus der Referenz.

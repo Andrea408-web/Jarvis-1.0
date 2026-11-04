@@ -16,6 +16,7 @@ import zipfile
 PAYLOAD_B64='__PAYLOAD_B64__'
 PAYLOAD_SHA='__PAYLOAD_SHA__'
 ALLOWED={
+    'frontend/lowpoly-stage.js',
     'backend/agents.py','frontend/office.js','backend/render_scene.py',
     'backend/models.py','backend/blender_scene.py','backend/persona.py','backend/local_ai.py','backend/ai.py','backend/openai_client.py',
     'README.md','docs/EINFACH-STARTEN.md','docs/PRUEFUNG.md',

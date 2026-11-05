@@ -87,3 +87,7 @@ Die neue perspektivische 3D-Werkstatt lässt sich mit Ziehen drehen und mit dem 
 „Bewege die Maus nach links in Finder“ und „Tippe Hallo Master in Notizen“ erzeugen konkrete geprüfte Eingabeabläufe. Die Richtung ist ein Anteil des Hauptbildschirms; es ist kein Erkennen von Schaltflächen. Für Notizen wird zuerst eine neue Notiz begonnen. Andere Apps erhalten Text in das aktive Eingabefeld der ausdrücklich genannten App. Native Maus/Tastatur benötigt Bedienungshilfen. Die Voransicht zeigt alle Schritte, bevor sie ausgeführt werden.
 
 Der Installer verändert die gewählte Stimme nicht mehr automatisch und lädt keine neue Stimme. Ein Browseraufruf des TikTok- und Instagram-Profils am 5. November 2026 endete jeweils mit ERR_TUNNEL_CONNECTION_FAILED. Der Inhalt wurde nicht gesehen. Netzfreigaben für www.tiktok.com und www.instagram.com sind als Cloud-Konfigurationsentwurf gespeichert; erst Prüfung/Speichern und Veröffentlichen in den Umgebungseinstellungen aktiviert sie.
+
+## Audiohinweis im Stimmfenster
+
+Der Audiohinweis wird in den aktiven Dialog verschoben, damit die Browser-Dialogebene seine Knöpfe nicht blockiert. **Audiohinweis schließen** blendet ihn für diese Sitzung aus; erneute Fehler öffnen ihn nicht sofort wieder. Der Aktivierungsknopf zeigt Fortschritt und wird bei einem Fehler wieder freigegeben. Ein nicht antwortender Wiedergabestart meldet nach vier Sekunden einen Fehler. Die Stimmwahl bleibt unverändert.

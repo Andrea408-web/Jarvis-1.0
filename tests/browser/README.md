@@ -32,3 +32,5 @@ Astra now additionally checks saved backend identity, Spotify and arbitrary webs
 `python tests/browser/reference_style.py` checks sleeping/running/completed clickable island desks using an actual controlled local job, then exports a procedural low-poly 720p video and verifies it with ffprobe. No image-generation model or remote assets are used.
 
 `python tests/browser/autospeech.py` verifies repeated real automatic speech under gesture-required Chromium autoplay, including after ending the conversation, without clicking replay for each reply. Safari/macOS output hardware is not emulated.
+
+`python tests/browser/audio_banner.py` reproduces blocked audio inside a modal voice dialog and checks top-layer clickability, dismissal without repeated reopening and successful activation.

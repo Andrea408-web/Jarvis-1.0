@@ -70,3 +70,5 @@ Kombinierte Blender-Aufträge und echte gespeicherte Sportwagen-Meshes sowie Abb
 Chromium-Aufrufe von www.tiktok.com/@moritz.maaker und www.instagram.com/moritz.maaker/ endeten mit ERR_TUNNEL_CONNECTION_FAILED. Keine Videos wurden gesehen. Ein Domainfreigabe-Entwurf wurde gespeichert; die Freigabe ist noch nicht aktiviert.
 
 Der Installer verändert die gewählte Stimme nicht mehr automatisch.
+
+Audiohinweis: verweigerte Browserwiedergabe im modalen Stimmfenster nachgestellt. Hinweis im aktiven Dialog tatsächlich anklickbar; Schließen verhindert sofortiges Wiedererscheinen; Aktivieren bei anschließend freigegebener Wiedergabe erfolgreich. Mehrere automatische Antworten ohne wiederholte Wiedergabeklicks bleiben geprüft.

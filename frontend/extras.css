@@ -22,3 +22,5 @@ label[for=local_voice_uri],#local-voice-selection-hint{display:none}.conversatio
 .audio-readiness{position:fixed;left:20px;right:20px;bottom:75px;z-index:1000;display:flex;align-items:center;gap:16px;padding:14px;background:#102333;border:1px solid #66bfe6;color:#e1f5ff;border-radius:10px;font-size:12px}.audio-readiness[hidden]{display:none}.audio-readiness button{padding:10px;border:1px solid #6fc8ef;background:#12354a;color:white;border-radius:6px;cursor:pointer}@media(max-width:600px){.audio-readiness{flex-direction:column;align-items:stretch}}
 
 #office-3d{display:block;width:100%;max-height:68vh;aspect-ratio:1200/760;background:#09111c;border:1px solid #345367;border-radius:14px;touch-action:none;cursor:grab}#office-3d:active{cursor:grabbing}#office-3d[hidden],#agent-office[hidden]{display:none}#office-3d:focus-visible{outline:2px solid #75cfff}
+
+dialog .audio-readiness{position:sticky;left:auto;right:auto;bottom:0;z-index:2;margin-top:14px;pointer-events:auto}.audio-readiness button{pointer-events:auto}.audio-readiness button:disabled{opacity:.6}

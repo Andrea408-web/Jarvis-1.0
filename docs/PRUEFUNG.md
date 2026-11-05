@@ -74,3 +74,9 @@ Der Installer verändert die gewählte Stimme nicht mehr automatisch.
 Audiohinweis: verweigerte Browserwiedergabe im modalen Stimmfenster nachgestellt. Hinweis im aktiven Dialog tatsächlich anklickbar; Schließen verhindert sofortiges Wiedererscheinen; Aktivieren bei anschließend freigegebener Wiedergabe erfolgreich. Mehrere automatische Antworten ohne wiederholte Wiedergabeklicks bleiben geprüft.
 
 Notizen-Regression: alter 3D-/Videospielverlauf wird gezielt vorgegeben. Notizen-Aufträge umgehen das Sprachmodell, fehlender Inhalt führt zu Rückfrage, native Skriptdaten werden als argv und escaped HTML übergeben. Kein done ohne Notes-Kennung. Browserablauf durch den kontrollierten Notes-Adapter bestätigt; echte Mac-Notes-Ausführung weiterhin ungeprüft.
+
+## Rückfragen und vollständiger Chat-Reset
+
+Notizinhalt, App, Webseitenadresse und Ziel-App für Texteingabe werden als konkrete Rückfragen gespeichert. Folgeantworten umgehen das Sprachmodell. Tests prüfen das Löschen aller Gesprächsbereiche und des gemerkten Namens sowie das Verwerfen einer verspäteten Modellantwort nach dem Löschen. Bereits erstellte Dateien und Notizen werden dabei nicht entfernt. Native Mac-Ausführung bleibt hier ungeprüft.
+
+Im Chromium zusätzlich geprüft: zweistufige Notiz-Erstellung mit einfachem Inhalt als Folgeantwort, bestätigter Adapteraufruf, Chat-löschen-Knopf inklusive offener Rückfrage und anschließend „Öffne eine App“ → „Spotify“.

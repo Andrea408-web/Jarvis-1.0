@@ -263,8 +263,8 @@ class LiveServerTests(unittest.TestCase):
         self.app.chat_lock.acquire()
         try:
             status, _, _ = self.request("DELETE", "/api/history")
-            self.assertEqual(status, 409)
-            self.assertEqual(len(self.app.store.history()), 2)
+            self.assertEqual(status, 200)
+            self.assertEqual(self.app.store.history(), [])
         finally:
             self.app.chat_lock.release()
         status, result, _ = self.request("DELETE", "/api/history")

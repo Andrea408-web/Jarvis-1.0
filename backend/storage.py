@@ -185,7 +185,7 @@ class Store:
                               "ORDER BY id DESC LIMIT 100) ORDER BY id", (conversation,)).fetchall()
         return [dict(row) for row in rows]
 
-    def append(self, role: str, text: str, conversation: str = "default") -> dict:
+    def append(self, role: str, text: str, conversation: str = "default", expected_epoch=None) -> dict:
         conversation = self._conversation(conversation)
         if role not in {"user", "assistant", "system", "tool"}:
             raise ValueError("Ungültige Gesprächsrolle.")
@@ -193,11 +193,29 @@ class Store:
             raise ValueError("Der Gesprächseintrag ist leer oder zu lang.")
         created_at = utc_now()
         with self._connect() as db:
+            if expected_epoch is not None:
+                db.execute('BEGIN IMMEDIATE')
+                row=db.execute("SELECT value FROM settings WHERE name='_history_epoch'").fetchone()
+                if (int(row['value']) if row else 0)!=expected_epoch:raise ValueError('Der Chat wurde gelöscht; die alte Antwort wird verworfen.')
             cursor = db.execute("INSERT INTO messages(conversation, role, text, created_at) VALUES (?, ?, ?, ?)",
                                 (conversation, role, text, created_at))
             item_id = cursor.lastrowid
         return {"id": item_id, "conversation": conversation, "role": role,
                 "text": text, "created_at": created_at}
+
+    def memory_epoch(self):
+        with self._connect() as db:
+            row=db.execute("SELECT value FROM settings WHERE name='_history_epoch'").fetchone()
+        return int(row['value']) if row else 0
+
+    def clear_all_history(self):
+        with self._connect() as db:
+            db.execute('BEGIN IMMEDIATE')
+            row=db.execute("SELECT value FROM settings WHERE name='_history_epoch'").fetchone()
+            epoch=(int(row['value']) if row else 0)+1
+            db.execute("INSERT OR REPLACE INTO settings(name,value) VALUES('_history_epoch',?)",(str(epoch),))
+            db.execute('DELETE FROM messages')
+            db.execute("INSERT OR REPLACE INTO settings(name,value) VALUES('user_name','\"\"')")
 
     def clear_history(self, conversation: str = "default") -> None:
         with self._connect() as db:

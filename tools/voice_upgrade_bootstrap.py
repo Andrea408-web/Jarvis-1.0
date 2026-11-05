@@ -16,6 +16,7 @@ import zipfile
 PAYLOAD_B64='__PAYLOAD_B64__'
 PAYLOAD_SHA='__PAYLOAD_SHA__'
 ALLOWED={
+    'backend/dialogue.py',
     'backend/notes.py',
     'frontend/office-3d.js',
     'frontend/lowpoly-stage.js',

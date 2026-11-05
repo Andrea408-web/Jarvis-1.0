@@ -21,6 +21,7 @@ class OpenAIClient(GeminiClient):
         self.transport = transport or request_json
 
     def _generate(self, text, conversation, image=None):
+        epoch=self.store.memory_epoch()
         if not isinstance(text, str) or not text.strip() or len(text) > 12000:
             raise ProviderError('Bitte 1 bis 12.000 Zeichen eingeben.')
         if not isinstance(conversation, str) or not re.fullmatch(r'[A-Za-z0-9_-]{1,80}', conversation):
@@ -68,6 +69,6 @@ class OpenAIClient(GeminiClient):
         except (KeyError, IndexError, ValueError, TypeError):
             raise ProviderError('OpenAI hat keine verwendbare Antwort geliefert.', 502) from None
         stored = text.strip() + ('\n[Bild übermittelt; Bilddaten werden nicht gespeichert.]' if image else '')
-        self.store.append('user', stored, conversation)
-        self.store.append('assistant', reply, conversation)
+        self.store.append('user', stored, conversation,expected_epoch=epoch)
+        self.store.append('assistant', reply, conversation,expected_epoch=epoch)
         return {'reply': reply, 'proposed_actions': proposals, 'conversation': conversation}

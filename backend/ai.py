@@ -109,6 +109,7 @@ class GeminiClient:
         return self._generate(text, conversation, image=(bytes(image), mime))
 
     def _generate(self, text, conversation, image=None):
+        epoch=self.store.memory_epoch()
         if not isinstance(text, str) or not text.strip() or len(text) > 12_000:
             raise ProviderError("Bitte geben Sie eine Nachricht mit höchstens 12.000 Zeichen ein.")
         if not isinstance(conversation, str) or not re.fullmatch(r"[A-Za-z0-9_-]{1,80}", conversation):
@@ -185,6 +186,6 @@ class GeminiClient:
         stored_text = text.strip()
         if image is not None:
             stored_text += "\n[Bild zur Analyse übermittelt; Bilddaten werden nicht gespeichert.]"
-        self.store.append("user", stored_text, conversation)
-        self.store.append("assistant", reply, conversation)
+        self.store.append("user", stored_text, conversation,expected_epoch=epoch)
+        self.store.append("assistant", reply, conversation,expected_epoch=epoch)
         return {"reply": reply, "proposed_actions": proposals, "conversation": conversation}

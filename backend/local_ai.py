@@ -71,6 +71,7 @@ class LocalClient:
     def chat(self, text, conversation='default'):
         if not isinstance(text, str) or not text.strip() or len(text) > 6000:
             raise ProviderError('Bitte für das kleine lokale Modell 1 bis 6.000 Zeichen eingeben.')
+        epoch=self.store.memory_epoch()
         model = self.store.settings()['local_model']
         validate_model(model)
         messages, remaining = [], 6000
@@ -102,8 +103,8 @@ class LocalClient:
         if re.match(r'^(?:öffne|starte|mach|erstelle|baue|bediene|klicke|bewege)\b',text.strip(),re.I) and re.search(r'blender|maus|notiz|\bapp\b|fenster|programm|datei',text,re.I) and re.search(r'ich habe.{0,100}(?:geöffnet|erstellt|ausgeführt)|(?:auftrag|aufgabe).{0,30}(?:erfüllt|erledigt)|wurde.{0,20}(?:geöffnet|ausgeführt|erfüllt)',reply,re.I|re.S):
             reply='Für diese Geräteaktion liegt mir kein bestätigtes Werkzeugergebnis vor. Es wurde durch diese Textantwort nichts ausgeführt. Nutze den sichtbaren Desktop-Auftrag; dort erscheinen tatsächliche Fehler und Ergebnisse.'
         reply=correct_identity(reply,self.store,text)
-        self.store.append('user', text.strip(), conversation)
-        self.store.append('assistant', reply, conversation)
+        self.store.append('user', text.strip(), conversation,expected_epoch=epoch)
+        self.store.append('assistant', reply, conversation,expected_epoch=epoch)
         return {'reply': reply, 'proposed_actions': [], 'conversation': conversation}
 
     def analyze_image(self, *args, **kwargs):

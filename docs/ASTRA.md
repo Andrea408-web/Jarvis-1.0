@@ -99,3 +99,9 @@ Der Audiohinweis wird in den aktiven Dialog verschoben, damit die Browser-Dialog
 macOS kann zuerst die Freigabe **Datenschutz & Sicherheit → Automation → Terminal/Python → Notizen** verlangen. Ein verfügbarer Standardaccount in Notizen wird benötigt. Bei verweigerter Freigabe, Timeout oder fehlender Kennung meldet Jarvis einen Fehler, keine erfolgreiche Ausführung. Diese native Mac-Ausführung wurde in der Linux-Cloud nicht live geprüft; Parser, Prozessaufruf, Fehlermeldungen und Ablauf sind kontrolliert getestet.
 
 Neue eigenständige Arbeitsaufträge erhalten keinen alten Gesprächsverlauf als Modellkontext. Der sichtbare Verlauf und gespeicherte Namen bleiben erhalten. Ein ausdrücklich fortgesetzter Auftrag mit „weiter“, „dazu“ oder „darauf“ kann weiter Kontext nutzen.
+
+## Chat löschen und Rückfragen
+
+„Chat löschen“ entfernt alle Chatverläufe, den gemerkten Namen und offene Rückfragen. Gespeicherte Dateien, bereits erstellte Notizen und Einstellungen bleiben erhalten. Eine verspätete KI-Antwort darf den gelöschten Kontext nicht zurückschreiben.
+
+„Erstelle eine Notiz“ fragt nach dem Inhalt. Antworte einfach „morgen Milch kaufen“; der nächste Schritt erstellt diese Notiz. „Abbrechen“ verwirft die Rückfrage. Ebenso: „Öffne eine App“ → „Spotify“ oder „Öffne eine Webseite“ → „youtube.com“. „Tippe Hallo“ fragt nach der Ziel-App. Auf dem Mac benötigen native Aktionen die entsprechenden macOS-Berechtigungen.

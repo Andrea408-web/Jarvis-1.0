@@ -25,6 +25,7 @@ from .natural_voice import NaturalVoice
 from .hub import MiniHub
 from .desktop import Desktop
 from .notes import request as note_request
+from .dialogue import Dialogue
 from .mobile import MobileLink
 from .agents import AgentOffice
 from .task_router import task_request
@@ -48,6 +49,7 @@ MAX_BODY = 32_768
 class Application:
     def __init__(self, data_dir=None):
         self.store = Store(data_dir)
+        self.dialogue=Dialogue()
         self.actions = PendingActions(self.store)
         self.ai = GeminiClient(self.store)
         self.openai = OpenAIClient(self.store)
@@ -85,6 +87,7 @@ class Application:
 
     def status(self):
         result = self.settings()
+        result['dialogue']=self.dialogue.get()
         result['system'] = snapshot(self.store.data_dir)
         result['capabilities'] = {
             'mac_control': result['system'].get('is_macos', False),
@@ -102,10 +105,29 @@ class Application:
         job=self.office.submit({**task,**(attachment or {})})
         return {'reply':'Sir, der Auftrag wurde tatsächlich angelegt. Auftragsnummer: '+job['id'][:8]+'. Status und Ergebnis stehen in der Werkstatt.','proposals':[],'view':'office','job_id':job['id']}
 
+    def clear_chat(self):
+        self.dialogue.clear();self.store.clear_all_history()
+        with self.desktop.lock:
+            self.desktop.commands.clear()
+            if self.desktop.plan and self.desktop.plan['state']=='review':self.desktop.stop()
+        return {'ok':True,'pending':None}
+
     def chat(self, text):
         if not isinstance(text, str) or not text.strip() or len(text) > 12000:
             raise ValueError('Bitte eine Nachricht mit 1 bis 12.000 Zeichen eingeben.')
-        text=re.sub(r'^(?:astra|asta|astda|astrid|asuka|jarvis)[,: ]+(?=(?:ich|mein|wie|wer|was|wo|wann|warum|wieso|kannst|könntest|würdest|öffne|starte|mach|erstelle|baue|modelliere|bitte|hallo|hi|danke|erklär|sag|zeig|nenne|schreibe|schreib|notiere|speichere|tippe|bewege)\b)','',text.strip(),flags=re.I)
+        text=re.sub(r'^(?:astra|asta|astda|astrid|asuka|jarvis)[,: ]+(?=(?:ich|mein|wie|wer|was|wo|wann|warum|wieso|kannst|könntest|würdest|öffne|starte|mach|erstelle|baue|modelliere|bitte|hallo|hi|danke|erklär|sag|zeig|nenne|schreibe|schreib|notiere|speichere|tippe|bewege|chat|vergiss|lösche|alles|abbrechen|stopp?)\b)','',text.strip(),flags=re.I)
+        if re.fullmatch(r'(?:chat löschen|lösche (?:den )?chat|alles vergessen|vergiss (?:bitte )?alles|alles da vergessen)[.! ]*',text,re.I):
+            self.clear_chat();return {'reply':'Gesprächsverläufe, gemerkter Name und offene Rückfragen sind gelöscht.','proposals':[],'pending':None,'cleared':True}
+        if re.fullmatch(r'(?:abbrechen|stopp?|vergiss das|neue aufgabe)[.! ]*',text,re.I) and self.dialogue.get():
+            self.dialogue.clear();return {'reply':'Rückfrage abgebrochen. Was möchtest du als Nächstes machen?','proposals':[],'pending':None}
+        answer=self.dialogue.answer(text)
+        if answer:
+            data=self.desktop.prepare(answer);self.dialogue.clear()
+            return {'reply':'Die Antwort ist übernommen. Der konkrete Auftrag ist vorbereitet; ein Erfolg wird erst nach der Ausführung gemeldet.','proposals':[],'view':'desktop','desktop':data,'pending':None}
+        if re.fullmatch(r'(?:öffne|starte)\s+(?:(?:eine?|die|das)\s+)?(?:app|programm)[.!? ]*',text,re.I):return self.dialogue.ask('app','Welche App soll ich öffnen?')
+        if re.fullmatch(r'(?:öffne|starte)\s+(?:(?:eine?|die)\s+)?(?:webseite|website|seite)[.!? ]*',text,re.I):return self.dialogue.ask('website','Welche Webseitenadresse soll ich öffnen?')
+        typing=re.fullmatch(r'(?:tippe|schreibe (?:den|folgenden) text)[: ]+(.+)',text,re.I|re.S)
+        if typing and not re.search(r'\s+in\s+|notiz',text,re.I):return self.dialogue.ask('typing_app','In welche App soll ich diesen Text eingeben?',text=typing[1])
         user_name=re.fullmatch(r'(?:ich heiße|ich heisse|mein name ist|nenne mich)\s+([A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ ’\'-]{0,59})[.!]?',text.strip(),re.I)
         if user_name:
             value=user_name[1].strip();self.store.update_settings({'user_name':value})
@@ -120,7 +142,7 @@ class Application:
             return {'reply':'Ich bin '+name(self.store)+', Sir.','proposals':[]}
         note=note_request(text)
         if note is not None:
-            if not note['body']:return {'reply':'Was soll in der Notiz stehen, Master? Zum Beispiel: Erstelle eine Notiz: Morgen Milch kaufen.','proposals':[]}
+            if not note['body']:return self.dialogue.ask('note','Was soll in der Notiz stehen, Master?')
             data=self.desktop.prepare({'goal':text})
             return {'reply':'Notizauftrag vorbereitet. Noch keine Notiz erstellt; der sichtbare Auftrag meldet das bestätigte Ergebnis.','proposals':[],'view':'desktop','desktop':data}
         if re.match(r'^(?:öffne|starte|mach|erstelle|baue|modelliere)\b',text,re.I) and re.search(r'\bblender\b',text,re.I):
@@ -380,13 +402,7 @@ class Handler(BaseHTTPRequestHandler):
                 self._headers(200, content_type + '; charset=utf-8', len(body))
                 return self.wfile.write(body)
         elif method == 'DELETE' and path == '/api/history':
-            if not app.chat_lock.acquire(blocking=False):
-                raise ProviderError('Bitte die laufende Antwort abwarten.', 409)
-            try:
-                app.store.clear_history()
-            finally:
-                app.chat_lock.release()
-            return self._json({'ok': True})
+            return self._json(app.clear_chat())
         elif method in {'POST', 'PUT', 'PATCH'}:
             body = self._body()
             if method=='POST' and path.startswith('/api/desktop/'):

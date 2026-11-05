@@ -33,7 +33,10 @@ class FakeStore:
     def history(self, conversation):
         return list(self.messages)
 
-    def append(self, role, text, conversation):
+    def memory_epoch(self):
+        return 0
+
+    def append(self, role, text, conversation, expected_epoch=None):
         self.messages.append({"role": role, "text": text, "conversation": conversation})
 
     def reserve_usage(self, service, amount, limit):

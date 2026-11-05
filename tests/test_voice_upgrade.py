@@ -59,7 +59,9 @@ class GeneratedPackageTests(unittest.TestCase):
             if isinstance(node,ast.Assign) and len(node.targets)==1 and isinstance(node.targets[0],ast.Name) and node.targets[0].id in {'PAYLOAD_B64','PAYLOAD_SHA'}:
                 values[node.targets[0].id]=ast.literal_eval(node.value)
         files,manifest=upgrade.payload_files(values['PAYLOAD_B64'],values['PAYLOAD_SHA'])
-        for name,data in files.items():self.assertEqual(data,(root/name).read_bytes())
+        for name,data in files.items():
+            self.assertEqual(data,(root/name).read_bytes())
+            if name.endswith('.md'):self.assertTrue(data.startswith(b'#'),name+' must contain the documentation, not program source')
         self.assertLess(len(script),300000)
         with zipfile.ZipFile(root/'updates/JARVIS-Stimme-Nachruestung.zip') as archive:
             self.assertEqual(archive.read('JARVIS-Stimme-nachruesten.command'),script.encode())

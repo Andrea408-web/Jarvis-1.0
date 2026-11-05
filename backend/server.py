@@ -117,6 +117,9 @@ class Application:
         if re.fullmatch(r'(?:wie (?:heißt|heisst) du|wer bist du|wie ist dein name)[?!. ]*',text.strip(),re.I):
             from .persona import name
             return {'reply':'Ich bin '+name(self.store)+', Sir.','proposals':[]}
+        if re.match(r'^(?:öffne|starte|mach|erstelle|baue|modelliere)\b',text,re.I) and re.search(r'\bblender\b',text,re.I):
+            data=self.desktop.prepare({'goal':text})
+            return {'reply':'Der Blender-Auftrag ist vorbereitet, Master. Er ist noch nicht ausgeführt. Prüfe den sichtbaren Ablauf und starte ihn.','proposals':[],'view':'desktop','desktop':data}
         routed=self.dispatch_agent(text)
         if routed:return routed
         if re.search(r'\bagent(?:en)?\b|werkstatt',text,re.I):
@@ -361,7 +364,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({'reminders': app.store.reminders()})
             # Exact static allowlist: no arbitrary files, keys or directory listings.
             static = {'/': 'index.html', '/index.html': 'index.html',
-                      '/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js', '/lowpoly-stage.js':'lowpoly-stage.js', '/artifacts.js':'artifacts.js', '/jarvis-voice.js':'jarvis-voice.js', '/voice-worker.js':'voice-worker.js', '/conversation.js':'conversation.js', '/mini-hub.js':'mini-hub.js', '/world-news.js':'world-news.js', '/astra.js':'astra.js', '/astra.css':'astra.css', '/astra-panel.html':'astra-panel.html', '/astra-panel.js':'astra-panel.js'}
+                      '/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js','/office-3d.js':'office-3d.js', '/lowpoly-stage.js':'lowpoly-stage.js', '/artifacts.js':'artifacts.js', '/jarvis-voice.js':'jarvis-voice.js', '/voice-worker.js':'voice-worker.js', '/conversation.js':'conversation.js', '/mini-hub.js':'mini-hub.js', '/world-news.js':'world-news.js', '/astra.js':'astra.js', '/astra.css':'astra.css', '/astra-panel.html':'astra-panel.html', '/astra-panel.js':'astra-panel.js'}
             for name in ['ESpeak.js','mespeak.js','config.json','jarvis-de.json','de.json','COPYING','NOTICE.txt','UPSTREAM-README.md','mespeak-2.0.2-source.tgz','speak-source-9c6f642.tar.gz']:
                 static['/vendor/voice/'+name]='vendor/voice/'+name
             if path in static:

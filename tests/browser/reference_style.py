@@ -9,7 +9,7 @@ with tempfile.TemporaryDirectory() as folder:
  try:
   with sync_playwright() as pw:
    browser=pw.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox']);page=browser.new_page(viewport={'width':1500,'height':1100},accept_downloads=True);errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
-   page.goto('http://127.0.0.1:'+str(server.server_port));page.get_by_text('LOKALE VERBINDUNG AKTIV',exact=True).wait_for();page.get_by_role('button',name='Agenten',exact=True).click();page.locator('.island-seat').first.wait_for();assert page.locator('.island-seat').count()==30
+   page.goto('http://127.0.0.1:'+str(server.server_port));page.get_by_text('LOKALE VERBINDUNG AKTIV',exact=True).wait_for();page.get_by_role('button',name='Agenten',exact=True).click();page.locator('#office-3d').wait_for();point=page.locator('#office-3d').evaluate('(canvas)=>{const p=[...canvas._pickPoints].sort((a,b)=>a.depth-b.depth)[0];const r=canvas.getBoundingClientRect();return {x:r.left+p.x*r.width/1200,y:r.top+p.y*r.height/760};}');page.mouse.click(point['x'],point['y']);page.locator('#agent-inspector').get_by_text('Schläft',exact=True).wait_for();page.get_by_role('button',name='Ansicht: 3D → Liste',exact=True).click();page.locator('.island-seat').first.wait_for();assert page.locator('.island-seat').count()==30
    page.locator('.island-seat').first.click();page.locator('#agent-inspector').get_by_text('Schläft',exact=True).wait_for();page.screenshot(path='/tmp/jarvis-work-islands.png',full_page=True)
    release=threading.Event()
    def transport(*args,**kwargs):release.wait(10);return {'choices':[{'finish_reason':'stop','message':{'content':'Geprüftes Test-Ergebnis'}}]}

@@ -9,7 +9,7 @@ import zipfile
 
 ROOT=Path(__file__).resolve().parents[1]
 BASE='232ba23b1f7fa0df13753775170649aba88c4f2c'
-FILES=['frontend/lowpoly-stage.js']+['backend/agents.py', 'frontend/office.js', 'backend/render_scene.py']+['backend/models.py', 'backend/blender_scene.py', 'backend/persona.py', 'backend/local_ai.py', 'backend/ai.py', 'backend/openai_client.py']+['README.md', 'docs/EINFACH-STARTEN.md', 'docs/PRUEFUNG.md']+['backend/desktop.py', 'backend/astra_panel.js', 'frontend/astra.js', 'frontend/astra-panel.html', 'frontend/astra-panel.js', 'frontend/astra.css', 'frontend/world-news.js', 'docs/ASTRA.md']+['backend/natural_voice.py','backend/server.py','backend/storage.py','frontend/app.js','frontend/jarvis-voice.js','docs/NATUERLICHE-STIMME.md','frontend/artifacts.js','backend/hub.py','frontend/mini-hub.js','frontend/index.html','frontend/extras.js','frontend/extras.css','frontend/conversation.js']
+FILES=['frontend/office-3d.js']+['frontend/lowpoly-stage.js']+['backend/agents.py', 'frontend/office.js', 'backend/render_scene.py']+['backend/models.py', 'backend/blender_scene.py', 'backend/persona.py', 'backend/local_ai.py', 'backend/ai.py', 'backend/openai_client.py']+['README.md', 'docs/EINFACH-STARTEN.md', 'docs/PRUEFUNG.md']+['backend/desktop.py', 'backend/astra_panel.js', 'frontend/astra.js', 'frontend/astra-panel.html', 'frontend/astra-panel.js', 'frontend/astra.css', 'frontend/world-news.js', 'docs/ASTRA.md']+['backend/natural_voice.py','backend/server.py','backend/storage.py','frontend/app.js','frontend/jarvis-voice.js','docs/NATUERLICHE-STIMME.md','frontend/artifacts.js','backend/hub.py','frontend/mini-hub.js','frontend/index.html','frontend/extras.js','frontend/extras.css','frontend/conversation.js']
 subprocess.run(['git','rev-parse','--verify',BASE+'^{commit}'],cwd=ROOT,capture_output=True,check=True)
 manifest={}
 buffer=io.BytesIO()
@@ -18,7 +18,7 @@ with zipfile.ZipFile(buffer,'w',zipfile.ZIP_DEFLATED,compresslevel=9) as archive
         data=(ROOT/name).read_bytes()
         previous=subprocess.run(['git','show',BASE+':'+name],cwd=ROOT,capture_output=True)
         accepted=[]
-        for ref in ['bd17dfd','9bf0a4e','539bd30','4490b8e','9b30d32','ef0726f','2c234cb','43d6239']:
+        for ref in ['bd17dfd','9bf0a4e','539bd30','4490b8e','9b30d32','ef0726f','2c234cb','43d6239','edbc0a0']:
             old=subprocess.run(['git','show',ref+':'+name],cwd=ROOT,capture_output=True)
             if old.returncode==0:accepted.append(hashlib.sha256(old.stdout).hexdigest())
         manifest[name]={'accepted_before':accepted,'before':hashlib.sha256(previous.stdout).hexdigest() if previous.returncode==0 else None,'after':hashlib.sha256(data).hexdigest()}

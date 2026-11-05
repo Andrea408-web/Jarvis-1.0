@@ -4,7 +4,7 @@ Stand: 3. November 2026. Linux-Cloud; der persönliche Mac und das iPhone sind n
 
 ## Verifiziert
 
-- **193 Python-Tests bestanden**, keine übersprungen. Python-Suite mit echten lokalen HTTP-/TLS-Verbindungen, Host-/Origin-/Token-Prüfung, privater Ablage, Budgetgrenzen und sicheren bestätigten Aktionen. Temporäre TLS-Zertifikate werden explizit vertraut; TLS-Prüfung wird nicht abgeschaltet.
+- **196 Python-Tests bestanden**, keine übersprungen. Python-Suite mit echten lokalen HTTP-/TLS-Verbindungen, Host-/Origin-/Token-Prüfung, privater Ablage, Budgetgrenzen und sicheren bestätigten Aktionen. Temporäre TLS-Zertifikate werden explizit vertraut; TLS-Prüfung wird nicht abgeschaltet.
 - Agentenaufträge: natürliche Formulierungen führen zu einem tatsächlichen Job. Queue, Fehler, Abbruch, Neustart und getrennte Gespräche sind getestet. Sprachmodellantworten sind hierfür kontrollierte Fixtures; daraus wird keine echte Modellqualität abgeleitet.
 - Bildanhänge: Format-/Größenprüfung, private Dateien mit Modus0600, Migration bestehender Datenbanken, Rückgabe lokaler Bildbefunde und Übergabe als Daten statt auszuführende Befehle. Auf Nicht-Macs wird kein vorhandenes Bildverständnis behauptet.
 - Eigene deutsche Stimme: echte eSpeak/meSpeak-Spracherzeugung im Browser, decodierbare PCM-Daten mit Sprachsignal und echte Web-Audio-Wiedergabe. Jeder Systemstimmen-Aufruf wird im Integrationstest als Fehler behandelt. Keine externen Sprachrequests. Die Engine ist keine neu trainierte neuronale Stimme; es handelt sich um eine mitgelieferte freie Formantengine mit eigener Konfiguration.
@@ -60,3 +60,13 @@ Regression geprüft: „Öffne Blender“ und „Kannst du Blender öffnen?“ w
 Stimme/Companion: gezielter Abbruch neuronaler Ausgabe, frei werdende Engine-Sperre, Companion-Heartbeat und zustellbare UI-Aufträge sowie 40 reale Team-Teilaufträge getestet. Browser: tatsächliche neuronale Thorsten-Ausgabe, Astra-Abläufe und Hintergrundton nach Stummschaltung bestanden. Blender-CPU-Rendering mit Kamera/Licht erzeugt ein echtes PNG (400305 Bytes im Prüflauf). Mac-Mikrofon, native Maus und AppKit bleiben hier ungeprüft; Browser-Hintergrund-ASR kann eingeschränkt sein. Kein autonomer Videoschnitt oder vollständiger 3D-Fotonachbau wird behauptet.
 
 Referenzstil: anklickbare farbige Arbeitsinseln mit echten Zuständen und festgehaltenem ausgewähltem Auftrag; separate Details zu Auftrag und Ergebnis. Browserprüfung zeigt Schlafen/Arbeiten/Fertig mit kontrollierter lokaler Inferenz. Prozedurale Low-Poly-Bühne wird zu einem realen 720p-Video exportiert und mit ffprobe geprüft. Bestehender Produktfoto-Export mit echter Sprecher-Audiospur bleibt geprüft. Kein frei generierendes Film-Modell wird behauptet.
+
+## 5. November: 3D-Werkstatt und Bedienung
+
+Die perspektivische 3D-Szene wurde tatsächlich im Browser gerendert. Figuren-Picking per Maus, Listenfallback und echter 720p-Low-Poly-Videoexport sind geprüft. Die Szene zeichnet lokale 3D-Polygone, ohne neue Modellgewichte oder Netzressourcen.
+
+Kombinierte Blender-Aufträge und echte gespeicherte Sportwagen-Meshes sowie Abbruch sind geprüft. Konkrete Richtungsbefehle für den Mauszeiger und Texteingabe in ausdrücklich genannte Apps erzeugen validierte Schritte. Native Mac-Eingaben sind hier nicht ausgeführt. Das Begleitfenster zeigt jetzt echten Mikrofon-/Fehlerstatus aus dem geöffneten Hauptbrowser.
+
+Chromium-Aufrufe von www.tiktok.com/@moritz.maaker und www.instagram.com/moritz.maaker/ endeten mit ERR_TUNNEL_CONNECTION_FAILED. Keine Videos wurden gesehen. Ein Domainfreigabe-Entwurf wurde gespeichert; die Freigabe ist noch nicht aktiviert.
+
+Der Installer verändert die gewählte Stimme nicht mehr automatisch.

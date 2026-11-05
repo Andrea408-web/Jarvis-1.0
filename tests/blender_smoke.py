@@ -8,7 +8,7 @@ if not binary:raise SystemExit('Blender is required for this optional check; not
 script=Path(__file__).resolve().parents[1]/'backend/blender_scene.py'
 with tempfile.TemporaryDirectory(prefix='astra-real-blender-') as folder:
     root=Path(folder)
-    for label in ['Auto','Haus','Roboter']:
+    for label in ['Auto','Haus','Roboter','Lamborghini']:
         target=root/label;scene=recipe('3D '+label);write_scene(target,scene)
         result=subprocess.run([binary,'--background','--factory-startup','--python',str(script),'--',str(target)],capture_output=True,text=True,timeout=60)
         progress=json.loads((target/'progress.json').read_text());assert result.returncode==0,(result.returncode,result.stderr[-500:]);assert progress['state']=='done',progress

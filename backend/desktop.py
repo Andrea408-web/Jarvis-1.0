@@ -184,15 +184,26 @@ class Desktop:
         if not isinstance(goal,str) or not 1<=len(goal.strip())<=3000:raise ValueError('Bitte einen konkreten Desktop-Auftrag eingeben.')
         with self.lock:
             if self.thread and self.thread.is_alive():raise ProviderError('Ein Desktop-Ablauf läuft. Zuerst stoppen oder abwarten.',409)
-        model_intent=bool(re.search(r'\b3d\b|modellier|(?:erstell|baue?|mach|kreier).*(?:modell|\bblender\b)',goal,re.I))
+        model_intent=bool(re.search(r'\b3d\b|modellier',goal,re.I) or re.search(r'\bblender\b',goal,re.I) and re.search(r'\b(?:erstell\w*|bau\w*|mach\w*|kreier\w*)\b',goal,re.I))
         scene=validate_scene(body['scene']) if 'scene' in body else recipe(goal) if 'steps' not in body and model_intent else None
+        template=scene is not None and 'scene' not in body
         if scene is None and 'steps' not in body and model_intent:scene=self.model_scene(goal)
         if scene:
             with self.lock:
                 if self.thread and self.thread.is_alive():raise ProviderError('Ein Desktop-Ablauf läuft bereits.',409)
-                self.plan={'id':secrets.token_hex(16),'goal':goal.strip(),'kind':'model','render':body.get('render',False),'scene':scene,'steps':[{'type':'model','object':p['name'],'shape':p['shape']} for p in scene['parts']],'state':'review','completed':0,'message':'Echte 3D-Grundkörper in Blender aufbauen. Eigene neue Szene; vorhandene Dateien werden nicht überschrieben.','expires':time.time()+600}
+                self.plan={'id':secrets.token_hex(16),'goal':goal.strip(),'kind':'model','template':template,'render':body.get('render',False),'scene':scene,'steps':[{'type':'model','object':p['name'],'shape':p['shape']} for p in scene['parts']],'state':'review','completed':0,'message':'Vereinfachter Grundkörper-Entwurf, kein exakter Fahrzeugnachbau. Echte 3D-Grundkörper in Blender aufbauen. Eigene neue Szene; vorhandene Dateien werden nicht überschrieben.','expires':time.time()+600}
                 return self.snapshot()
         steps=body.get('steps')
+        if steps is None:
+            move=re.fullmatch(r'(?:bewege|beweg)\s+(?:die\s+)?(?:maus|mauszeiger)\s+(?:nach\s+|zur\s+)?(links|rechts|mitte|oben|unten)\s+in\s+(.+?)[.!?]?',goal.strip(),re.I)
+            typing=re.fullmatch(r'(?:tippe|schreibe)\s+["“]?(.*?)["”]?\s+in\s+(.+?)[.!?]?',goal.strip(),re.I)
+            if move:
+                app=resolve_app(move[2]);x,y={'links':(.25,.5),'rechts':(.75,.5),'mitte':(.5,.5),'oben':(.5,.25),'unten':(.5,.75)}[move[1].casefold()]
+                steps=[{'type':'open','app':app['name']},{'type':'wait','seconds':1},{'type':'move','x':x,'y':y}]
+            elif typing:
+                app=resolve_app(typing[2]);steps=[{'type':'open','app':app['name']},{'type':'wait','seconds':1}]
+                if app['bundle']=='com.apple.Notes':steps.append({'type':'key','key':'n','modifiers':['command']})
+                steps.append({'type':'text','text':typing[1].strip()})
         if steps is None:
             # Straightforward commands do not depend on a small model guessing JSON.
             command=re.sub(r'^(?:bitte\s+)?(?:öffne|starte|öffnen|starten)\s+(?:mir\s+)?(?:bitte\s+)?(?:die app\s+|die webseite\s+|die seite\s+)?','',goal.strip(),flags=re.I).strip().rstrip('.!?')
@@ -353,10 +364,10 @@ class Desktop:
                 self.commands.append({'command':command,'text':text})
             return {'ok':True,'ui':dict(self.ui_state)}
     def sync_ui(self,body):
-        if set(body)-{'busy','mode','conversation','error','reply'}:raise ValueError('Ungültiger Gesprächsstatus.')
+        if set(body)-{'busy','mode','conversation','recording','consented','error','reply'}:raise ValueError('Ungültiger Gesprächsstatus.')
         if type(body.get('busy')) is not bool or type(body.get('conversation')) is not bool or body.get('mode') not in {'idle','listening','thinking','speaking','error'}:raise ValueError('Ungültiger Gesprächsstatus.')
         with self.lock:
-            self.ui_state={'busy':body['busy'],'mode':body['mode'],'conversation':body['conversation'],'error':str(body.get('error',''))[:300],'reply':str(body.get('reply',''))[:3000],'seen':time.time()}
+            self.ui_state={'busy':body['busy'],'mode':body['mode'],'conversation':body['conversation'],'recording':body.get('recording') is True,'consented':body.get('consented') is True,'error':str(body.get('error',''))[:300],'reply':str(body.get('reply',''))[:3000],'seen':time.time()}
             index=next((i for i,c in enumerate(self.commands) if not body['busy'] or c['command']!='send'),None)
             commands=[] if index is None else [self.commands.pop(index)]
             return {'commands':commands}

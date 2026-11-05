@@ -18,6 +18,10 @@ def setup():
 def add(item):
     shape=item['shape'];args={'location':item['location'],'rotation':item['rotation']}
     if shape=='cube':bpy.ops.mesh.primitive_cube_add(size=2,**args)
+    elif shape=='wedge':
+        mesh=bpy.data.meshes.new(item['name']);mesh.from_pydata([(-1,-1,-1),(-1,1,-1),(1,1,-1),(1,-1,-1),(-1,-1,-.2),(-1,1,-.2),(1,1,1),(1,-1,1)],[],[(0,3,2,1),(4,5,6,7),(0,1,5,4),(3,7,6,2),(1,2,6,5),(0,4,7,3)]);mesh.update()
+        obj=bpy.data.objects.new(item['name'],mesh);bpy.context.collection.objects.link(obj);bpy.context.view_layer.objects.active=obj;obj.select_set(True);obj.location=item['location'];obj.rotation_euler=item['rotation']
+        bevel=obj.modifiers.new('Kanten','BEVEL');bevel.width=.06;bevel.segments=2
     elif shape=='sphere':bpy.ops.mesh.primitive_uv_sphere_add(segments=24,ring_count=12,radius=1,**args)
     elif shape=='cylinder':bpy.ops.mesh.primitive_cylinder_add(vertices=32,radius=1,depth=2,**args)
     elif shape=='cone':bpy.ops.mesh.primitive_cone_add(vertices=4 if item['name']=='Dach' else 32,radius1=1,radius2=0,depth=2,**args)

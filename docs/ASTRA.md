@@ -71,3 +71,19 @@ Automatisches Vorlesen: Audio wird jetzt während des tatsächlichen Klicks bzw.
 ## Gezielte Audio- und Bedienkorrektur
 
 Die WAV-Stimme wird jetzt über einen sichtbaren normalen HTML-Audioplayer ohne Web-Audio-Filterkette abgespielt. Erzeugung und laufende Wiedergabe werden ausdrücklich unterschieden. Ein direkter Wechselknopf ergänzt die Sprachbefehle zu Astra/Jarvis; auch Asuka ist eine erkannte Anrede. Ältere Statusantworten können einen frisch vorbereiteten Ablauf nicht mehr deaktivieren. Mac-Lautsprecherausgabe und native Maussteuerung müssen weiterhin am Gerät geprüft werden.
+
+## Kombinierte Modellaufträge und Wiederherstellung von Thorsten
+
+„Öffne Blender und mach mir einen Lamborghini“ wird als Modellierungsauftrag erkannt, ebenso „Mach mir einen Lamborghini in Blender“. Der konkrete Entwurf ist ein vereinfachter Sportwagen mit vierzehn echten Bauteilen, keilförmiger Karosserie und Felgen; kein originalgetreuer Lamborghini. Bekannte Vorlagen starten nach dem ausdrücklichen Auftrag auf dem Mac direkt. Unbekannte KI-Entwürfe bleiben zur Prüfung offen. Erfolg zählt erst nach einer tatsächlich gespeicherten Blender-Datei. Die Desktop-Befehle funktionieren in Jarvis- und Astra-Modus.
+
+**Maussteuerung testen** öffnet Finder und bewegt den echten Zeiger ohne Klicks oder Dateiveränderungen. Eine fehlende Bedienungshilfen-Freigabe erscheint als Fehler. Das ist ein Funktionstest, keine allgemeine visuelle App-Steuerung. Blender-Modelle entstehen über die Datenschnittstelle, nicht durch eine vorgetäuschte Mausbewegung.
+
+Dieses Reparaturpaket wählt die vorhandene gültige natürliche Thorsten-Stimme wieder aus. Fehlt sie, bleibt die Ausgabe aus statt einer Ersatzstimme; neue Modelle werden nicht geladen.
+
+## Drehbare 3D-Werkstatt und konkrete Eingabebefehle
+
+Die neue perspektivische 3D-Werkstatt lässt sich mit Ziehen drehen und mit dem Mausrad zoomen. Figuren sind über ihre projizierte Position anklickbar und zeigen echte Aufträge; die Listenansicht bleibt zugänglich. Es werden lokale Polygone gerendert, keine Grafikpakete oder Modelle heruntergeladen.
+
+„Bewege die Maus nach links in Finder“ und „Tippe Hallo Master in Notizen“ erzeugen konkrete geprüfte Eingabeabläufe. Die Richtung ist ein Anteil des Hauptbildschirms; es ist kein Erkennen von Schaltflächen. Für Notizen wird zuerst eine neue Notiz begonnen. Andere Apps erhalten Text in das aktive Eingabefeld der ausdrücklich genannten App. Native Maus/Tastatur benötigt Bedienungshilfen. Die Voransicht zeigt alle Schritte, bevor sie ausgeführt werden.
+
+Der Installer verändert die gewählte Stimme nicht mehr automatisch und lädt keine neue Stimme. Ein Browseraufruf des TikTok- und Instagram-Profils am 5. November 2026 endete jeweils mit ERR_TUNNEL_CONNECTION_FAILED. Der Inhalt wurde nicht gesehen. Netzfreigaben für www.tiktok.com und www.instagram.com sind als Cloud-Konfigurationsentwurf gespeichert; erst Prüfung/Speichern und Veröffentlichen in den Umgebungseinstellungen aktiviert sie.

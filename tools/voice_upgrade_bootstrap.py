@@ -16,6 +16,7 @@ import zipfile
 PAYLOAD_B64='__PAYLOAD_B64__'
 PAYLOAD_SHA='__PAYLOAD_SHA__'
 ALLOWED={
+    'frontend/office-3d.js',
     'frontend/lowpoly-stage.js',
     'backend/agents.py','frontend/office.js','backend/render_scene.py',
     'backend/models.py','backend/blender_scene.py','backend/persona.py','backend/local_ai.py','backend/ai.py','backend/openai_client.py',
@@ -113,8 +114,8 @@ def main():
     print('Gefundenes Jarvis:',root,flush=True)
     print('Es werden Astra, Weltansicht und Desktop-Abläufe aktualisiert. Deine Text-KI, Gespräche und Schlüssel bleiben erhalten.',flush=True)
     def install_voice(project):
-        if os.environ.get('JARVIS_ASTRA_ONLY')=='1':return
         sys.path.insert(0,str(project));os.chdir(project)
+        if os.environ.get('JARVIS_ASTRA_ONLY')=='1':return
         from backend.natural_voice import install
         from backend.storage import Store
         voice=install()

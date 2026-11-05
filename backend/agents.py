@@ -41,7 +41,7 @@ class AgentOffice:
 
     def snapshot(self):
         with self.app.store._connect() as db:
-            jobs=[dict(row) for row in db.execute("SELECT * FROM agent_jobs ORDER BY CASE WHEN status IN ('queued','running') THEN 0 ELSE 1 END, created_at DESC LIMIT 60")]
+            jobs=[dict(row) for row in db.execute("SELECT * FROM agent_jobs ORDER BY CASE WHEN status='running' THEN 0 WHEN status='queued' THEN 1 ELSE 2 END, created_at DESC LIMIT 60")]
         return {'roles':[{ 'id':key,'name':value['name'],'title':value['title']} for key,value in ROLES.items()],
                 'jobs':jobs,'native_vision':platform.system()=='Darwin','execution':'Ein lokales Textmodell; Aufträge werden nacheinander verarbeitet. Keine Websuche oder Geräteaktionen.'}
 

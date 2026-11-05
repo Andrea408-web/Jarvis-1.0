@@ -115,3 +115,9 @@ Neue eigenständige Arbeitsaufträge erhalten keinen alten Gesprächsverlauf als
 Am Mac „Handy verbinden“ öffnen und der Anleitung für das eigene HTTPS-Zertifikat folgen. Mac eingeschaltet lassen; beide Geräte brauchen dasselbe WLAN. Nach erfolgreicher Kopplung in Safari: Teilen → Zum Home-Bildschirm → Hinzufügen. Der neue Knopf „App installieren“ erklärt die Schritte für iOS und Android. Dies ist kein öffentlicher Internet-Zugang.
 
 Falls das neue Home-Symbol eine separate Sitzung verwendet, dort einen neuen Kopplungslink vom Mac einfügen und „Mit Mac verbinden“ tippen. Kopplungen bleiben 30 Tage gespeichert, auch bei normalem Jarvis-Neustart; „Verbindung beenden“ am Mac widerruft sie. Nur Hashes der Sitzungsschlüssel liegen im privaten Datenordner. Bei geänderter WLAN-Adresse muss der Link bzw. das Home-Symbol erneuert werden. Mac-Steuerung bleibt auf den direkt am Mac geöffneten Browser beschränkt; auf dem Handy gibt es dafür eine klare Meldung.
+
+## Werbeclips mit eigener Figur und Thorsten
+
+Die Low-Poly-Bühne zeigt eine eigene mechanische Jarvis-Figur mit cyanfarbenem J-Kern, Metallgehäuse, sechseckigem Podest und Lichtbegleitern. Die frühere Dreiergruppe aus Stilvorlagen ist entfernt. Produktfotos werden nur im ausdrücklich ausgewählten Fotostil angezeigt.
+
+„Thorsten-Sprecher“ und „Untertitel“ sind standardmäßig aktiv; Wünsche wie „ohne Ton“ bzw. „ohne Untertitel“ schalten die jeweilige Option zunächst aus. Vorschau und Export verwenden dieselben lokal erzeugten Thorsten-Sätze. Untertitel und Mundlicht folgen den tatsächlichen Satzlängen. Sprechertext lässt sich vor dem Export bearbeiten. Fehlende Sprachdaten werden als Fehler angezeigt; es wird kein stiller Clip als erfolgreicher Sprecher-Export ausgegeben.

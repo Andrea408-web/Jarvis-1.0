@@ -12,7 +12,7 @@ from .storage import utc_now
 from .native_vision import analyze as analyze_local_image
 
 ROLES = {
-    'studio': {'name':'STUDIO','title':'Werbeclip','instruction':'Schreibe genau drei kurze Szenentexte für einen Werbeclip. Pro Szene eine Zeile, maximal 100 Zeichen. Keine erfundenen Produkteigenschaften.'},
+    'studio': {'name':'STUDIO','title':'Werbeclip','instruction':'Schreibe genau drei kurze gesprochene Werbesätze für den Auftrag. Pro Satz eine Zeile, maximal 100 Zeichen. Nur den tatsächlich zu sprechenden Text, keine Szenenbeschreibungen, Kameraanweisungen, Überschriften oder Sprecherlabels. Absender ist JARVIS; keine fremden KI-Figuren oder Marken aus Stilvorlagen übernehmen. Keine erfundenen Produkteigenschaften.'},
     'builder': {'name':'BAUER','title':'Mini-App','instruction':'Erstelle eine konkrete interaktive Checkliste zum Auftrag. Pro Zeile einen kurzen anklickbaren Arbeitsschritt. Keine Programmcodeblöcke.'},
     'planner': {'name':'ATLAS', 'title':'Planung', 'instruction':'Erstelle einen konkreten, übersichtlichen Arbeitsplan mit sinnvollen nächsten Schritten.'},
     'writer': {'name':'NOVA', 'title':'Entwurf', 'instruction':'Erstelle einen brauchbaren Textentwurf zum Auftrag. Trenne Annahmen von bekannten Angaben.'},

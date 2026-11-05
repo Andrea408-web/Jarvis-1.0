@@ -88,3 +88,5 @@ Handy-Nachbesserung: HTTPS-Kopplung, öffentliche App-Metadaten und Icon ohne Si
 Feste Thorsten-Präferenz: Standard, alte gespeicherte Roboterstimmen-Auswahl und Updates alter Clients bleiben bei Thorsten. Sprachpaket-Einrichtung läuft einzeln im Hintergrund, aktiviert nur eine geprüfte Stimme und ist nur direkt am Mac erreichbar. Kein Formant- oder Systemstimmen-Fallback.
 
 Die echte Thorsten-Inferenz mit lokal vorhandenem neuronalen Modell und anschließender Browserwiedergabe ist bestanden. Separat ist automatisches Vorlesen mehrerer Antworten unter Browser-Autoplay-Beschränkung mit kontrollierten WAV-Antworten am Thorsten-Endpunkt geprüft.
+
+Studio-Überarbeitung: eigene prozedurale Jarvis-Figur statt der Referenz-Dreiergruppe. Echter Produktfoto-Export mit Thorsten enthält überprüfte Video- und Audiospuren. Der Low-Poly-Stil wird als echtes 720p-Video exportiert. Vorschau, Satz-Untertitel und derselbe Thorsten-Audiopuffer im Export sind im Browser geprüft; fehlende Sprachdaten ergeben einen sichtbaren Fehler ohne synthetische Ersatzstimme.

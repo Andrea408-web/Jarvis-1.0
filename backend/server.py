@@ -24,6 +24,7 @@ from .voice import VoiceClient
 from .natural_voice import NaturalVoice
 from .hub import MiniHub
 from .desktop import Desktop
+from .notes import request as note_request
 from .mobile import MobileLink
 from .agents import AgentOffice
 from .task_router import task_request
@@ -104,7 +105,7 @@ class Application:
     def chat(self, text):
         if not isinstance(text, str) or not text.strip() or len(text) > 12000:
             raise ValueError('Bitte eine Nachricht mit 1 bis 12.000 Zeichen eingeben.')
-        text=re.sub(r'^(?:astra|asta|astda|astrid|jarvis)[,: ]+(?=(?:ich|mein|wie|wer|was|wo|wann|warum|wieso|kannst|könntest|würdest|öffne|starte|mach|erstelle|baue|modelliere|bitte|hallo|hi|danke|erklär|sag|zeig|nenne)\b)','',text.strip(),flags=re.I)
+        text=re.sub(r'^(?:astra|asta|astda|astrid|asuka|jarvis)[,: ]+(?=(?:ich|mein|wie|wer|was|wo|wann|warum|wieso|kannst|könntest|würdest|öffne|starte|mach|erstelle|baue|modelliere|bitte|hallo|hi|danke|erklär|sag|zeig|nenne|schreibe|schreib|notiere|speichere|tippe|bewege)\b)','',text.strip(),flags=re.I)
         user_name=re.fullmatch(r'(?:ich heiße|ich heisse|mein name ist|nenne mich)\s+([A-Za-zÀ-ÖØ-öø-ÿ][A-Za-zÀ-ÖØ-öø-ÿ ’\'-]{0,59})[.!]?',text.strip(),re.I)
         if user_name:
             value=user_name[1].strip();self.store.update_settings({'user_name':value})
@@ -117,6 +118,11 @@ class Application:
         if re.fullmatch(r'(?:wie (?:heißt|heisst) du|wer bist du|wie ist dein name)[?!. ]*',text.strip(),re.I):
             from .persona import name
             return {'reply':'Ich bin '+name(self.store)+', Sir.','proposals':[]}
+        note=note_request(text)
+        if note is not None:
+            if not note['body']:return {'reply':'Was soll in der Notiz stehen, Master? Zum Beispiel: Erstelle eine Notiz: Morgen Milch kaufen.','proposals':[]}
+            data=self.desktop.prepare({'goal':text})
+            return {'reply':'Notizauftrag vorbereitet. Noch keine Notiz erstellt; der sichtbare Auftrag meldet das bestätigte Ergebnis.','proposals':[],'view':'desktop','desktop':data}
         if re.match(r'^(?:öffne|starte|mach|erstelle|baue|modelliere)\b',text,re.I) and re.search(r'\bblender\b',text,re.I):
             data=self.desktop.prepare({'goal':text})
             return {'reply':'Der Blender-Auftrag ist vorbereitet, Master. Er ist noch nicht ausgeführt. Prüfe den sichtbaren Ablauf und starte ihn.','proposals':[],'view':'desktop','desktop':data}

@@ -91,3 +91,11 @@ Der Installer verändert die gewählte Stimme nicht mehr automatisch und lädt k
 ## Audiohinweis im Stimmfenster
 
 Der Audiohinweis wird in den aktiven Dialog verschoben, damit die Browser-Dialogebene seine Knöpfe nicht blockiert. **Audiohinweis schließen** blendet ihn für diese Sitzung aus; erneute Fehler öffnen ihn nicht sofort wieder. Der Aktivierungsknopf zeigt Fortschritt und wird bei einem Fehler wieder freigegeben. Ein nicht antwortender Wiedergabestart meldet nach vier Sekunden einen Fehler. Die Stimmwahl bleibt unverändert.
+
+## Notizen ohne altes 3D-/Spielthema
+
+**„Erstelle eine Notiz: Morgen Milch kaufen“** ist ein deterministischer Notes-Auftrag. Der Inhalt nach dem Doppelpunkt wird unverändert als Text behandelt, auch wenn er Wörter wie 3D oder Videospiel enthält. Ohne Inhalt wird danach gefragt. Auf dem Mac startet der ausdrückliche vollständige Auftrag automatisch. Eine feste AppleScript-Funktion legt eine neue Notiz im Ordner **Jarvis** in Apple Notizen an. Erfolg wird nur mit der von Notizen bestätigten Kennung gemeldet. Keine KI entscheidet über den Inhalt oder führt generierten Code aus.
+
+macOS kann zuerst die Freigabe **Datenschutz & Sicherheit → Automation → Terminal/Python → Notizen** verlangen. Ein verfügbarer Standardaccount in Notizen wird benötigt. Bei verweigerter Freigabe, Timeout oder fehlender Kennung meldet Jarvis einen Fehler, keine erfolgreiche Ausführung. Diese native Mac-Ausführung wurde in der Linux-Cloud nicht live geprüft; Parser, Prozessaufruf, Fehlermeldungen und Ablauf sind kontrolliert getestet.
+
+Neue eigenständige Arbeitsaufträge erhalten keinen alten Gesprächsverlauf als Modellkontext. Der sichtbare Verlauf und gespeicherte Namen bleiben erhalten. Ein ausdrücklich fortgesetzter Auftrag mit „weiter“, „dazu“ oder „darauf“ kann weiter Kontext nutzen.

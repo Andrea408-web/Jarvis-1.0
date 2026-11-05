@@ -14,6 +14,7 @@ import time
 from pathlib import Path
 
 from .providers import ProviderError
+from .notes import request as note_request,create as create_note
 from .models import recipe,validate_scene,write_scene
 
 APPS={'Safari':'com.apple.Safari','Finder':'com.apple.finder','Notizen':'com.apple.Notes','Kalender':'com.apple.iCal','Rechner':'com.apple.calculator','Musik':'com.apple.Music','Blender':'org.blenderfoundation.blender','Spotify':'com.spotify.client'}
@@ -184,6 +185,13 @@ class Desktop:
         if not isinstance(goal,str) or not 1<=len(goal.strip())<=3000:raise ValueError('Bitte einen konkreten Desktop-Auftrag eingeben.')
         with self.lock:
             if self.thread and self.thread.is_alive():raise ProviderError('Ein Desktop-Ablauf läuft. Zuerst stoppen oder abwarten.',409)
+        note=note_request(goal) if 'steps' not in body and 'scene' not in body else None
+        if note is not None:
+            if not note['body']:raise ValueError('Was soll in der Notiz stehen? Zum Beispiel: Erstelle eine Notiz: Morgen Milch kaufen.')
+            with self.lock:
+                if self.thread and self.thread.is_alive():raise ProviderError('Ein Auftrag läuft bereits.',409)
+                self.plan={'id':secrets.token_hex(16),'goal':goal.strip(),'kind':'note','note':note,'steps':[{'type':'note','title':note['title'],'text':note['body']}],'state':'review','completed':0,'message':'Eine neue Notiz im Ordner Jarvis anlegen. Noch nicht ausgeführt.','expires':time.time()+600}
+                return self.snapshot()
         model_intent=bool(re.search(r'\b3d\b|modellier',goal,re.I) or re.search(r'\bblender\b',goal,re.I) and re.search(r'\b(?:erstell\w*|bau\w*|mach\w*|kreier\w*)\b',goal,re.I))
         scene=validate_scene(body['scene']) if 'scene' in body else recipe(goal) if 'steps' not in body and model_intent else None
         template=scene is not None and 'scene' not in body
@@ -235,7 +243,7 @@ class Desktop:
     def start(self,ident):
         with self.lock:
             if not self.plan or self.plan['id']!=ident or self.plan['state']!='review' or time.time()>self.plan['expires']:raise ValueError('Dieser Ablauf ist abgelaufen oder wurde bereits gestartet.')
-            driver=None if self.plan.get('kind')=='model' else self.driver()
+            driver=None if self.plan.get('kind') in {'model','note'} else self.driver()
             if self.plan.get('kind')=='model':self.blender_binary() # Validate before starting.
             if driver is not None and isinstance(driver,MacInput):driver.cancel_event=self.cancel
             self.start_delay=.2 if len(self.plan['steps'])==1 and self.plan['steps'][0]['type'] in {'open','website'} else 3
@@ -244,6 +252,10 @@ class Desktop:
     def _run(self,driver):
         try:
             if self.cancel.wait(self.start_delay):return
+            if self.plan.get('kind')=='note':
+                result=create_note(**self.plan['note'])
+                with self.lock:self.plan.update(state='done',completed=1,message=result['message'],note_id=result['id'])
+                return
             if self.plan.get('kind')=='model':
                 self._run_model();return
             for step in self.plan['steps']:

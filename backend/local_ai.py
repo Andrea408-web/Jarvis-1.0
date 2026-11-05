@@ -82,6 +82,7 @@ class LocalClient:
                 if entry['role']=='user':gaming=bool(re.search(r'minecraft|pvp|bedrock|\bjava\b',entry['text'],re.I))
                 if not gaming:filtered.append(entry)
             history=filtered
+        if re.match(r'^(?:bitte\s+)?(?:öffne|starte|erstelle|mach|schreib|notier|speicher|tippe|bewege)',text.strip(),re.I) and not re.search(r'\b(?:weiter|dazu|darauf|vorherig\w*)\b',text,re.I):history=[]
         for item in reversed(history):
             if item['role'] not in {'user', 'assistant'}:
                 continue
@@ -98,7 +99,7 @@ class LocalClient:
         if (result.get('done') is not True or not isinstance(reply, str) or not reply.strip()
                 or len(reply) > 24000 or message.get('tool_calls')):
             raise ProviderError('Das lokale Modell hat keine abgeschlossene Textantwort geliefert.', 502)
-        if re.match(r'^(?:öffne|starte|mach|erstelle|baue|bediene|klicke|bewege)\b',text.strip(),re.I) and re.search(r'blender|maus|\bapp\b|fenster|programm|datei',text,re.I) and re.search(r'ich habe.{0,100}(?:geöffnet|erstellt|ausgeführt)|(?:auftrag|aufgabe).{0,30}(?:erfüllt|erledigt)|wurde.{0,20}(?:geöffnet|ausgeführt|erfüllt)',reply,re.I|re.S):
+        if re.match(r'^(?:öffne|starte|mach|erstelle|baue|bediene|klicke|bewege)\b',text.strip(),re.I) and re.search(r'blender|maus|notiz|\bapp\b|fenster|programm|datei',text,re.I) and re.search(r'ich habe.{0,100}(?:geöffnet|erstellt|ausgeführt)|(?:auftrag|aufgabe).{0,30}(?:erfüllt|erledigt)|wurde.{0,20}(?:geöffnet|ausgeführt|erfüllt)',reply,re.I|re.S):
             reply='Für diese Geräteaktion liegt mir kein bestätigtes Werkzeugergebnis vor. Es wurde durch diese Textantwort nichts ausgeführt. Nutze den sichtbaren Desktop-Auftrag; dort erscheinen tatsächliche Fehler und Ergebnisse.'
         reply=correct_identity(reply,self.store,text)
         self.store.append('user', text.strip(), conversation)

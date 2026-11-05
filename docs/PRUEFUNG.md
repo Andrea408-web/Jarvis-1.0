@@ -4,7 +4,7 @@ Stand: 3. November 2026. Linux-Cloud; der persönliche Mac und das iPhone sind n
 
 ## Verifiziert
 
-- **196 Python-Tests bestanden**, keine übersprungen. Python-Suite mit echten lokalen HTTP-/TLS-Verbindungen, Host-/Origin-/Token-Prüfung, privater Ablage, Budgetgrenzen und sicheren bestätigten Aktionen. Temporäre TLS-Zertifikate werden explizit vertraut; TLS-Prüfung wird nicht abgeschaltet.
+- **202 Python-Tests bestanden**, keine übersprungen. Python-Suite mit echten lokalen HTTP-/TLS-Verbindungen, Host-/Origin-/Token-Prüfung, privater Ablage, Budgetgrenzen und sicheren bestätigten Aktionen. Temporäre TLS-Zertifikate werden explizit vertraut; TLS-Prüfung wird nicht abgeschaltet.
 - Agentenaufträge: natürliche Formulierungen führen zu einem tatsächlichen Job. Queue, Fehler, Abbruch, Neustart und getrennte Gespräche sind getestet. Sprachmodellantworten sind hierfür kontrollierte Fixtures; daraus wird keine echte Modellqualität abgeleitet.
 - Bildanhänge: Format-/Größenprüfung, private Dateien mit Modus0600, Migration bestehender Datenbanken, Rückgabe lokaler Bildbefunde und Übergabe als Daten statt auszuführende Befehle. Auf Nicht-Macs wird kein vorhandenes Bildverständnis behauptet.
 - Eigene deutsche Stimme: echte eSpeak/meSpeak-Spracherzeugung im Browser, decodierbare PCM-Daten mit Sprachsignal und echte Web-Audio-Wiedergabe. Jeder Systemstimmen-Aufruf wird im Integrationstest als Fehler behandelt. Keine externen Sprachrequests. Die Engine ist keine neu trainierte neuronale Stimme; es handelt sich um eine mitgelieferte freie Formantengine mit eigener Konfiguration.
@@ -72,3 +72,5 @@ Chromium-Aufrufe von www.tiktok.com/@moritz.maaker und www.instagram.com/moritz.
 Der Installer verändert die gewählte Stimme nicht mehr automatisch.
 
 Audiohinweis: verweigerte Browserwiedergabe im modalen Stimmfenster nachgestellt. Hinweis im aktiven Dialog tatsächlich anklickbar; Schließen verhindert sofortiges Wiedererscheinen; Aktivieren bei anschließend freigegebener Wiedergabe erfolgreich. Mehrere automatische Antworten ohne wiederholte Wiedergabeklicks bleiben geprüft.
+
+Notizen-Regression: alter 3D-/Videospielverlauf wird gezielt vorgegeben. Notizen-Aufträge umgehen das Sprachmodell, fehlender Inhalt führt zu Rückfrage, native Skriptdaten werden als argv und escaped HTML übergeben. Kein done ohne Notes-Kennung. Browserablauf durch den kontrollierten Notes-Adapter bestätigt; echte Mac-Notes-Ausführung weiterhin ungeprüft.

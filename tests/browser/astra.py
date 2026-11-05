@@ -11,6 +11,8 @@ with tempfile.TemporaryDirectory() as folder:
     class Driver:
         def execute(self,step):events.append(step)
     app.desktop.driver=Driver
+    import backend.desktop as desktop_module
+    desktop_module.create_note=lambda title,body:(events.append({'type':'note','title':title,'text':body}) or {'id':'x-coredata://fixture/ICNote/p1','message':'Notiz bestätigt'})
     app.llamacpp.chat=lambda *a,**k:{'reply':json.dumps({'steps':[{'type':'open','app':'Notizen'},{'type':'wait','seconds':.5},{'type':'text','text':'Testnotiz'}]})}
     server=JarvisServer(('127.0.0.1',0),app);thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
@@ -32,7 +34,7 @@ with tempfile.TemporaryDirectory() as folder:
             page.get_by_role('button',name='Reden stoppen',exact=True).click()
             page.wait_for_function("()=>window.JarvisDesktopMuted===true")
             page.wait_for_function("()=>document.getElementById('astra-desktop-status').textContent.startsWith('done')",timeout=10000)
-            assert [e['type'] for e in events]==['open','text'];assert app.desktop.snapshot()['muted']
+            assert [e['type'] for e in events]==['note'];assert app.desktop.snapshot()['muted']
             page.get_by_role('button',name='Wieder reden',exact=True).click();page.wait_for_function("()=>window.JarvisDesktopMuted===false")
             page.locator('#astra-desktop').get_by_role('button',name='Schließen',exact=True).click()
             page.evaluate("()=>JarvisBridge.sendMessage('Wie heißt du?')");page.get_by_text('Ich bin ASTRA, Master.',exact=True).wait_for()

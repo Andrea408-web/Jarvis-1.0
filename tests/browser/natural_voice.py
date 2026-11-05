@@ -20,7 +20,7 @@ with tempfile.TemporaryDirectory() as folder:
             page.on('pageerror',lambda error:errors.append(str(error)));page.on('request',lambda request:requests.append(request.url))
             page.add_init_script("window.systemCalls=0;if(window.speechSynthesis)speechSynthesis.speak=()=>{window.systemCalls++;throw Error('System voice forbidden');};")
             page.goto('http://127.0.0.1:'+str(server.server_port));page.get_by_text('LOKALE VERBINDUNG AKTIV',exact=True).wait_for()
-            page.get_by_role('button',name='Stimme',exact=True).click();page.get_by_role('button',name='Natürliche Stimme verwenden',exact=True).click()
+            page.get_by_role('button',name='Stimme',exact=True).click();page.get_by_role('button',name='Thorsten testen',exact=True).click()
             page.get_by_text('THORSTEN · NEURONALE OFFLINE-STIMME',exact=True).wait_for(timeout=15000)
             assert page.evaluate('()=>window.systemCalls')==0;assert not any('voice-worker.js' in url for url in requests)
             assert any('/api/natural-voice/speak' in url for url in requests);assert not errors,errors

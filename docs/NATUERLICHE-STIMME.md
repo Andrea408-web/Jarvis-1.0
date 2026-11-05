@@ -11,7 +11,7 @@ Download: ungefähr **100 MB auf Apple Silicon**, ungefähr **104 MB auf Intel**
 
 Die Stimme wird getrennt im privaten JARVIS-Datenordner unter `natural-voice` gespeichert. Gespräche, Schlüssel, Bilder, dein Textmodell und andere Einstellungen werden nicht ersetzt. Die Sicherung der wenigen aktualisierten Programmdateien liegt unter `.jarvis/voice-update-backups` im Projektordner. Schlägt die Installation fehl, werden diese Programmdateien zurückgesetzt; die natürliche Stimme wird nicht fälschlich aktiviert.
 
-Unter **Stimme → Natürliche Stimme verwenden** kannst du sie erneut auswählen und testen. Standard/Zügig/Ruhig ändern nur das Tempo; die künstlichen Formant-/Tonhöhenänderungen der bisherigen Roboterstimme entfallen. Eine fehlende oder beschädigte natürliche Stimme löst einen sichtbaren Fehler aus, keinen stillen Wechsel zur alten Stimme.
+Unter **Stimme → Thorsten testen** kannst du sie erneut auswählen und testen. Standard/Zügig/Ruhig ändern nur das Tempo; die künstlichen Formant-/Tonhöhenänderungen der bisherigen Roboterstimme entfallen. Eine fehlende oder beschädigte natürliche Stimme löst einen sichtbaren Fehler aus, keinen stillen Wechsel zur alten Stimme.
 
 Die natürliche Ausgabe wird auf dem JARVIS-Mac erzeugt, auch wenn du Jarvis auf deinem Handy öffnest. Deine Texte gehen dafür an deinen eigenen JARVIS-Server, nicht an einen externen Sprachanbieter. Die bestehende Browser-Spracherkennung ist davon getrennt und bleibt browserabhängig.
 
@@ -34,3 +34,9 @@ Die Klatscherkennung zuerst ausdrücklich aktivieren; dafür bleibt das Mikrofon
 Die Erkennung ist von Mikrofon und Raumgeräuschen abhängig. Die bestehende Browser-Spracherkennung kann einen Dienst des Browseranbieters verwenden; die neue Sprachausgabe selbst benötigt keinen externen Sprachdienst.
 
 Die Stimme ist eine natürliche veröffentlichte deutsche Sprecherstimme, keine identische Kopie des deutschen Film-JARVIS. Die Hörprobe zeigt den tatsächlichen Klang vor dem größeren Download.
+
+## Feste Auswahl: Thorsten
+
+Auf Wunsch des Nutzers bleibt Thorsten immer die Stimme für Jarvis und Astra. Alte gespeicherte „bundled“-Einstellungen werden als Thorsten gelesen; alte Clients können keine Roboterstimme zurückschalten. Die Tempo-Profile verändern nur Thorsten. Es gibt keinen System- oder Formantstimmen-Fallback.
+
+Unter „Stimme“: „Thorsten testen“ für die Hörprobe. Falls nötig am Mac „Thorsten einrichten / reparieren“ anklicken. Vorhandene, geprüfte Dateien werden wiederverwendet; bei fehlendem Paket beträgt der Download ungefähr 100–104 MB. Die Text-KI muss nicht erneut geladen werden. Der Download startet nur durch diesen Klick oder den ausdrücklich geöffneten Stimmen-Nachrüsthelfer.

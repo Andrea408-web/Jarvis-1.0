@@ -34,7 +34,7 @@ DEFAULT_SETTINGS = {
     "voice_enabled": False,
     "local_voice_uri": "",
     "voice_preset": "jarvis",
-    "voice_engine": "bundled",
+    "voice_engine": "natural",
     "youtube_channel": "",
     "tiktok_channel": "",
     "hub_country": "ALL",
@@ -105,6 +105,8 @@ class Store:
             for row in db.execute("SELECT name, value FROM settings"):
                 if row["name"] in DEFAULT_SETTINGS:
                     result[row["name"]] = json.loads(row["value"])
+        # Thorsten is the chosen voice, including installations with legacy settings.
+        result["voice_engine"]="natural"
         return result
 
     def update_settings(self, values: dict) -> dict:
@@ -156,6 +158,7 @@ class Store:
             elif key == "voice_engine":
                 if not isinstance(value,str) or value not in {"bundled","natural"}:
                     raise ValueError("Bitte eine vorhandene Sprachengine wählen.")
+                values[key]="natural"
             elif key == "voice_preset":
                 if not isinstance(value,str) or value not in {"jarvis","clear","system"}:
                     raise ValueError("Bitte ein vorhandenes Stimmprofil wählen.")

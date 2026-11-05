@@ -104,6 +104,7 @@ class PairingTests(unittest.TestCase):
                 self.assertEqual(request('/api/session',cookie=cookie)[0],200);self.assertTrue(json.loads(request('/api/session',cookie=cookie)[2])['remote_device'])
                 self.assertEqual(request('/api/mobile/pair','POST',{'ticket':ticket})[0],400)
                 self.assertEqual(request('/api/mobile/stop','POST',{},cookie)[0],403)
+                self.assertEqual(request('/api/natural-voice/install','POST',{},cookie)[0],403)
                 self.assertEqual(request('/api/settings',cookie=cookie,origin='https://evil.example')[0],403)
                 self.assertEqual(request('/api/training/plan','POST',{'edition':'bedrock'},cookie)[0],200)
                 for asset in ['/extras.js','/extras.css','/world.geojson','/qr.js']:

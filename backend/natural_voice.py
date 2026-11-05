@@ -157,7 +157,7 @@ class NaturalVoice:
         return path
     def verify(self):
         path=self.root/'installed.json'
-        if not path.is_file() or path.stat().st_size>1000000:raise ValueError('Die natürliche Stimme ist noch nicht eingerichtet. Bitte den separaten Stimmen-Nachrüsthelfer verwenden.')
+        if not path.is_file() or path.stat().st_size>1000000:raise ValueError('Thorsten ist noch nicht eingerichtet. Am Mac: Stimme → Thorsten einrichten / reparieren.')
         record=json.loads(path.read_text())
         if record.get('version')!=1 or record.get('architecture')!=platform.machine() or not isinstance(record.get('files'),dict) or not 1<=len(record['files'])<=3000:raise ValueError('Die natürliche Stimme ist für diesen Mac nicht gültig eingerichtet.')
         signatures={}
@@ -174,7 +174,7 @@ class NaturalVoice:
         try:
             if self.record is None:self.verify()
             return {'installed':True,'name':'Thorsten · natürliche deutsche Offline-Stimme','message':'Neuronale Stimme eingerichtet. Kein Konto und kein externer Sprachdienst.'}
-        except (OSError,ValueError,TypeError,KeyError,RuntimeError):return {'installed':False,'name':'Thorsten','message':'Natürliche Stimme noch nicht eingerichtet oder beschädigt. Separaten Nachrüsthelfer verwenden.'}
+        except (OSError,ValueError,TypeError,KeyError,RuntimeError):return {'installed':False,'name':'Thorsten','message':'Thorsten fehlt oder muss repariert werden. Am Mac in Jarvis: Stimme → Thorsten einrichten / reparieren.'}
     def cancel(self,request_id):
         if not isinstance(request_id,str) or not 1<=len(request_id)<=80:raise ValueError('Ungültige Sprachkennung.')
         with self.event_lock:

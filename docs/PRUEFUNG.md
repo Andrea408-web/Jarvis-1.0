@@ -84,3 +84,7 @@ Im Chromium zusätzlich geprüft: zweistufige Notiz-Erstellung mit einfachem Inh
 Ein-Klick-Start im Chromium geprüft: Start ohne vorhandenen Ablauf, Hinweis bei leerem Textfeld, neuer Auftrag nach abgeschlossenem Ablauf, sichtbarer Berechtigungsfehler und erfolgreicher erneuter Start. Kontrollierter Eingabetreiber; native Mac-Berechtigungen und App-Ereignisse hier nicht geprüft.
 
 Handy-Nachbesserung: HTTPS-Kopplung, öffentliche App-Metadaten und Icon ohne Sitzung, Home-Bildschirm-Start ohne Einmal-Ticket, manuelle Kopplung im separaten App-Kontext sowie gespeicherte Sitzungs-Hashes und Widerruf sind geprüft. Eine tatsächliche iPhone-Installation und iOS-Zertifikatsfreigabe sind in dieser Linux-Umgebung nicht geprüft.
+
+Feste Thorsten-Präferenz: Standard, alte gespeicherte Roboterstimmen-Auswahl und Updates alter Clients bleiben bei Thorsten. Sprachpaket-Einrichtung läuft einzeln im Hintergrund, aktiviert nur eine geprüfte Stimme und ist nur direkt am Mac erreichbar. Kein Formant- oder Systemstimmen-Fallback.
+
+Die echte Thorsten-Inferenz mit lokal vorhandenem neuronalen Modell und anschließender Browserwiedergabe ist bestanden. Separat ist automatisches Vorlesen mehrerer Antworten unter Browser-Autoplay-Beschränkung mit kontrollierten WAV-Antworten am Thorsten-Endpunkt geprüft.

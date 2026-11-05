@@ -50,6 +50,7 @@ class Application:
     def __init__(self, data_dir=None):
         self.store = Store(data_dir)
         self.dialogue=Dialogue()
+        self.voice_install_lock=threading.Lock();self.voice_install_state={'state':'idle','message':''}
         self.actions = PendingActions(self.store)
         self.ai = GeminiClient(self.store)
         self.openai = OpenAIClient(self.store)
@@ -104,6 +105,25 @@ class Application:
         if not task['task']:return {'reply':'Sir, was genau soll der Agent erstellen?','proposals':[],'view':'office'}
         job=self.office.submit({**task,**(attachment or {})})
         return {'reply':'Sir, der Auftrag wurde tatsächlich angelegt. Auftragsnummer: '+job['id'][:8]+'. Status und Ergebnis stehen in der Werkstatt.','proposals':[],'view':'office','job_id':job['id']}
+
+    def install_thorsten(self):
+        import platform
+        if platform.system()!='Darwin':raise ValueError('Thorsten bitte auf deinem Mac einrichten.')
+        with self.voice_install_lock:
+            if self.voice_install_state['state']=='running':return dict(self.voice_install_state)
+            self.voice_install_state={'state':'running','message':'Thorsten wird eingerichtet. Einmalig ungefähr 100–104 MB, falls das Paket fehlt. Terminal geöffnet lassen.'}
+        def worker():
+            try:
+                from .natural_voice import install
+                voice=install(self.store.data_dir)
+                if not voice.status()['installed']:raise ValueError('Thorsten konnte nicht geprüft werden.')
+                self.natural_voice=voice
+                self.store.update_settings({'voice_engine':'natural','voice_enabled':True,'elevenlabs_enabled':False})
+                result={'state':'done','message':'Thorsten ist eingerichtet und fest ausgewählt.'}
+            except Exception as error:result={'state':'error','message':str(error)[:500]}
+            with self.voice_install_lock:self.voice_install_state=result
+        threading.Thread(target=worker,daemon=True).start()
+        return {'state':'running','message':'Thorsten wird eingerichtet. Bitte warten.'}
 
     def clear_chat(self):
         self.dialogue.clear();self.store.clear_all_history()
@@ -377,7 +397,7 @@ class Handler(BaseHTTPRequestHandler):
                 data=app.desktop.model_file();self._headers(200,'application/octet-stream',len(data));return self.wfile.write(data)
             if path == '/api/desktop':return self._json(app.desktop.snapshot())
             if path == '/api/natural-voice/status':
-                return self._json(app.natural_voice.status())
+                return self._json({**app.natural_voice.status(),'installation':dict(app.voice_install_state)})
             if path == '/api/agents':
                 return self._json(app.office.snapshot())
             if path == '/api/cameras':
@@ -425,6 +445,10 @@ class Handler(BaseHTTPRequestHandler):
             if method=='POST' and path in {'/api/hub/news','/api/hub/channels'}:
                 if body:raise ValueError('Keine Parameter für die Hub-Aktualisierung erforderlich.')
                 return self._json(app.hub.news() if path.endswith('/news') else app.hub.channels())
+            if method=='POST' and path=='/api/natural-voice/install':
+                if self.server.device_auth or not ipaddress.ip_address(self.client_address[0]).is_loopback:return self._json({'error':'Thorsten bitte direkt am Mac einrichten.'},403)
+                if body:raise ValueError('Keine Parameter für die Thorsten-Einrichtung erforderlich.')
+                return self._json(app.install_thorsten())
             if method=='POST' and path=='/api/natural-voice/cancel':
                 if set(body)!={'id'}:raise ValueError('Nur die Sprachkennung angeben.')
                 return self._json(app.natural_voice.cancel(body['id']))

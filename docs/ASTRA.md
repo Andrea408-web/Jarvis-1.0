@@ -105,3 +105,7 @@ Neue eigenständige Arbeitsaufträge erhalten keinen alten Gesprächsverlauf als
 „Chat löschen“ entfernt alle Chatverläufe, den gemerkten Namen und offene Rückfragen. Gespeicherte Dateien, bereits erstellte Notizen und Einstellungen bleiben erhalten. Eine verspätete KI-Antwort darf den gelöschten Kontext nicht zurückschreiben.
 
 „Erstelle eine Notiz“ fragt nach dem Inhalt. Antworte einfach „morgen Milch kaufen“; der nächste Schritt erstellt diese Notiz. „Abbrechen“ verwirft die Rückfrage. Ebenso: „Öffne eine App“ → „Spotify“ oder „Öffne eine Webseite“ → „youtube.com“. „Tippe Hallo“ fragt nach der Ziel-App. Auf dem Mac benötigen native Aktionen die entsprechenden macOS-Berechtigungen.
+
+## Start mit einem Klick
+
+„Auftrag starten“ ist auch ohne vorbereiteten Ablauf benutzbar. Gib deinen Auftrag in das Textfeld ein und klicke darauf: Der Auftrag wird validiert, bei Bedarf vorbereitet und gestartet. Ein geänderter Text nach einem fertigen Auftrag aktiviert den Knopf wieder. Leere Eingaben zeigen einen Hinweis; Fehler bleiben sichtbar und können nach Behebung erneut versucht werden. Während Vorbereitung oder Ausführung werden doppelte Starts verhindert.

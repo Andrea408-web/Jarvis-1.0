@@ -80,3 +80,5 @@ Notizen-Regression: alter 3D-/Videospielverlauf wird gezielt vorgegeben. Notizen
 Notizinhalt, App, Webseitenadresse und Ziel-App für Texteingabe werden als konkrete Rückfragen gespeichert. Folgeantworten umgehen das Sprachmodell. Tests prüfen das Löschen aller Gesprächsbereiche und des gemerkten Namens sowie das Verwerfen einer verspäteten Modellantwort nach dem Löschen. Bereits erstellte Dateien und Notizen werden dabei nicht entfernt. Native Mac-Ausführung bleibt hier ungeprüft.
 
 Im Chromium zusätzlich geprüft: zweistufige Notiz-Erstellung mit einfachem Inhalt als Folgeantwort, bestätigter Adapteraufruf, Chat-löschen-Knopf inklusive offener Rückfrage und anschließend „Öffne eine App“ → „Spotify“.
+
+Ein-Klick-Start im Chromium geprüft: Start ohne vorhandenen Ablauf, Hinweis bei leerem Textfeld, neuer Auftrag nach abgeschlossenem Ablauf, sichtbarer Berechtigungsfehler und erfolgreicher erneuter Start. Kontrollierter Eingabetreiber; native Mac-Berechtigungen und App-Ereignisse hier nicht geprüft.

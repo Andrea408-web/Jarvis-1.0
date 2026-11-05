@@ -10,7 +10,7 @@ import unittest
 from unittest.mock import patch
 
 from backend import easy_setup as setup
-from backend.mobile import DeviceAuth, certificates
+from backend.mobile import DeviceAuth, MobileLink, certificates
 from backend.server import Application, JarvisServer
 from backend.training import plan
 
@@ -59,6 +59,21 @@ class PairingTests(unittest.TestCase):
         with self.assertRaises(ValueError):auth.pair(ticket)
         self.assertFalse(auth.valid('jarvis_device=wrong'))
 
+    def test_pairing_persists_as_hashes_and_can_be_revoked(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path=Path(folder)/'devices.json';auth=DeviceAuth(path);session=auth.pair(auth.issue())
+            self.assertNotIn(session,path.read_text());self.assertEqual(path.stat().st_mode & 0o777,0o600)
+            restored=DeviceAuth(path);self.assertTrue(restored.valid('jarvis_device='+session))
+            restored.revoke();self.assertFalse(DeviceAuth(path).valid('jarvis_device='+session))
+
+    def test_normal_shutdown_preserves_pairing_but_explicit_stop_revokes_it(self):
+        from types import SimpleNamespace
+        with tempfile.TemporaryDirectory() as folder:
+            app=SimpleNamespace(store=SimpleNamespace(data_dir=Path(folder)))
+            link=MobileLink(app);session=link.auth.pair(link.auth.issue());link.stop(revoke=False)
+            restored=MobileLink(app);self.assertTrue(restored.auth.valid('jarvis_device='+session))
+            restored.stop();self.assertFalse(MobileLink(app).auth.valid('jarvis_device='+session))
+
     def test_real_verified_tls_pairing_guards_and_public_profile(self):
         with tempfile.TemporaryDirectory() as folder:
             cert,key,profile,fingerprint=certificates(Path(folder)/'cert','127.0.0.1')
@@ -82,10 +97,11 @@ class PairingTests(unittest.TestCase):
                 finally:client.close()
             try:
                 self.assertEqual(request('/api/session')[0],401)
-                self.assertIn(b'pair.js',request('/')[2])
+                self.assertIn(b'pair.js',request('/')[2]);self.assertIn(b'pair-form',request('/')[2])
+                self.assertEqual(request('/manifest.webmanifest')[0],200);self.assertEqual(request('/app-icon.png')[0],200)
                 ticket=server.device_auth.issue();status,headers,_=request('/api/mobile/pair','POST',{'ticket':ticket})
                 self.assertEqual(status,200);cookie=headers['Set-Cookie'];self.assertIn('Secure',cookie);self.assertIn('HttpOnly',cookie);self.assertIn('SameSite=Strict',cookie)
-                self.assertEqual(request('/api/session',cookie=cookie)[0],200)
+                self.assertEqual(request('/api/session',cookie=cookie)[0],200);self.assertTrue(json.loads(request('/api/session',cookie=cookie)[2])['remote_device'])
                 self.assertEqual(request('/api/mobile/pair','POST',{'ticket':ticket})[0],400)
                 self.assertEqual(request('/api/mobile/stop','POST',{},cookie)[0],403)
                 self.assertEqual(request('/api/settings',cookie=cookie,origin='https://evil.example')[0],403)

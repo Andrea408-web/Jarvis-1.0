@@ -318,7 +318,7 @@ class Handler(BaseHTTPRequestHandler):
             if path == '/api/mobile/pair' and self.command == 'POST':
                 return True
             if not self.server.device_auth.valid(self.headers.get('Cookie')):
-                if self.command == 'GET' and path in {'/','/pair.js','/style.css'}:
+                if self.command == 'GET' and path in {'/','/pair.js','/style.css','/manifest.webmanifest','/app-icon.png'}:
                     return True
                 self._json({'error':'Bitte dieses Gerät über den aktuellen QR-Code am Mac koppeln.'},401)
                 return False
@@ -362,7 +362,7 @@ class Handler(BaseHTTPRequestHandler):
                 self._headers(200,'text/html; charset=utf-8',len(body))
                 return self.wfile.write(body)
             if path == '/api/session':
-                return self._json({'token': app.token})
+                return self._json({'token': app.token,'remote_device':bool(self.server.device_auth)})
             if re.fullmatch(r'/api/agents/[0-9a-f]{32}/image',path):
                 data,mime=app.office.image(path.split('/')[3]);self._headers(200,mime,len(data));return self.wfile.write(data)
             if path == '/api/hub':return self._json(app.hub.snapshot())
@@ -392,7 +392,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json({'reminders': app.store.reminders()})
             # Exact static allowlist: no arbitrary files, keys or directory listings.
             static = {'/': 'index.html', '/index.html': 'index.html',
-                      '/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js','/office-3d.js':'office-3d.js', '/lowpoly-stage.js':'lowpoly-stage.js', '/artifacts.js':'artifacts.js', '/jarvis-voice.js':'jarvis-voice.js', '/voice-worker.js':'voice-worker.js', '/conversation.js':'conversation.js', '/mini-hub.js':'mini-hub.js', '/world-news.js':'world-news.js', '/astra.js':'astra.js', '/astra.css':'astra.css', '/astra-panel.html':'astra-panel.html', '/astra-panel.js':'astra-panel.js'}
+                      '/manifest.webmanifest':'manifest.webmanifest','/app-icon.png':'app-icon.png','/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js','/office-3d.js':'office-3d.js', '/lowpoly-stage.js':'lowpoly-stage.js', '/artifacts.js':'artifacts.js', '/jarvis-voice.js':'jarvis-voice.js', '/voice-worker.js':'voice-worker.js', '/conversation.js':'conversation.js', '/mini-hub.js':'mini-hub.js', '/world-news.js':'world-news.js', '/astra.js':'astra.js', '/astra.css':'astra.css', '/astra-panel.html':'astra-panel.html', '/astra-panel.js':'astra-panel.js'}
             for name in ['ESpeak.js','mespeak.js','config.json','jarvis-de.json','de.json','COPYING','NOTICE.txt','UPSTREAM-README.md','mespeak-2.0.2-source.tgz','speak-source-9c6f642.tar.gz']:
                 static['/vendor/voice/'+name]='vendor/voice/'+name
             if path in static:
@@ -450,7 +450,7 @@ class Handler(BaseHTTPRequestHandler):
                 if set(body)!={'ticket'}:
                     raise ValueError('Ungültige Kopplungsanfrage.')
                 session=self.server.device_auth.pair(body['ticket'])
-                return self._json({'ok':True},cookie='jarvis_device='+session+'; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=43200')
+                return self._json({'ok':True},cookie='jarvis_device='+session+'; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=2592000')
             if method == 'POST' and path in {'/api/mobile/start','/api/mobile/profile','/api/mobile/reveal','/api/mobile/stop'}:
                 if self.server.device_auth or not ipaddress.ip_address(self.client_address[0]).is_loopback:
                     return self._json({'error':'Handykopplung nur direkt am Mac verwalten.'},403)
@@ -637,7 +637,7 @@ def main(argv=None):
             if app.desktop.thread:app.desktop.thread.join(timeout=2)
             if app.desktop.panel and app.desktop.panel.poll() is None:app.desktop.panel.terminate()
             app.office.stop()
-            app.mobile.stop()
+            app.mobile.stop(revoke=False)
         finally:
             server.server_close()
 

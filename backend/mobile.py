@@ -1,25 +1,41 @@
 """Explicit private-LAN pairing. No public tunnel, account or global trust changes."""
 from pathlib import Path
-import hashlib,hmac,ipaddress,plistlib,secrets,ssl,subprocess,threading,time,uuid
+import hashlib,hmac,ipaddress,json,os,plistlib,secrets,ssl,subprocess,threading,time,uuid
 from http.cookies import SimpleCookie
 
 
 class DeviceAuth:
-    def __init__(self):self.lock=threading.Lock();self.ticket=None;self.expires=0;self.sessions={}
+    SESSION_SECONDS=30*24*3600
+    def __init__(self,path=None):
+        self.lock=threading.Lock();self.ticket=None;self.expires=0;self.sessions={};self.path=Path(path) if path else None
+        if self.path and self.path.is_file():
+            try:
+                data=json.loads(self.path.read_text())
+                self.sessions={key:end for key,end in data.items() if isinstance(key,str) and len(key)==64 and isinstance(end,(int,float)) and time.time()<end<=time.time()+self.SESSION_SECONDS}
+            except (OSError,ValueError,TypeError,AttributeError):self.sessions={}
+    def _save(self):
+        if not self.path:return
+        self.path.parent.mkdir(parents=True,exist_ok=True,mode=0o700)
+        tmp=self.path.with_suffix('.tmp')
+        fd=os.open(tmp,os.O_WRONLY|os.O_CREAT|os.O_TRUNC,0o600)
+        with os.fdopen(fd,'w') as stream:json.dump(self.sessions,stream)
+        os.replace(tmp,self.path)
+    def revoke(self):
+        with self.lock:self.sessions={};self.ticket=None;self._save()
     def issue(self):
         with self.lock:self.ticket=secrets.token_urlsafe(32);self.expires=time.monotonic()+300;return self.ticket
     def pair(self,ticket):
         with self.lock:
             if not isinstance(ticket,str) or not self.ticket or time.monotonic()>self.expires or not hmac.compare_digest(ticket.encode(),self.ticket.encode()):raise ValueError('Kopplung ungültig oder abgelaufen. Bitte am Mac einen neuen QR-Code anzeigen.')
             token=secrets.token_urlsafe(32);self.ticket=None
-            self.sessions={key:end for key,end in self.sessions.items() if end>time.monotonic()}
+            self.sessions={key:end for key,end in self.sessions.items() if end>time.time()}
             if len(self.sessions)>=8:self.sessions.pop(next(iter(self.sessions)))
-            self.sessions[token]=time.monotonic()+12*3600;return token
+            self.sessions[hashlib.sha256(token.encode()).hexdigest()]=time.time()+self.SESSION_SECONDS;self._save();return token
     def valid(self,header):
         try:
             cookie=SimpleCookie();cookie.load(header or '');token=cookie['jarvis_device'].value
         except Exception:return False
-        with self.lock:return self.sessions.get(token,0)>time.monotonic()
+        with self.lock:return self.sessions.get(hashlib.sha256(token.encode()).hexdigest(),0)>time.time()
 
 
 def private_ip():
@@ -58,7 +74,7 @@ def certificates(directory,address):
 
 
 class MobileLink:
-    def __init__(self,app):self.app=app;self.server=None;self.auth=DeviceAuth();self.lock=threading.Lock()
+    def __init__(self,app):self.app=app;self.server=None;self.auth=DeviceAuth(app.store.data_dir/'mobile'/'devices.json');self.lock=threading.Lock()
     def start(self):
         import platform
         if platform.system()!='Darwin':raise ValueError('Die einfache Handykopplung wird auf dem Mac gestartet. Hier ist nur die Entwicklungsumgebung verfügbar.')
@@ -79,7 +95,7 @@ class MobileLink:
         if self.server is None:raise ValueError('Bitte zuerst Handykopplung vorbereiten.')
         try:subprocess.run(['/usr/bin/open','-R',str(self.profile)],capture_output=True,check=True,timeout=5)
         except (OSError,subprocess.SubprocessError):raise ValueError('Die Profil-Datei konnte im Finder nicht angezeigt werden.') from None
-    def stop(self):
+    def stop(self,revoke=True):
         with self.lock:
             if self.server:self.server.shutdown();self.server.server_close();self.server=None
-            self.auth=DeviceAuth()
+            if revoke:self.auth.revoke()

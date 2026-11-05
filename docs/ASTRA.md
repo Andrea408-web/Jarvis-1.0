@@ -109,3 +109,9 @@ Neue eigenständige Arbeitsaufträge erhalten keinen alten Gesprächsverlauf als
 ## Start mit einem Klick
 
 „Auftrag starten“ ist auch ohne vorbereiteten Ablauf benutzbar. Gib deinen Auftrag in das Textfeld ein und klicke darauf: Der Auftrag wird validiert, bei Bedarf vorbereitet und gestartet. Ein geänderter Text nach einem fertigen Auftrag aktiviert den Knopf wieder. Leere Eingaben zeigen einen Hinweis; Fehler bleiben sichtbar und können nach Behebung erneut versucht werden. Während Vorbereitung oder Ausführung werden doppelte Starts verhindert.
+
+## Handy und Home-Bildschirm
+
+Am Mac „Handy verbinden“ öffnen und der Anleitung für das eigene HTTPS-Zertifikat folgen. Mac eingeschaltet lassen; beide Geräte brauchen dasselbe WLAN. Nach erfolgreicher Kopplung in Safari: Teilen → Zum Home-Bildschirm → Hinzufügen. Der neue Knopf „App installieren“ erklärt die Schritte für iOS und Android. Dies ist kein öffentlicher Internet-Zugang.
+
+Falls das neue Home-Symbol eine separate Sitzung verwendet, dort einen neuen Kopplungslink vom Mac einfügen und „Mit Mac verbinden“ tippen. Kopplungen bleiben 30 Tage gespeichert, auch bei normalem Jarvis-Neustart; „Verbindung beenden“ am Mac widerruft sie. Nur Hashes der Sitzungsschlüssel liegen im privaten Datenordner. Bei geänderter WLAN-Adresse muss der Link bzw. das Home-Symbol erneuert werden. Mac-Steuerung bleibt auf den direkt am Mac geöffneten Browser beschränkt; auf dem Handy gibt es dafür eine klare Meldung.

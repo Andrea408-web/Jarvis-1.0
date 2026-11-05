@@ -82,3 +82,5 @@ Notizinhalt, App, Webseitenadresse und Ziel-App für Texteingabe werden als konk
 Im Chromium zusätzlich geprüft: zweistufige Notiz-Erstellung mit einfachem Inhalt als Folgeantwort, bestätigter Adapteraufruf, Chat-löschen-Knopf inklusive offener Rückfrage und anschließend „Öffne eine App“ → „Spotify“.
 
 Ein-Klick-Start im Chromium geprüft: Start ohne vorhandenen Ablauf, Hinweis bei leerem Textfeld, neuer Auftrag nach abgeschlossenem Ablauf, sichtbarer Berechtigungsfehler und erfolgreicher erneuter Start. Kontrollierter Eingabetreiber; native Mac-Berechtigungen und App-Ereignisse hier nicht geprüft.
+
+Handy-Nachbesserung: HTTPS-Kopplung, öffentliche App-Metadaten und Icon ohne Sitzung, Home-Bildschirm-Start ohne Einmal-Ticket, manuelle Kopplung im separaten App-Kontext sowie gespeicherte Sitzungs-Hashes und Widerruf sind geprüft. Eine tatsächliche iPhone-Installation und iOS-Zertifikatsfreigabe sind in dieser Linux-Umgebung nicht geprüft.

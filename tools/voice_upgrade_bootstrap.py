@@ -16,6 +16,7 @@ import zipfile
 PAYLOAD_B64='__PAYLOAD_B64__'
 PAYLOAD_SHA='__PAYLOAD_SHA__'
 ALLOWED={
+    'backend/everyday.py','frontend/discover.js',
     'backend/task_router.py',
     'backend/input_access.py','backend/website.py','frontend/mobile.html','frontend/mobile-app.js','frontend/boot.js','frontend/task-board.js',
     'backend/web_assistant.py',

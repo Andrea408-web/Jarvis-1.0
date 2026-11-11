@@ -216,8 +216,10 @@ class WebAssistant:
         with dialogue.lock:pending=dict(dialogue.pending) if dialogue.get() else None
         if pending and pending['kind']=='web_open':
             if re.fullmatch(r'(?:ja(?: bitte)?|öffne (?:sie|die (?:webseite|website))|öffnen|mach das)[.! ]*',text,re.I):
-                dialogue.clear();return {'reply':'Hier ist die Website, Sir. Falls der Browser das neue Fenster blockiert, tippe auf „Website öffnen“.','proposals':[],'pending':None,'open_url':pending['data']['url'],'sources':pending['data']['sources']}
+                dialogue.clear();return {'reply':'Sir, die Quellenansicht ist in Jarvis geöffnet. Über den beschrifteten Knopf kannst du die Originalseite öffnen.','proposals':[],'pending':None,'open_url':pending['data']['url'],'open_inside':True,'view':'discover','title':'Website & Ergebnisse','sources':pending['data']['sources']}
             if re.fullmatch(r'(?:nein(?: danke)?|lieber nicht|nicht öffnen|passt|danke)[.! ]*',text,re.I):dialogue.clear();return {'reply':'Gerne, Sir. Die Website bleibt geschlossen.','proposals':[],'pending':None}
+            dialogue.clear();pending=None
+        if pending and pending['kind']=='web_details' and re.match(r'^(?:warum|wieso|was\b|wie\b|wer\b|woher\b|wohin\b|welch\w*|kannst|erklär|erzähle|sag\b).*',text,re.I):
             dialogue.clear();pending=None
         if pending and pending['kind']!='web_details':return None
         kind=pending['data']['slots']['kind'] if pending else self.intent(text)
@@ -235,8 +237,8 @@ class WebAssistant:
             result=self.answer(data)
             with dialogue.lock:
                 if self.app.store.memory_epoch()!=epoch:raise ValueError('Der Chat wurde inzwischen gelöscht.')
-                dialogue.ask('web_open','Soll ich die Website öffnen, Sir?',url=result['sources'][0]['url'],sources=result['sources'])
-                result.update(proposals=[],pending=dialogue.get());result['reply']+='\nSoll ich die Website öffnen, Sir?'
+                dialogue.ask('web_open','Soll ich dir die Quellenansicht in Jarvis öffnen, Sir?',url=result['sources'][0]['url'],sources=result['sources'])
+                result.update(proposals=[],pending=dialogue.get());result['reply']+='\nSoll ich dir die Quellenansicht in Jarvis öffnen, Sir?'
                 self.app.store.append('user',text,expected_epoch=epoch);self.app.store.append('assistant',result['reply'],expected_epoch=epoch)
             return result
         finally:self.app.chat_lock.release()
@@ -250,7 +252,8 @@ class WebAssistant:
             html,_=self.reader(search_url);parser=Page();parser.feed(html);sources.extend(row for row in parser.links if not any(row['url']==old['url'] for old in sources))
         except (OSError,ValueError,http.client.HTTPException,subprocess.SubprocessError):pass
         sources=sources[:3]
-        if not sources:sources=[{'title':'Öffentliche Websuche','url':search_url,'snippet':''}]
+        for source in sources:source['kind']='website'
+        if not sources:sources=[{'title':'Websuche zu deiner Frage','url':search_url,'snippet':'','kind':'search'}]
         def read(source):
             try:
                 html,final=self.reader(source['url']);page=Page();page.feed(html);return {**source,'url':final},page
@@ -264,7 +267,7 @@ class WebAssistant:
             if shows:
                 reply=f"Sir, diese Vorstellungen passen zur angegebenen Altersgrenze {data['age']} und beginnen am {on_date:%d.%m.%Y} (Stand {now:%H:%M}, deutsche Ortszeit):\n"+'\n'.join(f"• {title} – {start:%H:%M}, FSK {rating}" for start,title,rating in sorted(set(shows))[:8])
                 reply+='\nFSK ist keine Garantie für den Einlass; Begleitung, Jugendschutz und freie Plätze bitte beim Kino prüfen.'
-            else:reply=f"Sir, für {data['place']} kann ich gerade keine Spielzeiten für {on_date:%d.%m.%Y} samt passender FSK bis {data['age']} zuverlässig bestätigen. Ich nenne dir deshalb keine erfundenen Filme oder Uhrzeiten. Das aktuelle Kinoprogramm findest du über die Quelle unten."
+            else:reply=f"Sir, das Programm für {data['place']} ist gerade nicht mit lesbaren Spielzeiten und FSK-Angaben verfügbar. Ich habe dir den Zugang zum Kinoprogramm im Ergebnisfenster bereitgelegt. Dort kannst du die Vorstellungen für {on_date:%d.%m.%Y} prüfen."
         else:
             rows=[]
             for source,page in pages:
@@ -284,4 +287,4 @@ class WebAssistant:
                 if kind=='food':reply+=f"\nGesucht für {data['people']} Personen in {data['place']}, Budget: {data['budget']}. Ob gerade geöffnet ist und ihr innerhalb des Budgets satt werdet, ist durch diese Angaben nicht sicher bestätigt."
             else:reply='Sir, die aktuellen Angaben konnte ich nicht zuverlässig aus den öffentlichen Seiten lesen. Ich kann dir die passende Website bzw. Websuche öffnen; Preise und Öffnungszeiten erfinde ich nicht.'
         reply+=f'\nAbruf: {now:%d.%m.%Y %H:%M} (Europe/Berlin).'
-        return {'reply':reply,'sources':[{'title':s['title'][:180],'url':s['url']} for s in sources]}
+        return {'reply':reply,'view':'discover','category':kind,'title':'Kinoprogramm' if kind=='cinema' else 'Ergebnisse zu deiner Frage','cards':[],'sources':[{'title':s['title'][:180],'url':s['url'],'kind':s.get('kind','website')} for s in sources]}

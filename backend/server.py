@@ -28,6 +28,7 @@ from .notes import request as note_request
 from .dialogue import Dialogue
 from .web_assistant import WebAssistant
 from .website import requested as website_requested
+from .everyday import arithmetic,film_ideas,news_request,news_answer
 from .mobile import MobileLink
 from .agents import AgentOffice
 from .task_router import task_request
@@ -139,11 +140,27 @@ class Application:
     def chat(self, text):
         if not isinstance(text, str) or not text.strip() or len(text) > 12000:
             raise ValueError('Bitte eine Nachricht mit 1 bis 12.000 Zeichen eingeben.')
-        text=re.sub(r'^(?:astra|asta|astda|astrid|asuka|jarvis)[,: ]+(?=(?:ich|mein|wie|wer|was|wo|wann|warum|wieso|kannst|könntest|würdest|öffne|starte|mach|erstelle|baue|modelliere|bitte|hallo|hi|danke|erklär|sag|zeig|nenne|schreibe|schreib|notiere|speichere|tippe|bewege|chat|vergiss|lösche|alles|abbrechen|stopp?)\b)','',text.strip(),flags=re.I)
+        text=re.sub(r'^(?:astra|asta|astda|astrid|asuka|jarvis)[,: ]+(?=(?:ich|mein|wie|wer|was|wo|wann|warum|wieso|kannst|könntest|würdest|öffne|starte|mach|erstelle|baue|modelliere|bitte|hallo|hi|danke|erklär|sag|zeig|nenne|schreibe|schreib|notiere|speichere|tippe|bewege|wieviel|rechne|berechne|eins|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|[0-9]+|chat|vergiss|lösche|alles|abbrechen|stopp?)\b)','',text.strip(),flags=re.I)
         if re.fullmatch(r'(?:chat löschen|lösche (?:den )?chat|alles vergessen|vergiss (?:bitte )?alles|alles da vergessen)[.! ]*',text,re.I):
             self.clear_chat();return {'reply':'Gesprächsverläufe, gemerkter Name und offene Rückfragen sind gelöscht.','proposals':[],'pending':None,'cleared':True}
         if re.fullmatch(r'(?:abbrechen|stopp?|vergiss das|neue aufgabe)[.! ]*',text,re.I) and self.dialogue.get():
             self.dialogue.clear();return {'reply':'Rückfrage abgebrochen. Was möchtest du als Nächstes machen?','proposals':[],'pending':None}
+        math_reply=arithmetic(text)
+        pending=self.dialogue.get()
+        if math_reply and (not pending or pending['kind'].startswith('web_') or re.match(r'was|wie|rechne|berechne',text,re.I)):
+            self.dialogue.clear();return {'reply':math_reply,'proposals':[],'pending':None}
+        movie=film_ideas(text)
+        if movie and note_request(text) is None and (not pending or pending['kind'].startswith('web_') or re.match(r'was|welche|empfiehl',text,re.I)):
+            with self.dialogue.lock:
+                self.dialogue.clear();self.store.append('user',text);self.store.append('assistant',movie['reply'])
+            return movie
+        news=news_request(text)
+        if news and note_request(text) is None:
+            epoch=self.store.memory_epoch();result=news_answer(self,news)
+            with self.dialogue.lock:
+                if self.store.memory_epoch()!=epoch:raise ValueError('Der Chat wurde inzwischen gelöscht.')
+                self.dialogue.clear();self.store.append('user',text,expected_epoch=epoch);self.store.append('assistant',result['reply'],expected_epoch=epoch)
+            return result
         if task_request(text):self.dialogue.clear()
         answer=self.dialogue.answer(text)
         if answer:
@@ -427,7 +444,7 @@ class Handler(BaseHTTPRequestHandler):
             if path == '/api/reminders':
                 return self._json({'reminders': app.store.reminders()})
             # Exact static allowlist: no arbitrary files, keys or directory listings.
-            static = {'/': 'mobile.html' if self.server.device_auth or re.search(r'iPhone|iPad|iPod|Macintosh.*Mobile',self.headers.get('User-Agent',''),re.I) else 'index.html', '/index.html': 'index.html', '/mobile':'mobile.html','/mobile-app.js':'mobile-app.js','/boot.js':'boot.js','/task-board.js':'task-board.js',
+            static = {'/': 'mobile.html' if self.server.device_auth or re.search(r'iPhone|iPad|iPod|Macintosh.*Mobile',self.headers.get('User-Agent',''),re.I) else 'index.html', '/index.html': 'index.html', '/mobile':'mobile.html','/mobile-app.js':'mobile-app.js','/boot.js':'boot.js','/task-board.js':'task-board.js','/discover.js':'discover.js',
                       '/manifest.webmanifest':'manifest.webmanifest','/app-icon.png':'app-icon.png','/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js','/office-3d.js':'office-3d.js', '/lowpoly-stage.js':'lowpoly-stage.js', '/artifacts.js':'artifacts.js', '/jarvis-voice.js':'jarvis-voice.js', '/voice-worker.js':'voice-worker.js', '/conversation.js':'conversation.js', '/mini-hub.js':'mini-hub.js', '/world-news.js':'world-news.js', '/astra.js':'astra.js', '/astra.css':'astra.css', '/astra-panel.html':'astra-panel.html', '/astra-panel.js':'astra-panel.js'}
             for name in ['ESpeak.js','mespeak.js','config.json','jarvis-de.json','de.json','COPYING','NOTICE.txt','UPSTREAM-README.md','mespeak-2.0.2-source.tgz','speak-source-9c6f642.tar.gz']:
                 static['/vendor/voice/'+name]='vendor/voice/'+name
@@ -453,6 +470,11 @@ class Handler(BaseHTTPRequestHandler):
                     if set(body)!={'muted'}:raise ValueError('Ungültiger Sprachstatus.')
                     return self._json(app.desktop.speech(body['muted']))
                 if body:raise ValueError('Diese Desktop-Aktion braucht keine Parameter.')
+                if path=='/api/desktop/open-accessibility':
+                    if platform.system()!='Darwin':raise ValueError('Diese Freigabe wird direkt am Mac eingerichtet.')
+                    import subprocess
+                    subprocess.run(['/usr/bin/open','x-apple.systempreferences:com.apple.preference.security?Privacy_Accessibility'],check=True,timeout=5)
+                    return self._json({'ok':True})
                 if path=='/api/desktop/panel-ready':return self._json(app.desktop.panel_ready())
                 if path=='/api/desktop/stop':return self._json(app.desktop.stop())
                 if path=='/api/desktop/panel':

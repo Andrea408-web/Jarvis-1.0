@@ -15,10 +15,11 @@ with tempfile.TemporaryDirectory() as folder:
    page.goto('http://127.0.0.1:'+str(server.server_port));page.get_by_text('LOKALE VERBINDUNG AKTIV',exact=True).wait_for()
    def send(text):page.locator('#chat-input').fill(text);page.locator('#send-button').click();page.wait_for_function("()=>!document.getElementById('send-button').disabled")
    send('Jarvis, welche Filme kann ich jetzt im Cineplex Neufahrn ansehen?');page.get_by_text('Wie alt ist die jüngste Person, Master? Dann berücksichtige ich die FSK.',exact=True).wait_for()
-   send('zwölf');message=page.locator('#messages .message.assistant').last;assert 'Sternenreise' in message.inner_text();assert 'Nur für Erwachsene' not in message.inner_text();link=message.get_by_role('link',name='Website öffnen',exact=True);assert link.get_attribute('href')==CINEMA;assert link.get_attribute('target')=='_blank';assert 'noopener' in link.get_attribute('rel')
+   send('zwölf');message=page.locator('#messages .message.assistant').last;assert 'Sternenreise' in message.inner_text();assert 'Nur für Erwachsene' not in message.inner_text();link=page.locator('#discover-dialog').get_by_role('link',name='Website öffnen: Cineplex Neufahrn · offizielles Kinoprogramm',exact=True);assert link.get_attribute('href')==CINEMA;assert link.get_attribute('target')=='_blank';assert 'noopener' in link.get_attribute('rel')
+   page.locator('#discover-dialog').get_by_role('button',name='Schließen',exact=True).click()
    # No/yes is handled as the previous source question, rather than sent to the model.
    send('nein danke');assert app.dialogue.get() is None;assert app.desktop.plan is None
-   send('Wo kann ich jetzt billig Pizza essen?');send('München');send('zwei');send('20 Euro insgesamt');assert app.dialogue.get()['kind']=='web_open'
+   send('Wo kann ich jetzt billig Pizza essen?');send('München');send('zwei');send('20 Euro insgesamt');page.locator('#discover-dialog').get_by_role('button',name='Schließen',exact=True).click();assert app.dialogue.get()['kind']=='web_open'
    page.get_by_role('button',name='Chat löschen',exact=True).click();page.get_by_text('Chatverläufe, gemerkter Name und offene Rückfragen gelöscht.',exact=True).wait_for();assert app.dialogue.get() is None
    page.get_by_role('button',name='Einstellungen öffnen',exact=True).click();web=page.locator('input[name=web_enabled]');assert web.is_checked();web.uncheck();page.get_by_role('button',name='Einstellungen speichern',exact=False).click();page.wait_for_function("()=>!document.getElementById('settings-dialog').open");assert not app.store.settings()['web_enabled']
    assert not errors,errors

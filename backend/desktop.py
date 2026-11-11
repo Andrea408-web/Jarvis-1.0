@@ -14,7 +14,7 @@ import time
 from pathlib import Path
 
 from .providers import ProviderError
-from .input_access import label_point
+from .input_access import label_point,frontmost
 from .notes import request as note_request,create as create_note
 from .models import recipe,validate_scene,write_scene
 
@@ -92,7 +92,7 @@ class Point(ctypes.Structure):_fields_=[('x',ctypes.c_double),('y',ctypes.c_doub
 class MacInput:
     def __init__(self):
         if platform.system()!='Darwin':raise ValueError('Desktop-Steuerung benötigt Jarvis auf deinem Mac.')
-        self.active_app=None
+        self.active_app=None;self.focus_deadline=0
         self.last_message=None
         self.cg=None
         self.cancel_event=None
@@ -125,8 +125,7 @@ class MacInput:
         kind=step['type']
         if kind not in {'open','website','wait'}:
             self.ensure_input()
-            probe=subprocess.run(['/usr/bin/osascript','-l','JavaScript','-e',"ObjC.import('AppKit');ObjC.unwrap($.NSWorkspace.sharedWorkspace.frontmostApplication.bundleIdentifier);"],capture_output=True,text=True,timeout=5)
-            if probe.returncode or probe.stdout.strip()!=self.active_app:raise ValueError('Die Ziel-App ist nicht mehr im Vordergrund. Ablauf gestoppt, damit keine Eingabe in eine andere App gelangt.')
+            if not frontmost(self.active_app,self.focus_deadline,self.cancel_event):return
         if kind=='open':
             app=resolve_app(step['app'])
             command=['/usr/bin/open','-a',app['path']] if app.get('path') else ['/usr/bin/open','-b',app['bundle']]
@@ -139,11 +138,11 @@ class MacInput:
                 if step['app']=='Spotify':
                     self.execute({'type':'website','url':'https://open.spotify.com'});self.last_message='Spotify als Web-App in Safari geöffnet; die native Spotify-App wurde nicht gefunden.';return
                 raise ValueError('Die gewählte App ist nicht installiert oder konnte nicht geöffnet werden.')
-            self.active_app=app['bundle']
+            self.active_app=app['bundle'];self.focus_deadline=time.monotonic()+4
         elif kind=='website':
             result=subprocess.run(['/usr/bin/open','-b','com.apple.Safari',website(step['url'])],capture_output=True,timeout=10)
             if result.returncode:raise ValueError('Die Webseite konnte in Safari nicht geöffnet werden.')
-            self.active_app='com.apple.Safari'
+            self.active_app='com.apple.Safari';self.focus_deadline=time.monotonic()+4
         elif kind=='click_label':
             found=label_point(self.active_app,step['label']);x=found['x']/max(1,self.width-1);y=found['y']/max(1,self.height-1)
             if not 0<=x<=1 or not 0<=y<=1:raise ValueError('Die gefundene Schaltfläche liegt nicht auf dem Hauptbildschirm.')

@@ -23,7 +23,7 @@ class WebTests(unittest.TestCase):
   opened=self.app.chat('ja bitte');self.assertEqual(opened['open_url'],CINEMA);self.assertIsNone(self.app.dialogue.get());self.assertIsNone(self.app.desktop.plan)
  def test_blocked_web_has_no_invented_times_and_can_decline_opening(self):
   self.app.web.reader=Mock(side_effect=OSError('blocked'))
-  result=self.app.chat('Welche Filme ab 12 kann ich jetzt im Cineplex Neufahrn sehen?');self.assertIn('keine Spielzeiten',result['reply']);self.assertEqual(result['sources'][0]['url'],CINEMA)
+  result=self.app.chat('Welche Filme ab 12 kann ich jetzt im Cineplex Neufahrn sehen?');self.assertIn('nicht mit lesbaren Spielzeiten',result['reply']);self.assertEqual(result['sources'][0]['url'],CINEMA)
   self.assertNotIn('open_url',self.app.chat('nein danke'));self.assertIsNone(self.app.dialogue.get())
  def test_food_remembers_plain_place_people_budget_and_scope(self):
   calls=[]

@@ -1,6 +1,6 @@
 import json,tempfile,unittest
 from unittest.mock import Mock,patch
-from backend.input_access import label_point,status
+from backend.input_access import label_point,status,frontmost
 from backend.server import Application
 from backend.desktop import MacInput
 
@@ -19,5 +19,9 @@ class InputAccessTests(unittest.TestCase):
      with self.assertRaisesRegex(ValueError,'Bedienungshilfen'):app.desktop.start(plan['id'])
     self.assertEqual(app.desktop.snapshot()['plan']['state'],'review');self.assertIsNone(app.desktop.thread)
    finally:app.office.stop()
+ def test_frontmost_readiness_waits_for_just_opened_target_and_rejects_other_app(self):
+  with patch('backend.input_access.subprocess.run',side_effect=[Mock(returncode=0,stdout='com.apple.finder'),Mock(returncode=0,stdout='com.apple.Notes')]),patch('time.sleep'):
+   self.assertTrue(frontmost('com.apple.Notes',float('inf')))
+  with patch('backend.input_access.subprocess.run',return_value=Mock(returncode=0,stdout='com.apple.finder')),self.assertRaises(ValueError):frontmost('com.apple.Notes',0)
  def test_no_native_support_is_reported_explicitly(self):
   with patch('backend.input_access.platform.system',return_value='Linux'):self.assertFalse(status()['supported'])

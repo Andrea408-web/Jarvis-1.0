@@ -36,3 +36,17 @@ def label_point(bundle,label):
   if isinstance(p,dict) and type(p.get('x')) in {float,int} and type(p.get('y')) in {float,int}:unique[(p['x'],p['y'])]=p
  if len(unique)!=1:raise ValueError('Die Schaltfläche wurde nicht eindeutig gefunden. Es wurde nicht auf eine geratene Position geklickt.')
  return next(iter(unique.values()))
+
+
+def frontmost(bundle,deadline,cancel_event=None):
+ """Wait briefly for a just-opened app; never type into another application."""
+ import time
+ while True:
+  if cancel_event and cancel_event.is_set():return False
+  try:
+   result=subprocess.run(['/usr/bin/osascript','-l','JavaScript','-e',"ObjC.import('AppKit');ObjC.unwrap($.NSWorkspace.sharedWorkspace.frontmostApplication.bundleIdentifier);"],capture_output=True,text=True,timeout=3)
+  except (OSError,subprocess.SubprocessError):raise ValueError('Die Vordergrund-App konnte nicht geprüft werden.') from None
+  if not result.returncode and result.stdout.strip()==bundle:return True
+  if time.monotonic()>=deadline:raise ValueError('Die Ziel-App ist nicht im Vordergrund. Es wurden keine Eingaben in eine andere App gesendet. Öffne die Ziel-App und starte den Auftrag erneut.')
+  if cancel_event:cancel_event.wait(.15)
+  else:time.sleep(.15)

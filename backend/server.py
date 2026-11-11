@@ -35,7 +35,7 @@ from .task_router import task_request
 from .cameras import CAMERAS, SPORTS
 from .training import plan as training_plan
 from .openai_client import OpenAIClient
-from .local_ai import LocalClient, local_status
+from .local_ai import _bare_confirmation,LocalClient, local_status
 from .llamacpp import LlamaCppClient, status as llama_status
 from .small_model import start as start_small_model
 from .storage import Store
@@ -145,6 +145,11 @@ class Application:
             self.clear_chat();return {'reply':'Gesprächsverläufe, gemerkter Name und offene Rückfragen sind gelöscht.','proposals':[],'pending':None,'cleared':True}
         if re.fullmatch(r'(?:abbrechen|stopp?|vergiss das|neue aufgabe)[.! ]*',text,re.I) and self.dialogue.get():
             self.dialogue.clear();return {'reply':'Rückfrage abgebrochen. Was möchtest du als Nächstes machen?','proposals':[],'pending':None}
+        if _bare_confirmation(text) and not self.dialogue.get():
+            with self.desktop.lock:review=bool(self.desktop.plan and self.desktop.plan['state']=='review')
+            with self.actions._lock:action=any(value[0]>time.time() for value in self.actions._pending.values())
+            reply=('Ein konkreter Auftrag wartet, Sir. Prüfe ihn und nutze den zugehörigen Start- oder Bestätigungsknopf.' if review or action else 'Gerade gibt es keine Aktion zu bestätigen, Sir. Stell mir bitte deine Frage direkt; dafür ist keine Bestätigung nötig.')
+            return {'reply':reply,'proposals':[],'pending':None}
         math_reply=arithmetic(text)
         pending=self.dialogue.get()
         if math_reply and (not pending or pending['kind'].startswith('web_') or re.match(r'was|wie|rechne|berechne',text,re.I)):

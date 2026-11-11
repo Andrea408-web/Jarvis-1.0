@@ -7,6 +7,38 @@ import urllib.request
 from .providers import ProviderError, _NoRedirect
 from .persona import instruction as persona_instruction,correct_identity
 
+
+def _bare_confirmation(text):
+    return bool(re.fullmatch(r'(?:bestätigen|bestätige|ich bestätige|ja[, ]+bestätigen)[.! ]*',text.strip(),re.I))
+
+
+def _broken_confirmation(reply):
+    # A stale tiny-model refusal about 1+1 is not a usable chat instruction.
+    return bool(re.search(r'bestätig',reply,re.I) and re.search(r'zuverlässig',reply,re.I) and re.search(r'eins\s*(?:plus|\+)\s*eins|zwei\s*(?:plus|\+)\s*zwei|\b[12]\s*(?:\+|plus)\s*[12]\b',reply,re.I))
+
+
+def _clean_chat_history(history):
+    clean=[];turn=[]
+    def keep(entries):
+        return not any(e['role']=='assistant' and _broken_confirmation(e['text']) or e['role']=='user' and _bare_confirmation(e['text']) for e in entries)
+    for entry in history:
+        if entry['role']=='user' and turn:
+            if keep(turn):clean.extend(turn)
+            turn=[]
+        turn.append(entry)
+    if keep(turn):clean.extend(turn)
+    return clean
+
+
+def _repair_chat_reply(reply,text,history,store):
+    repeats=sum(e['role']=='assistant' and e['text'].strip().casefold()==reply.strip().casefold() for e in history)
+    repeated_confirmation=repeats>=2 and re.search(r'bestätig|anfrage erfüllt',reply,re.I) and not re.search(r'wiederhol|zitiere|nochmal genau',text,re.I)
+    if not _broken_confirmation(reply) and not repeated_confirmation:return reply
+    address=store.settings().get('user_address') or 'Master'
+    if re.search(r'was (?:kann|könnte|soll) ich (?:jetzt )?(?:machen|tun)',text,re.I):
+        return address+', du könntest etwas Kreatives ausprobieren, kurz rausgehen oder einen Filmabend planen. Möchtest du etwas Entspanntes oder etwas Aktives machen?'
+    return address+', auf deine aktuelle Frage habe ich noch keine passende Antwort. Sag mir bitte genauer, wobei du Hilfe möchtest. Dafür ist keine Bestätigung nötig.'
+
 BASE = 'http://127.0.0.1:11434'
 
 
@@ -76,6 +108,7 @@ class LocalClient:
         validate_model(model)
         messages, remaining = [], 6000
         history=self.store.history(conversation)[-12:]
+        if conversation=='default':history=_clean_chat_history(history)
         # A past gaming discussion is not a standing instruction for new topics.
         if not re.search(r'minecraft|pvp|bedrock|\bjava\b|weiter|dazu|darauf|genauer|das spiel',text,re.I):
             filtered=[];gaming=False
@@ -102,6 +135,7 @@ class LocalClient:
             raise ProviderError('Das lokale Modell hat keine abgeschlossene Textantwort geliefert.', 502)
         if re.match(r'^(?:öffne|starte|mach|erstelle|baue|bediene|klicke|bewege)\b',text.strip(),re.I) and re.search(r'blender|maus|notiz|\bapp\b|fenster|programm|datei',text,re.I) and re.search(r'ich habe.{0,100}(?:geöffnet|erstellt|ausgeführt)|(?:auftrag|aufgabe).{0,30}(?:erfüllt|erledigt)|wurde.{0,20}(?:geöffnet|ausgeführt|erfüllt)',reply,re.I|re.S):
             reply='Für diese Geräteaktion liegt mir kein bestätigtes Werkzeugergebnis vor. Es wurde durch diese Textantwort nichts ausgeführt. Nutze den sichtbaren Desktop-Auftrag; dort erscheinen tatsächliche Fehler und Ergebnisse.'
+        if conversation=='default':reply=_repair_chat_reply(reply,text,self.store.history(conversation)[-12:],self.store)
         reply=correct_identity(reply,self.store,text)
         self.store.append('user', text.strip(), conversation,expected_epoch=epoch)
         self.store.append('assistant', reply, conversation,expected_epoch=epoch)

@@ -215,7 +215,7 @@ class WebAssistant:
         dialogue=self.app.dialogue
         with dialogue.lock:pending=dict(dialogue.pending) if dialogue.get() else None
         if pending and pending['kind']=='web_open':
-            if re.fullmatch(r'(?:ja(?: bitte)?|öffne (?:sie|die (?:webseite|website))|öffnen|mach das)[.! ]*',text,re.I):
+            if re.fullmatch(r'(?:ja(?: bitte)?|bestätigen|bestätige|ich bestätige|öffne (?:sie|die (?:webseite|website))|öffnen|mach das)[.! ]*',text,re.I):
                 dialogue.clear();return {'reply':'Sir, die Quellenansicht ist in Jarvis geöffnet. Über den beschrifteten Knopf kannst du die Originalseite öffnen.','proposals':[],'pending':None,'open_url':pending['data']['url'],'open_inside':True,'view':'discover','title':'Website & Ergebnisse','sources':pending['data']['sources']}
             if re.fullmatch(r'(?:nein(?: danke)?|lieber nicht|nicht öffnen|passt|danke)[.! ]*',text,re.I):dialogue.clear();return {'reply':'Gerne, Sir. Die Website bleibt geschlossen.','proposals':[],'pending':None}
             dialogue.clear();pending=None

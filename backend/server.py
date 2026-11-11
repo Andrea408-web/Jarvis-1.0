@@ -26,6 +26,8 @@ from .hub import MiniHub
 from .desktop import Desktop
 from .notes import request as note_request
 from .dialogue import Dialogue
+from .web_assistant import WebAssistant
+from .website import requested as website_requested
 from .mobile import MobileLink
 from .agents import AgentOffice
 from .task_router import task_request
@@ -64,6 +66,7 @@ class Application:
         self.office = AgentOffice(self)
         self.hub = MiniHub(self.store)
         self.desktop = Desktop(self)
+        self.web = WebAssistant(self)
 
     def settings(self):
         values = self.store.settings()
@@ -104,7 +107,7 @@ class Application:
         if not task:return None
         if not task['task']:return {'reply':'Sir, was genau soll der Agent erstellen?','proposals':[],'view':'office'}
         job=self.office.submit({**task,**(attachment or {})})
-        return {'reply':'Sir, der Auftrag wurde tatsächlich angelegt. Auftragsnummer: '+job['id'][:8]+'. Status und Ergebnis stehen in der Werkstatt.','proposals':[],'view':'office','job_id':job['id']}
+        return {'reply':'Sir, der Auftrag wurde tatsächlich angelegt. Auftragsnummer: '+job['id'][:8]+'. Status und Ergebnis stehen in der Werkstatt.','proposals':[],'view':'office','job_id':job['id'],**({'artifact':'website'} if task['role']=='builder' and website_requested(task['task']) else {})}
 
     def install_thorsten(self):
         import platform
@@ -126,7 +129,8 @@ class Application:
         return {'state':'running','message':'Thorsten wird eingerichtet. Bitte warten.'}
 
     def clear_chat(self):
-        self.dialogue.clear();self.store.clear_all_history()
+        with self.dialogue.lock:
+            self.dialogue.clear();self.store.clear_all_history()
         with self.desktop.lock:
             self.desktop.commands.clear()
             if self.desktop.plan and self.desktop.plan['state']=='review':self.desktop.stop()
@@ -140,6 +144,7 @@ class Application:
             self.clear_chat();return {'reply':'Gesprächsverläufe, gemerkter Name und offene Rückfragen sind gelöscht.','proposals':[],'pending':None,'cleared':True}
         if re.fullmatch(r'(?:abbrechen|stopp?|vergiss das|neue aufgabe)[.! ]*',text,re.I) and self.dialogue.get():
             self.dialogue.clear();return {'reply':'Rückfrage abgebrochen. Was möchtest du als Nächstes machen?','proposals':[],'pending':None}
+        if task_request(text):self.dialogue.clear()
         answer=self.dialogue.answer(text)
         if answer:
             data=self.desktop.prepare(answer);self.dialogue.clear()
@@ -168,10 +173,13 @@ class Application:
         if re.match(r'^(?:öffne|starte|mach|erstelle|baue|modelliere)\b',text,re.I) and re.search(r'\bblender\b',text,re.I):
             data=self.desktop.prepare({'goal':text})
             return {'reply':'Der Blender-Auftrag ist vorbereitet, Master. Er ist noch nicht ausgeführt. Prüfe den sichtbaren Ablauf und starte ihn.','proposals':[],'view':'desktop','desktop':data}
+        if re.search(r'tafel|auftragsübersicht',text,re.I) and re.search(r'öffne|zeig|ansehen',text,re.I):return {'reply':'Sir, die Live-Auftragstafel zeigt deine wirklichen Aufträge und Ergebnisse.','proposals':[],'view':'taskboard'}
         routed=self.dispatch_agent(text)
         if routed:return routed
         if re.search(r'\bagent(?:en)?\b|werkstatt',text,re.I):
             return {'reply':'Sir, die Werkstatt zeigt deine wirklichen Aufträge und Ergebnisse. Es wurde durch diese Frage kein neuer Auftrag angelegt. Zum Starten: „Beauftrage einen Agenten: …“ oder den Knopf „Auftrag starten“ verwenden.','proposals':[],'view':'office'}
+        web_result=self.web.handle(text)
+        if web_result:return web_result
         if not self.chat_lock.acquire(blocking=False):
             raise ProviderError('Eine Anfrage läuft bereits. Bitte kurz warten.', 409)
         try:
@@ -279,7 +287,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Referrer-Policy', 'no-referrer')
         self.send_header('X-Frame-Options', 'DENY')
         self.send_header('Permissions-Policy', 'camera=(self), microphone=(self), geolocation=()')
-        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; worker-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://images.tagesschau.de https://www.tagesschau.de https://tagesschau.de https://i.ytimg.com; media-src 'self' blob:; connect-src 'self'; frame-src https://www.youtube-nocookie.com https://www.tiktok.com https://zugspitze.panomax.com https://www.muenchen.de https://www.berlin.de https://www.earthcam.com https://www.abbeyroad.com https://www.livefromiceland.is https://www.skylinewebcams.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
+        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; worker-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://images.tagesschau.de https://www.tagesschau.de https://tagesschau.de https://i.ytimg.com; media-src 'self' blob:; connect-src 'self'; frame-src 'self' https://www.youtube-nocookie.com https://www.tiktok.com https://zugspitze.panomax.com https://www.muenchen.de https://www.berlin.de https://www.earthcam.com https://www.abbeyroad.com https://www.livefromiceland.is https://www.skylinewebcams.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
         if self.server.secure:
             self.send_header('Strict-Transport-Security', 'max-age=86400')
         self.end_headers()
@@ -338,7 +346,7 @@ class Handler(BaseHTTPRequestHandler):
             if path == '/api/mobile/pair' and self.command == 'POST':
                 return True
             if not self.server.device_auth.valid(self.headers.get('Cookie')):
-                if self.command == 'GET' and path in {'/','/pair.js','/style.css','/manifest.webmanifest','/app-icon.png'}:
+                if self.command == 'GET' and path in {'/','/mobile','/pair.js','/style.css','/manifest.webmanifest','/app-icon.png'}:
                     return True
                 self._json({'error':'Bitte dieses Gerät über den aktuellen QR-Code am Mac koppeln.'},401)
                 return False
@@ -377,10 +385,15 @@ class Handler(BaseHTTPRequestHandler):
         app = self.server.app
         method = self.command
         if method == 'GET':
-            if self.server.device_auth and not self.server.device_auth.valid(self.headers.get('Cookie')) and path == '/':
+            if self.server.device_auth and not self.server.device_auth.valid(self.headers.get('Cookie')) and path in {'/','/mobile'}:
                 body=(FRONTEND/'pair.html').read_bytes()
                 self._headers(200,'text/html; charset=utf-8',len(body))
                 return self.wfile.write(body)
+            if re.fullmatch(r'/site/[0-9a-f]{32}',path):
+                data=app.office.site(path.split('/')[-1])
+                self.send_response(200);self.send_header('Content-Type','text/html; charset=utf-8');self.send_header('Content-Length',str(len(data)));self.send_header('Cache-Control','no-store');self.send_header('X-Content-Type-Options','nosniff');self.send_header('Content-Security-Policy',"sandbox; default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'")
+                if 'download=1' in urlsplit(self.path).query:self.send_header('Content-Disposition','attachment; filename="Jarvis-Website.html"')
+                self.end_headers();return self.wfile.write(data)
             if path == '/api/session':
                 return self._json({'token': app.token,'remote_device':bool(self.server.device_auth)})
             if re.fullmatch(r'/api/agents/[0-9a-f]{32}/image',path):
@@ -395,6 +408,9 @@ class Handler(BaseHTTPRequestHandler):
                 self._headers(200,'image/png',len(data));return self.wfile.write(data)
             if path == '/api/desktop/model':
                 data=app.desktop.model_file();self._headers(200,'application/octet-stream',len(data));return self.wfile.write(data)
+            if path == '/api/desktop/input-status':
+                from .input_access import status
+                return self._json(status())
             if path == '/api/desktop':return self._json(app.desktop.snapshot())
             if path == '/api/natural-voice/status':
                 return self._json({**app.natural_voice.status(),'installation':dict(app.voice_install_state)})
@@ -411,7 +427,7 @@ class Handler(BaseHTTPRequestHandler):
             if path == '/api/reminders':
                 return self._json({'reminders': app.store.reminders()})
             # Exact static allowlist: no arbitrary files, keys or directory listings.
-            static = {'/': 'index.html', '/index.html': 'index.html',
+            static = {'/': 'mobile.html' if self.server.device_auth or re.search(r'iPhone|iPad|iPod|Macintosh.*Mobile',self.headers.get('User-Agent',''),re.I) else 'index.html', '/index.html': 'index.html', '/mobile':'mobile.html','/mobile-app.js':'mobile-app.js','/boot.js':'boot.js','/task-board.js':'task-board.js',
                       '/manifest.webmanifest':'manifest.webmanifest','/app-icon.png':'app-icon.png','/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js','/office-3d.js':'office-3d.js', '/lowpoly-stage.js':'lowpoly-stage.js', '/artifacts.js':'artifacts.js', '/jarvis-voice.js':'jarvis-voice.js', '/voice-worker.js':'voice-worker.js', '/conversation.js':'conversation.js', '/mini-hub.js':'mini-hub.js', '/world-news.js':'world-news.js', '/astra.js':'astra.js', '/astra.css':'astra.css', '/astra-panel.html':'astra-panel.html', '/astra-panel.js':'astra-panel.js'}
             for name in ['ESpeak.js','mespeak.js','config.json','jarvis-de.json','de.json','COPYING','NOTICE.txt','UPSTREAM-README.md','mespeak-2.0.2-source.tgz','speak-source-9c6f642.tar.gz']:
                 static['/vendor/voice/'+name]='vendor/voice/'+name
@@ -506,7 +522,17 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError('Ungültige Felder für die Schlüsselkonfiguration.')
                 return self._json(configure_credential(body.get('provider'), body.get('api_key'), body.get('persist', True)))
             if method == 'POST' and path == '/api/chat':
-                return self._json(app.chat(body.get('text')))
+                text=body.get('text')
+                if self.server.device_auth and isinstance(text,str):
+                    pending=app.dialogue.get()
+                    native=re.match(r'^(?:(?:jarvis|astra|asta)[, :]+)?(?:öffne|starte|klicke?|bewege?|tippe)\b',text,re.I) or note_request(text) is not None
+                    if native and not (pending and pending['kind']=='web_open'):
+                        url=re.search(r'https://[^\s]+',text)
+                        if url:
+                            from .web_assistant import public_url
+                            if public_url(url[0]):return self._json({'reply':'Hier ist die Website, Sir. Tippe auf den Link.','proposals':[],'sources':[{'title':'Website','url':url[0]}]})
+                        return self._json({'reply':'Desktop-Aufträge bitte in Jarvis direkt auf dem Mac starten. Website- und Film-Aufträge sowie Chat funktionieren hier auf dem Handy.','proposals':[]})
+                return self._json(app.chat(text))
             if method == 'POST' and path == '/api/image':
                 encoded = body.get('image')
                 if not isinstance(encoded, str) or len(encoded) > 5_592_408:
@@ -644,6 +670,9 @@ def main(argv=None):
         server.socket = context.wrap_socket(server.socket, server_side=True, do_handshake_on_connect=False)
     print(f'JARVIS läuft auf Port {server.server_port}. Beenden mit Strg+C.', flush=True)
     print('Cloud-Funktionen verwenden ausschließlich Ihre gespeicherten Freigaben.', flush=True)
+    try:
+        if app.mobile.resume():print('Handy-Zugang im Heimnetz wieder gestartet.',flush=True)
+    except (OSError,ValueError):print('Handy-Zugang konnte nicht starten. Am Mac „Handy verbinden“ öffnen und das WLAN prüfen.',flush=True)
     if args.open_browser:
         import webbrowser
         address = f'[{args.host}]' if ':' in args.host else args.host

@@ -52,7 +52,7 @@ def private_ip():
         raise ValueError('Keine private WLAN-/LAN-Adresse gefunden. Mac und Handy müssen im selben vertrauenswürdigen Heimnetz sein.') from None
 
 
-def certificates(directory,address):
+def certificates(directory,address,hostname=None):
     address=str(ipaddress.IPv4Address(address));directory=Path(directory);directory.mkdir(parents=True,exist_ok=True,mode=0o700)
     ca=directory/'ca.pem';key=directory/'ca.key';leaf=directory/'server.pem';leafkey=directory/'server.key'
     def run(args):
@@ -61,7 +61,10 @@ def certificates(directory,address):
     if not ca.is_file() or not key.is_file():
         config=directory/'ca.cnf';config.write_text('[req]\ndistinguished_name=dn\nx509_extensions=ca\nprompt=no\n[dn]\nCN=JARVIS privates Heimnetz\n[ca]\nbasicConstraints=critical,CA:true,pathlen:0\nkeyUsage=critical,keyCertSign,cRLSign\n')
         run(['req','-x509','-newkey','rsa:2048','-nodes','-days','1825','-keyout',str(key),'-out',str(ca),'-config',str(config)])
-    config=directory/'server.cnf';config.write_text(f'basicConstraints=critical,CA:false\nkeyUsage=critical,digitalSignature,keyEncipherment\nextendedKeyUsage=serverAuth\nsubjectAltName=IP:{address}\n')
+    import re
+    if hostname and not re.fullmatch(r'[A-Za-z0-9-]{1,63}\.local',hostname):raise ValueError('Ungültiger lokaler Mac-Name.')
+    san=f'IP:{address}'+(',DNS:'+hostname if hostname else '')
+    config=directory/'server.cnf';config.write_text(f'basicConstraints=critical,CA:false\nkeyUsage=critical,digitalSignature,keyEncipherment\nextendedKeyUsage=serverAuth\nsubjectAltName={san}\n')
     csr=directory/'server.csr'
     run(['req','-new','-newkey','rsa:2048','-nodes','-keyout',str(leafkey),'-out',str(csr),'-subj','/CN=JARVIS privat'])
     run(['x509','-req','-in',str(csr),'-CA',str(ca),'-CAkey',str(key),'-CAcreateserial','-out',str(leaf),'-days','365','-sha256','-extfile',str(config)])
@@ -74,20 +77,31 @@ def certificates(directory,address):
 
 
 class MobileLink:
-    def __init__(self,app):self.app=app;self.server=None;self.auth=DeviceAuth(app.store.data_dir/'mobile'/'devices.json');self.lock=threading.Lock()
+    def __init__(self,app):self.app=app;self.server=None;self.auth=DeviceAuth(app.store.data_dir/'mobile'/'devices.json');self.lock=threading.Lock();self.enabled_path=app.store.data_dir/'mobile'/'enabled'
+    def resume(self):
+        if self.enabled_path.is_file() or self.auth.sessions:return self.start()
+        return None
     def start(self):
         import platform
         if platform.system()!='Darwin':raise ValueError('Die einfache Handykopplung wird auf dem Mac gestartet. Hier ist nur die Entwicklungsumgebung verfügbar.')
         with self.lock:
             if self.server is None:
                 from .server import JarvisServer
-                address=private_ip();cert,key,self.profile,self.fingerprint=certificates(self.app.store.data_dir/'mobile',address)
+                address=private_ip();self.hostname=None
+                try:
+                    import re
+                    name=subprocess.run(['/usr/sbin/scutil','--get','LocalHostName'],capture_output=True,text=True,timeout=3).stdout.strip()
+                    if re.fullmatch(r'[A-Za-z0-9-]{1,63}',name):self.hostname=name+'.local'
+                except (OSError,subprocess.SubprocessError):pass
+                cert,key,self.profile,self.fingerprint=certificates(self.app.store.data_dir/'mobile',address,self.hostname)
                 server=JarvisServer((address,8766),self.app,secure=True);server.device_auth=self.auth
+                if self.hostname:server.allowed_hosts.add(self.hostname.lower())
                 context=ssl.SSLContext(ssl.PROTOCOL_TLS_SERVER);context.minimum_version=ssl.TLSVersion.TLSv1_2;context.load_cert_chain(cert,key)
                 server.socket=context.wrap_socket(server.socket,server_side=True,do_handshake_on_connect=False)
                 self.server=server;threading.Thread(target=server.serve_forever,daemon=True).start()
-            ticket=self.auth.issue();address=self.server.server_address[0]
-            return {'url':f'https://{address}:8766/#pair='+ticket,'fingerprint':self.fingerprint,'expires_seconds':300,'instructions':'Mac und Handy im selben vertrauenswürdigen WLAN. Erst das Zertifikatsprofil per AirDrop übertragen, auf iOS installieren und das Vertrauen bewusst aktivieren. Danach QR-Code scannen. Ohne Zertifikatsvertrauen kann iOS die Kamera nicht freigeben.'}
+            self.enabled_path.parent.mkdir(parents=True,exist_ok=True,mode=0o700);self.enabled_path.touch(mode=0o600)
+            ticket=self.auth.issue();address=self.server.server_address[0];display=self.hostname or address
+            return {'url':f'https://{display}:8766/#pair='+ticket,'ip_url':f'https://{address}:8766/#pair='+ticket,'fingerprint':self.fingerprint,'expires_seconds':300,'instructions':'Mac und Handy im selben vertrauenswürdigen WLAN. Erst das Zertifikatsprofil per AirDrop übertragen, auf iOS installieren und das Vertrauen bewusst aktivieren. Danach QR-Code scannen. Ohne Zertifikatsvertrauen kann iOS die Kamera nicht freigeben.'}
     def profile_data(self):
         if self.server is None:raise ValueError('Bitte zuerst Handykopplung vorbereiten.')
         return {'filename':self.profile.name,'content':self.profile.read_text(),'fingerprint':self.fingerprint}
@@ -98,4 +112,4 @@ class MobileLink:
     def stop(self,revoke=True):
         with self.lock:
             if self.server:self.server.shutdown();self.server.server_close();self.server=None
-            if revoke:self.auth.revoke()
+            if revoke:self.auth.revoke();self.enabled_path.unlink(missing_ok=True)

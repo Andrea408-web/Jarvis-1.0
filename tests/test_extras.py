@@ -74,6 +74,15 @@ class PairingTests(unittest.TestCase):
             restored=MobileLink(app);self.assertTrue(restored.auth.valid('jarvis_device='+session))
             restored.stop();self.assertFalse(MobileLink(app).auth.valid('jarvis_device='+session))
 
+    def test_enabled_mobile_access_resumes_but_explicit_stop_disables_it(self):
+        from types import SimpleNamespace
+        with tempfile.TemporaryDirectory() as folder:
+            link=MobileLink(SimpleNamespace(store=SimpleNamespace(data_dir=Path(folder))))
+            with patch.object(link,'start') as start:
+                link.resume();start.assert_not_called()
+                link.enabled_path.parent.mkdir(parents=True);link.enabled_path.touch();link.resume();start.assert_called_once()
+                link.stop();self.assertFalse(link.enabled_path.exists())
+
     def test_real_verified_tls_pairing_guards_and_public_profile(self):
         with tempfile.TemporaryDirectory() as folder:
             cert,key,profile,fingerprint=certificates(Path(folder)/'cert','127.0.0.1')

@@ -16,16 +16,16 @@ with tempfile.TemporaryDirectory() as folder:
   with sync_playwright() as pw:
    browser=pw.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox'])
    safari=browser.new_context(ignore_https_errors=True,viewport={'width':390,'height':844},is_mobile=True,has_touch=True)
-   page=safari.new_page();ticket=server.device_auth.issue();page.goto(url+'/#pair='+ticket);page.get_by_text('LOKALE VERBINDUNG AKTIV',exact=True).wait_for(state='attached');assert page.url==url+'/'
+   page=safari.new_page();ticket=server.device_auth.issue();page.goto(url+'/#pair='+ticket);page.get_by_text('Mit Jarvis auf deinem Mac verbunden.',exact=True).wait_for();assert page.url==url+'/'
    manifest=page.evaluate("async()=>await (await fetch(document.querySelector('link[rel=manifest]').href)).json()")
    assert manifest['start_url']=='/' and '#' not in manifest['start_url'];assert manifest['display']=='standalone'
    assert page.locator('link[rel=apple-touch-icon]').count()==1
    # Home-screen Safari may have independent cookie storage. Pair there without scanning back into Safari.
    home=browser.new_context(ignore_https_errors=True,viewport={'width':390,'height':844},is_mobile=True,has_touch=True);icon=home.new_page();errors=[];icon.on('pageerror',lambda e:errors.append(str(e)))
-   icon.goto(url+'/');icon.locator('#pair-form').wait_for();ticket=server.device_auth.issue();icon.locator('#pair-link').fill(url+'/#pair='+ticket);icon.get_by_role('button',name='Mit Mac verbinden',exact=True).click();icon.get_by_text('LOKALE VERBINDUNG AKTIV',exact=True).wait_for(state='attached')
-   icon.get_by_role('button',name='App installieren',exact=True).click();icon.locator('#install-dialog').get_by_text('iPhone/iPad:',exact=False).wait_for();icon.locator('#install-dialog').get_by_role('button',name='Schließen',exact=True).click()
-   icon.locator('#chat-input').fill('Hallo');icon.locator('#send-button').click();icon.get_by_text('Verbindung zum Mac funktioniert.',exact=True).wait_for()
-   icon.locator('#chat-input').fill('Öffne Spotify');icon.locator('#send-button').click();icon.locator('#messages').get_by_text('Desktop-Aufträge bitte in Jarvis direkt auf dem Mac starten.',exact=False).wait_for();assert app.desktop.plan is None
+   icon.goto(url+'/');icon.locator('#pair-form').wait_for();ticket=server.device_auth.issue();icon.locator('#pair-link').fill(url+'/#pair='+ticket);icon.get_by_role('button',name='Mit Mac verbinden',exact=True).click();icon.get_by_text('Mit Jarvis auf deinem Mac verbunden.',exact=True).wait_for()
+   icon.locator('#voice').uncheck();icon.get_by_text('Auf dem Home-Bildschirm',exact=True).click();icon.get_by_text('In Safari: Teilen',exact=False).wait_for()
+   icon.locator('#chat-input').fill('Hallo');icon.locator('#send').click();icon.get_by_text('Verbindung zum Mac funktioniert.',exact=True).wait_for()
+   icon.locator('#chat-input').fill('Öffne Spotify');icon.locator('#send').click();icon.locator('#messages').get_by_text('Desktop-Aufträge bitte in Jarvis direkt auf dem Mac starten.',exact=False).wait_for();assert app.desktop.plan is None
    assert not errors,errors
    print('PASS: HTTPS QR pairing, separate-context manual pairing, manifest and icon, install guide, mobile chat, clear Mac-control limitation. No physical iPhone installation tested.')
    browser.close()

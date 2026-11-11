@@ -1,0 +1,2 @@
+/* Independent boot notice survives a syntax/load error in the main application. */
+(function(){var timer=setTimeout(function(){var note=document.getElementById('boot-fallback');if(note)note.hidden=false;},8000);window.addEventListener('jarvis:ready',function(){clearTimeout(timer);var note=document.getElementById('boot-fallback');if(note)note.hidden=true;});window.addEventListener('error',function(){var note=document.getElementById('boot-fallback');if(note)note.hidden=false;});})();

@@ -14,6 +14,7 @@ import time
 from pathlib import Path
 
 from .providers import ProviderError
+from .input_access import label_point
 from .notes import request as note_request,create as create_note
 from .models import recipe,validate_scene,write_scene
 
@@ -73,8 +74,9 @@ def validate_steps(steps):
     for step in steps:
         if not isinstance(step,dict):raise ValueError('Ungültiger Desktop-Schritt.')
         kind=step.get('type')
-        fields={'open':{'type','app'},'website':{'type','url'},'move':{'type','x','y'},'click':{'type','x','y'},'text':{'type','text'},'key':{'type','key','modifiers'},'wait':{'type','seconds'}}
+        fields={'open':{'type','app'},'website':{'type','url'},'move':{'type','x','y'},'click':{'type','x','y'},'text':{'type','text'},'key':{'type','key','modifiers'},'wait':{'type','seconds'},'click_label':{'type','label'}}
         if not isinstance(kind,str) or kind not in fields or set(step)!=fields[kind]:raise ValueError('Nicht unterstützter Desktop-Schritt; kein Programmcode wird ausgeführt.')
+        if kind=='click_label' and (not isinstance(step['label'],str) or not 1<=len(step['label'])<=100):raise ValueError('Bitte eine konkrete Schaltflächenbeschriftung nennen.')
         if kind=='open':resolve_app(step['app'])
         if kind=='website':website(step['url'])
         if kind in {'move','click'} and any(type(step[k]) not in {int,float} or not math.isfinite(step[k]) or not 0<=step[k]<=1 for k in ['x','y']):raise ValueError('Mauspositionen müssen zwischen 0 und 1 liegen.')
@@ -142,6 +144,10 @@ class MacInput:
             result=subprocess.run(['/usr/bin/open','-b','com.apple.Safari',website(step['url'])],capture_output=True,timeout=10)
             if result.returncode:raise ValueError('Die Webseite konnte in Safari nicht geöffnet werden.')
             self.active_app='com.apple.Safari'
+        elif kind=='click_label':
+            found=label_point(self.active_app,step['label']);x=found['x']/max(1,self.width-1);y=found['y']/max(1,self.height-1)
+            if not 0<=x<=1 or not 0<=y<=1:raise ValueError('Die gefundene Schaltfläche liegt nicht auf dem Hauptbildschirm.')
+            self.execute({'type':'click','x':x,'y':y})
         elif kind in {'move','click'}:
             point=Point(step['x']*max(1,self.width-1),step['y']*max(1,self.height-1))
             self.cg.CGEventCreate.argtypes=[ctypes.c_void_p];self.cg.CGEventCreate.restype=ctypes.c_void_p
@@ -183,6 +189,9 @@ class Desktop:
         if 'render' in body and type(body['render']) is not bool:raise ValueError('Ungültige Render-Option.')
         goal=body.get('goal','')
         if not isinstance(goal,str) or not 1<=len(goal.strip())<=3000:raise ValueError('Bitte einen konkreten Desktop-Auftrag eingeben.')
+        click_label=re.fullmatch(r'(?:klicke?|drücke|betätige)\s+(?:auf\s+)?[„"“]?(.+?)[“"”]?\s+in\s+(.+?)[.!]?$',goal.strip(),re.I)
+        if click_label and 'steps' not in body:
+            app=resolve_app(click_label[2]);body={**body,'steps':[{'type':'open','app':app['name']},{'type':'wait','seconds':.5},{'type':'click_label','label':click_label[1].strip('„“\"”')}]}
         with self.lock:
             if self.thread and self.thread.is_alive():raise ProviderError('Ein Desktop-Ablauf läuft. Zuerst stoppen oder abwarten.',409)
         note=note_request(goal) if 'steps' not in body and 'scene' not in body else None
@@ -226,7 +235,7 @@ class Desktop:
                 except ValueError:pass
         if steps is None:
             if self.app.store.settings()['ai_provider'] not in {'llamacpp','ollama'}:raise ValueError('Astra-Desktopplanung benötigt deine lokale Text-KI. Kein externer KI-Dienst wird verwendet.')
-            instruction='Erstelle nur JSON: {"steps":[...]}. Maximal 12 Schritte, erster Schritt open. Apps: '+', '.join(APPS)+'. Erlaubt: {"type":"open","app":"Notizen"}, {"type":"wait","seconds":1}, {"type":"key","key":"n","modifiers":["command"]}, {"type":"text","text":"Hallo"}. Keine Shell, kein Code, keine erfundenen Koordinaten. Nur einfache App-Aufgaben. Bei komplexen 3D-/Bildaufgaben: {"unsupported":true}. Du siehst keinen Bildschirm. Auftrag: '+goal
+            instruction='Erstelle nur JSON: {"steps":[...]}. Maximal 12 Schritte, erster Schritt open. Apps: '+', '.join(app_catalog())[:1200]+'. Erlaubt: {"type":"open","app":"Notizen"}, {"type":"wait","seconds":1}, {"type":"key","key":"n","modifiers":["command"]}, {"type":"text","text":"Hallo"}, {"type":"click_label","label":"Speichern"}. Benannte Schaltflächen werden vor dem Klick in der echten App-Oberfläche gesucht; bei keinem eindeutigen Treffer wird gestoppt. Keine Shell, kein Code, keine erfundenen Koordinaten. Nur einfache App-Aufgaben. Bei komplexen 3D-/Bildaufgaben: {"unsupported":true}. Du siehst keinen Bildschirm. Auftrag: '+goal
             result=self.app.selected_client().chat(instruction,conversation='astra-desktop-plan')
             raw=result.get('reply','').strip()
             if raw.startswith('```'):raw=raw.split('\n',1)[-1].rsplit('```',1)[0].strip()
@@ -245,9 +254,11 @@ class Desktop:
             if not self.plan or self.plan['id']!=ident or self.plan['state']!='review' or time.time()>self.plan['expires']:raise ValueError('Dieser Ablauf ist abgelaufen oder wurde bereits gestartet.')
             driver=None if self.plan.get('kind') in {'model','note'} else self.driver()
             if self.plan.get('kind')=='model':self.blender_binary() # Validate before starting.
-            if driver is not None and isinstance(driver,MacInput):driver.cancel_event=self.cancel
+            if driver is not None and isinstance(driver,MacInput):
+                driver.cancel_event=self.cancel
+                if any(step['type'] not in {'open','website','wait'} for step in self.plan['steps']):driver.ensure_input()
             self.start_delay=.2 if len(self.plan['steps'])==1 and self.plan['steps'][0]['type'] in {'open','website'} else 3
-            self.model_folder=None;self.cancel.clear();self.plan.update(state='running',message='Öffnen angefordert.' if self.start_delay<1 else 'Start in 3 Sekunden. Aktionen stoppen beendet den Ablauf; Reden stoppen lässt ihn weiterlaufen.')
+            self.model_folder=None;self.cancel.clear();self.plan.update(events=[],active_step=None,state='running',message='Öffnen angefordert.' if self.start_delay<1 else 'Start in 3 Sekunden. Aktionen stoppen beendet den Ablauf; Reden stoppen lässt ihn weiterlaufen.')
             self.thread=threading.Thread(target=self._run,args=(driver,),daemon=True);self.thread.start();return self.snapshot()
     def _run(self,driver):
         try:
@@ -258,16 +269,21 @@ class Desktop:
                 return
             if self.plan.get('kind')=='model':
                 self._run_model();return
-            for step in self.plan['steps']:
+            for index,step in enumerate(self.plan['steps']):
                 if self.cancel.is_set():break
+                with self.lock:
+                    self.plan['active_step']=index
+                    self.plan['events'].append({'step':index+1,'state':'running','type':step['type']})
                 if step['type']=='wait':self.cancel.wait(step['seconds'])
                 else:driver.execute(step)
                 if self.cancel.is_set():break
-                with self.lock:self.plan['completed']+=1
+                with self.lock:
+                    self.plan['completed']+=1;self.plan['events'].append({'step':index+1,'state':'done','type':step['type']});self.plan['active_step']=None
                 if self.cancel.wait(.35):break
             with self.lock:self.plan.update(state='stopped' if self.cancel.is_set() else 'done',message='Gestoppt.' if self.cancel.is_set() else getattr(driver,'last_message',None) or 'Eingabeschritte ausgeführt. Das Ergebnis wurde nicht visuell überprüft.')
         except Exception as error:
-            with self.lock:self.plan.update(state='error',message=str(error)[:500])
+            with self.lock:
+                self.plan.setdefault('events',[]).append({'state':'error','message':str(error)[:500]});self.plan.update(state='stopped' if self.cancel.is_set() else 'error',message=str(error)[:500])
         finally:
             with self.lock:
                 if self.plan['state']=='running':self.plan.update(state='stopped',message='Gestoppt.')

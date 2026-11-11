@@ -16,6 +16,9 @@ import zipfile
 PAYLOAD_B64='__PAYLOAD_B64__'
 PAYLOAD_SHA='__PAYLOAD_SHA__'
 ALLOWED={
+    'backend/task_router.py',
+    'backend/input_access.py','backend/website.py','frontend/mobile.html','frontend/mobile-app.js','frontend/boot.js','frontend/task-board.js',
+    'backend/web_assistant.py',
     'backend/mobile.py','frontend/pair.html','frontend/pair.js','frontend/manifest.webmanifest','frontend/app-icon.png',
     'backend/dialogue.py',
     'backend/notes.py',

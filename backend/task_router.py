@@ -3,6 +3,9 @@ import re
 
 def task_request(text):
     clean=text.strip()
+    from .website import requested
+    if requested(clean):return {'role':'builder','task':clean[:3000]}
+    if re.match(r'^(?:(?:kannst|könntest) du )?(?:bitte )?(?:erstelle|mach|mache|produziere)\b',clean,re.I) and re.search(r'\b(?:werbeclip|werbung|video)\b',clean,re.I):return {'role':'studio','task':clean[:3000]}
     names=r'atlas|nova|sentinel|planer|autor|prüfer|studio|bauer|agent(?:en)?'
     if not re.search(r'\b(?:'+names+r')\b',clean,re.I):return None
     if not re.search(r'beauftrag|auftrag|\blass\b|\bsoll\b|erstell|mach|bau|schreib|produzier',clean,re.I):return None

@@ -389,7 +389,7 @@ class Handler(BaseHTTPRequestHandler):
             length = int(self.headers.get('Content-Length', '0'))
         except ValueError:
             raise ValueError('Ungültige Nachrichtenlänge.') from None
-        maximum = 512000 if urlsplit(self.path).path=='/api/aeris/pose' else 6 * 1024 * 1024 if urlsplit(self.path).path in {'/api/image','/api/agents','/api/agents/dispatch','/api/aeris/pose'} else MAX_BODY
+        maximum = 512000 if urlsplit(self.path).path in {'/api/aeris/pose','/api/video-call'} else 6 * 1024 * 1024 if urlsplit(self.path).path in {'/api/image','/api/agents','/api/agents/dispatch','/api/aeris/pose'} else MAX_BODY
         if length < 1 or length > maximum:
             raise ValueError('Die Anfrage ist leer oder überschreitet das Größenlimit.')
         if self.headers.get_content_type() != 'application/json':
@@ -452,7 +452,7 @@ class Handler(BaseHTTPRequestHandler):
             if path == '/api/reminders':
                 return self._json({'reminders': app.store.reminders()})
             # Exact static allowlist: no arbitrary files, keys or directory listings.
-            static = {'/': 'mobile.html' if self.server.device_auth or re.search(r'iPhone|iPad|iPod|Macintosh.*Mobile',self.headers.get('User-Agent',''),re.I) else 'index.html', '/index.html': 'index.html', '/mobile':'mobile.html','/mobile-app.js':'mobile-app.js','/boot.js':'boot.js','/task-board.js':'task-board.js','/discover.js':'discover.js','/aeris':'aeris.html','/aeris.js':'aeris.js','/aeris-assistant.js':'aeris-assistant.js','/aeris-xr.js':'aeris-xr.js','/aeris-pose.js':'aeris-pose.js','/aeris-gestures.js':'aeris-gestures.js','/aeris-shell.css':'aeris-shell.css','/aeris-shell.js':'aeris-shell.js','/aeris-icon.svg':'aeris-icon.svg','/aeris-sw.js':'aeris-sw.js',
+            static = {'/': 'mobile.html' if self.server.device_auth or re.search(r'iPhone|iPad|iPod|Macintosh.*Mobile',self.headers.get('User-Agent',''),re.I) else 'index.html', '/index.html': 'index.html', '/mobile':'mobile.html','/mobile-app.js':'mobile-app.js','/boot.js':'boot.js','/task-board.js':'task-board.js','/discover.js':'discover.js','/aeris':'aeris.html','/aeris.js':'aeris.js','/aeris-assistant.js':'aeris-assistant.js','/aeris-xr.js':'aeris-xr.js','/aeris-pose.js':'aeris-pose.js','/aeris-tracking.js':'aeris-tracking.js','/video-call.js':'video-call.js','/video-call.css':'video-call.css','/aeris-gestures.js':'aeris-gestures.js','/aeris-shell.css':'aeris-shell.css','/aeris-shell.js':'aeris-shell.js','/aeris-icon.svg':'aeris-icon.svg','/aeris-sw.js':'aeris-sw.js',
                       '/manifest.webmanifest':'manifest.webmanifest','/app-icon.png':'app-icon.png','/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js','/office-3d.js':'office-3d.js', '/lowpoly-stage.js':'lowpoly-stage.js', '/artifacts.js':'artifacts.js', '/jarvis-voice.js':'jarvis-voice.js', '/voice-worker.js':'voice-worker.js', '/conversation.js':'conversation.js', '/mini-hub.js':'mini-hub.js', '/world-news.js':'world-news.js', '/astra.js':'astra.js', '/astra.css':'astra.css', '/astra-panel.html':'astra-panel.html', '/astra-panel.js':'astra-panel.js'}
             for name in ['ESpeak.js','mespeak.js','config.json','jarvis-de.json','de.json','COPYING','NOTICE.txt','UPSTREAM-README.md','mespeak-2.0.2-source.tgz','speak-source-9c6f642.tar.gz']:
                 static['/vendor/voice/'+name]='vendor/voice/'+name
@@ -551,6 +551,12 @@ class Handler(BaseHTTPRequestHandler):
                 if set(body) - {'provider', 'api_key', 'persist'}:
                     raise ValueError('Ungültige Felder für die Schlüsselkonfiguration.')
                 return self._json(configure_credential(body.get('provider'), body.get('api_key'), body.get('persist', True)))
+            if method=='POST' and path=='/api/video-call':
+                if not app.chat_lock.acquire(blocking=False):raise ProviderError('Eine Anfrage läuft bereits. Bitte kurz warten.',409)
+                try:
+                    from .video_call import answer
+                    return self._json(answer(app,body))
+                finally:app.chat_lock.release()
             if method=='POST' and path=='/api/aeris/pose':
                 if set(body)!={'image'} or not isinstance(body['image'],str) or len(body['image'])>400000:raise ValueError('Bitte ein JPEG-Frame bis 300 KB senden.')
                 try:image=base64.b64decode(body['image'],validate=True)

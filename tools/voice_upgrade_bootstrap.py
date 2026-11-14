@@ -16,7 +16,7 @@ import zipfile
 PAYLOAD_B64='__PAYLOAD_B64__'
 PAYLOAD_SHA='__PAYLOAD_SHA__'
 ALLOWED={
-    'frontend/aeris-gestures.js','frontend/aeris-shell.css','frontend/aeris-shell.js','frontend/aeris-icon.svg','frontend/aeris-sw.js',
+    'backend/video_call.py','backend/native_vision.py','frontend/video-call.js','frontend/video-call.css','frontend/aeris-tracking.js','frontend/aeris-gestures.js','frontend/aeris-shell.css','frontend/aeris-shell.js','frontend/aeris-icon.svg','frontend/aeris-sw.js',
     'backend/arm_pose.py','frontend/aeris-pose.js',
     'frontend/aeris-xr.js',
     'frontend/aeris-assistant.js',

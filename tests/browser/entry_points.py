@@ -9,7 +9,7 @@ with tempfile.TemporaryDirectory() as folder:
  try:
   with sync_playwright() as p:
    browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox']);context=browser.new_context(java_script_enabled=False);page=context.new_page();page.goto(url+'/index.html');tile=page.get_by_role('link',name='Videoanruf mit Jarvis',exact=False);assert tile.is_visible();assert tile.bounding_box()['y']<600
-   page.set_viewport_size({'width':390,'height':844});page.goto(url+'/mobile');tile=page.get_by_role('link',name='Videoanruf mit Jarvis Hier tippen',exact=False);assert tile.is_visible();assert tile.bounding_box()['y']<150;page.screenshot(path='/tmp/jarvis-call-entry.png');page.goto(url+'/vr-guide');assert page.get_by_text('Verlässlicher lokaler Verbindungsweg: USB',exact=True).is_visible()
+   page.set_viewport_size({'width':390,'height':844});page.goto(url+'/mobile');tile=page.get_by_role('link',name='Videoanruf mit Jarvis Hier tippen',exact=False);assert tile.is_visible();assert tile.bounding_box()['y']<150;page.screenshot(path='/tmp/jarvis-call-entry.png');page.goto(url+'/vr-guide');assert page.get_by_text('Vier kurze Schritte',exact=True).is_visible()
    print('PASS: large call entry above fold on desktop/mobile with JavaScript disabled, direct /call link, local VR guide reachable.')
    browser.close()
  finally:app.office.stop();server.shutdown();server.server_close();thread.join(3)

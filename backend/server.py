@@ -65,6 +65,8 @@ class Application:
         self.token = secrets.token_urlsafe(32)
         self.chat_lock = threading.Lock()
         self.mobile = MobileLink(self)
+        from .quest_window import QuestWindow
+        self.quest_window=QuestWindow()
         self.office = AgentOffice(self)
         self.hub = MiniHub(self.store)
         self.desktop = Desktop(self)
@@ -521,6 +523,11 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError('Ungültige Kopplungsanfrage.')
                 session=self.server.device_auth.pair(body['ticket'])
                 return self._json({'ok':True},cookie='jarvis_device='+session+'; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=2592000')
+            if method=='POST' and path in {'/api/quest-window/start','/api/quest-window/stop'}:
+                if self.server.device_auth or not ipaddress.ip_address(self.client_address[0]).is_loopback:return self._json({'error':'Den Brillen-Link bitte direkt am Mac erstellen.'},403)
+                if body:raise ValueError('Keine Parameter erforderlich.')
+                if path.endswith('/start'):return self._json(app.quest_window.start())
+                app.quest_window.stop();return self._json({'ok':True})
             if method == 'POST' and path in {'/api/mobile/start','/api/mobile/profile','/api/mobile/reveal','/api/mobile/stop'}:
                 if self.server.device_auth or not ipaddress.ip_address(self.client_address[0]).is_loopback:
                     return self._json({'error':'Handykopplung nur direkt am Mac verwalten.'},403)
@@ -738,6 +745,7 @@ def main(argv=None):
             if app.desktop.panel and app.desktop.panel.poll() is None:app.desktop.panel.terminate()
             app.office.stop()
             app.mobile.stop(revoke=False)
+            app.quest_window.stop()
         finally:
             server.server_close()
 

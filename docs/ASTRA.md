@@ -161,3 +161,13 @@ Auf Quest über den gekoppelten Heimnetz-Zugang im Browser öffnen. Dies ist ein
 Aeris bietet jetzt Chat, Thorsten-Ausgabe, browserabhängige Spracheingabe und die gemeinsame Auftragstafel direkt in der gelben Glasoberfläche. Seine Identität gilt nur für die jeweilige Anfrage; Jarvis/Astra werden dadurch nicht dauerhaft umbenannt. Szenenbefehle: „Erstelle einen Würfel“, „Entferne das letzte Objekt“, „Schulter auf 30 Grad“, entsprechend Basis und Ellbogen. Die Gelenkgrenzen werden eingehalten.
 
 Die Kamera wird ausdrücklich per Knopf oder Befehl angefordert. Vorschau nur lokal, keine automatische Bildanalyse, kein Video-Upload. Ausschalten, Seitenwechsel oder eine überholte Freigabe beenden die Streams. Quest-Kamerazugriff ist vom Browser abhängig. Die Glasoptik ist UI-Gestaltung, keine echte Headset-Passthrough-Funktion. Weiterhin kein immersives WebXR oder realer Hardware-Arm.
+
+## Immersives Aeris-VR und 2D-Kameratracking
+
+„Wechsel zu Aeris“ ist über die Jarvis-Oberfläche verfügbar. Aeris prüft beim VR-Start WebXR-Unterstützung. Ein unterstützter Quest Browser kann eine immersive VR-Sitzung mit gelben virtuellen Glasflächen starten. Handtracking ist optional: Daumen-/Zeigefinger-Pinch greift nahe virtuelle Würfel; bei Controllern übernimmt der Trigger. Poseverlust löst den Griff. Der dargestellte Roboterarm wird aus der Handposition konstruiert, kein tatsächlicher Ellbogen des Menschen gemessen. Die Brille beendet VR über ihr Systemmenü; zusätzlich gibt es außerhalb der Sitzung einen Beenden-Knopf. Keine Garantie für jede historische Meta-Brille und kein Kamera-Passthrough.
+
+Mac/iPad-Kamera: Erst Kamera einschalten, dann ausdrücklich „Armtracking starten“. Dabei gehen höchstens zwei kleine JPEG-Frames pro Sekunde nur an den eigenen Mac. macOS Vision (macOS 11+) erkennt Schulter, Ellbogen und Handgelenk als 2D-Punkte. Die virtuelle Szene folgt den erkannten Punkten. Keine Tiefenmessung oder Finger-/Greifererkennung aus der normalen Kamera. Frames werden nicht gespeichert. Stop, Kamerastopp und Hintergrundwechsel beenden weitere Übertragung. Unsichere Punkte werden nicht geraten. Die native Vision-Implementierung ist hier nicht auf einem Mac geprüft.
+
+Es gibt weiterhin keine Verbindung zu echter Roboterhardware. Dafür fehlen Hersteller, Modell, Schnittstelle, Arbeitsraum und Kalibrierung. Die Kamera und WebXR geben ausschließlich virtuelle Szenendaten weiter.
+
+Die Positionen der in VR bewegten Würfel lassen sich anschließend mit „VR-Objekte als OBJ speichern“ als tatsächliche Geometrie exportieren. Dies sind virtuelle Würfel, keine gescannten Realwelt-Objekte.

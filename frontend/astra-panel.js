@@ -36,6 +36,7 @@
     let started=false;if(data.supported&&plan.steps.length===1&&['open','website'].includes(plan.steps[0].type)){await api('/api/desktop/start',{id:plan.id});started=true;}
     result={reply:'Der konkrete Ablauf ist vorbereitet. '+(started?'Der Öffnen-Auftrag wurde gestartet.':'Mit dem Startknopf kannst du ihn hier ausführen; dazu muss der Server auf deinem Mac laufen.')};
    }else result=await api('/api/chat',{text});
+   if(result.view==='aeris'){location.assign('/aeris');return;}
    document.getElementById('companion-reply').textContent=result.reply||'';showSources(result);document.getElementById('companion-input').value='';await refresh();
    if(result.reply&&(!muted||result.speak_requested))await speak(result.reply);
   }catch(e){panelError=e.message;status.textContent=e.message;}finally{requestBusy=false;resumeListening();}

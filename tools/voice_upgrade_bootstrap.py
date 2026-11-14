@@ -16,6 +16,8 @@ import zipfile
 PAYLOAD_B64='__PAYLOAD_B64__'
 PAYLOAD_SHA='__PAYLOAD_SHA__'
 ALLOWED={
+    'backend/arm_pose.py','frontend/aeris-pose.js',
+    'frontend/aeris-xr.js',
     'frontend/aeris-assistant.js',
     'frontend/aeris.html','frontend/aeris.js',
     'backend/everyday.py','frontend/discover.js',

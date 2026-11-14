@@ -11,3 +11,11 @@ class AerisModeTests(unittest.TestCase):
    with self.assertRaises(ValueError):
     with store.identity_context('aeris'):raise ValueError('test')
    self.assertEqual(name(store),'JARVIS')
+
+ def test_switch_to_aeris_overrides_an_old_question(self):
+  from backend.server import Application
+  with tempfile.TemporaryDirectory() as folder:
+   app=Application(folder)
+   try:
+    app.chat('Erstelle eine Notiz');result=app.chat('Wechsel zu Aeris');self.assertEqual(result['view'],'aeris');self.assertIsNone(app.dialogue.get());self.assertIsNone(app.desktop.plan)
+   finally:app.office.stop()

@@ -16,7 +16,7 @@ import zipfile
 PAYLOAD_B64='__PAYLOAD_B64__'
 PAYLOAD_SHA='__PAYLOAD_SHA__'
 ALLOWED={
-    'backend/video_call.py','backend/native_vision.py','frontend/video-call.js','frontend/video-call.css','frontend/aeris-tracking.js','frontend/aeris-gestures.js','frontend/aeris-shell.css','frontend/aeris-shell.js','frontend/aeris-icon.svg','frontend/aeris-sw.js',
+    'VR-Quest-verbinden.command','backend/quest_link.py','frontend/vr-guide.html','frontend/call.html','frontend/call-bridge.js','frontend/aeris-model.js','frontend/aeris-projects.js','backend/video_call.py','backend/native_vision.py','frontend/video-call.js','frontend/video-call.css','frontend/aeris-tracking.js','frontend/aeris-gestures.js','frontend/aeris-shell.css','frontend/aeris-shell.js','frontend/aeris-icon.svg','frontend/aeris-sw.js',
     'backend/arm_pose.py','frontend/aeris-pose.js',
     'frontend/aeris-xr.js',
     'frontend/aeris-assistant.js',
@@ -107,7 +107,7 @@ def apply(root,files,manifest,install_callback):
             destination=backup/name;destination.parent.mkdir(parents=True,exist_ok=True);shutil.copy2(target,destination)
     try:
         for name,data in files.items():
-            target=root/name;written.append(name);atomic_write(target,data,originals[name][1] if originals[name] else 0o644)
+            target=root/name;written.append(name);atomic_write(target,data,originals[name][1] if originals[name] else (0o755 if name.endswith('.command') else 0o644))
         install_callback(root)
     except BaseException:
         for name in reversed(written):

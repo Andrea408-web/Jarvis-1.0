@@ -47,6 +47,12 @@ class UpgradeTests(unittest.TestCase):
         with self.assertRaises(ValueError):upgrade.apply(self.root,self.files,self.manifest,fail)
         self.assertEqual((self.root/'frontend/app.js').read_text(),'concurrent edit')
 
+    def test_new_quest_launcher_is_executable(self):
+        name='VR-Quest-verbinden.command';path=self.root/name;path.unlink()
+        self.manifest[name]['before']=None
+        upgrade.apply(self.root,self.files,self.manifest,lambda root:None)
+        self.assertEqual(path.stat().st_mode&0o777,0o755)
+
 class GeneratedPackageTests(unittest.TestCase):
     def test_packaged_helper_contains_current_patch_and_no_model_weights(self):
         import ast

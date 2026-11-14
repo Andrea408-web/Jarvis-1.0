@@ -1,0 +1,5 @@
+'use strict';
+const CACHE='aeris-workspace-v1';const FILES=['/aeris','/aeris.js','/aeris-assistant.js','/aeris-pose.js','/aeris-xr.js','/aeris-shell.css','/aeris-shell.js','/aeris-icon.svg','/mobile-app.js'];
+self.addEventListener('install',event=>event.waitUntil(caches.open(CACHE).then(cache=>cache.addAll(FILES))));
+self.addEventListener('activate',event=>event.waitUntil(self.clients.claim()));
+self.addEventListener('fetch',event=>{const url=new URL(event.request.url);if(url.origin!==self.location.origin||event.request.method!=='GET')return;if(FILES.includes(url.pathname)){event.respondWith(fetch(event.request).catch(()=>caches.match(url.pathname)));return;}if(event.request.mode==='navigate'&&['/','/index.html'].includes(url.pathname))event.respondWith(fetch(event.request).catch(()=>caches.match('/aeris')));});

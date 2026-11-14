@@ -171,3 +171,9 @@ Mac/iPad-Kamera: Erst Kamera einschalten, dann ausdrücklich „Armtracking star
 Es gibt weiterhin keine Verbindung zu echter Roboterhardware. Dafür fehlen Hersteller, Modell, Schnittstelle, Arbeitsraum und Kalibrierung. Die Kamera und WebXR geben ausschließlich virtuelle Szenendaten weiter.
 
 Die Positionen der in VR bewegten Würfel lassen sich anschließend mit „VR-Objekte als OBJ speichern“ als tatsächliche Geometrie exportieren. Dies sind virtuelle Würfel, keine gescannten Realwelt-Objekte.
+
+## Gelber Aeris-Energiekern und erste Offline-Grundlage
+
+Aeris besitzt ein eigenes Diamant-/Orbit-Symbol, einen gelben animierten Energiekern als Sprechknopf, einen animierten Einstieg und direkte Wechselknöpfe zu Jarvis/Astra. Reduzierte Bewegung wird respektiert.
+
+„Offline-Werkstatt vorbereiten“ speichert nur die Aeris-Programmoberfläche und deren Skripte im Browser. Nach erfolgreicher Vorbereitung bleiben 3D-Regler und OBJ-Export ohne Mac erreichbar. Der Service Worker speichert keine API-Antworten, Chatverläufe, Kamerabilder oder Zugangsschlüssel. Browser können diese Daten später entfernen. Eine Offline-KI, Thorsten-Inferenz auf dem Gerät, Apple-Vision-Tracking ohne Mac oder ein echter eigener iOS-Server sind damit ausdrücklich nicht eingerichtet. Gerätevarianten müssen später über eine passende Laufzeit und installierte Modelle behandelt werden.

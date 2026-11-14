@@ -449,7 +449,7 @@ class Handler(BaseHTTPRequestHandler):
             if path == '/api/reminders':
                 return self._json({'reminders': app.store.reminders()})
             # Exact static allowlist: no arbitrary files, keys or directory listings.
-            static = {'/': 'mobile.html' if self.server.device_auth or re.search(r'iPhone|iPad|iPod|Macintosh.*Mobile',self.headers.get('User-Agent',''),re.I) else 'index.html', '/index.html': 'index.html', '/mobile':'mobile.html','/mobile-app.js':'mobile-app.js','/boot.js':'boot.js','/task-board.js':'task-board.js','/discover.js':'discover.js','/aeris':'aeris.html','/aeris.js':'aeris.js',
+            static = {'/': 'mobile.html' if self.server.device_auth or re.search(r'iPhone|iPad|iPod|Macintosh.*Mobile',self.headers.get('User-Agent',''),re.I) else 'index.html', '/index.html': 'index.html', '/mobile':'mobile.html','/mobile-app.js':'mobile-app.js','/boot.js':'boot.js','/task-board.js':'task-board.js','/discover.js':'discover.js','/aeris':'aeris.html','/aeris.js':'aeris.js','/aeris-assistant.js':'aeris-assistant.js',
                       '/manifest.webmanifest':'manifest.webmanifest','/app-icon.png':'app-icon.png','/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js','/office-3d.js':'office-3d.js', '/lowpoly-stage.js':'lowpoly-stage.js', '/artifacts.js':'artifacts.js', '/jarvis-voice.js':'jarvis-voice.js', '/voice-worker.js':'voice-worker.js', '/conversation.js':'conversation.js', '/mini-hub.js':'mini-hub.js', '/world-news.js':'world-news.js', '/astra.js':'astra.js', '/astra.css':'astra.css', '/astra-panel.html':'astra-panel.html', '/astra-panel.js':'astra-panel.js'}
             for name in ['ESpeak.js','mespeak.js','config.json','jarvis-de.json','de.json','COPYING','NOTICE.txt','UPSTREAM-README.md','mespeak-2.0.2-source.tgz','speak-source-9c6f642.tar.gz']:
                 static['/vendor/voice/'+name]='vendor/voice/'+name
@@ -559,6 +559,8 @@ class Handler(BaseHTTPRequestHandler):
                             from .web_assistant import public_url
                             if public_url(url[0]):return self._json({'reply':'Hier ist die Website, Sir. Tippe auf den Link.','proposals':[],'sources':[{'title':'Website','url':url[0]}]})
                         return self._json({'reply':'Desktop-Aufträge bitte in Jarvis direkt auf dem Mac starten. Website- und Film-Aufträge sowie Chat funktionieren hier auf dem Handy.','proposals':[]})
+                if body.get('mode')=='aeris':
+                    with app.store.identity_context('aeris'):return self._json(app.chat(text))
                 return self._json(app.chat(text))
             if method == 'POST' and path == '/api/image':
                 encoded = body.get('image')

@@ -155,3 +155,9 @@ Astra wartet nach dem App-Öffnen kurz auf die tatsächliche Vordergrund-App. Be
 Unter `/aeris` öffnet sich eine gelbe Werkstatt in Glasoptik. Ziehen dreht die Ansicht; drei Regler bewegen einen virtuellen Roboterarm. Bis zu 30 Würfel lassen sich hinzufügen, entfernen und als echte OBJ-Geometrie speichern. Der Arm ist eine Simulation und wird nicht exportiert. Die Szene wird beim Neuladen zurückgesetzt. Links sind in der vollständigen und mobilen Jarvis-Ansicht vorhanden.
 
 Auf Quest über den gekoppelten Heimnetz-Zugang im Browser öffnen. Dies ist eine flache Browser-Ansicht, kein immersiver WebXR-Modus; kein Handtracking und keine echte Roboter-Hardwaresteuerung. Keine Meta-Brille wurde hier getestet, daher keine Zusage für alle Meta-Geräte.
+
+### Aeris als Assistent
+
+Aeris bietet jetzt Chat, Thorsten-Ausgabe, browserabhängige Spracheingabe und die gemeinsame Auftragstafel direkt in der gelben Glasoberfläche. Seine Identität gilt nur für die jeweilige Anfrage; Jarvis/Astra werden dadurch nicht dauerhaft umbenannt. Szenenbefehle: „Erstelle einen Würfel“, „Entferne das letzte Objekt“, „Schulter auf 30 Grad“, entsprechend Basis und Ellbogen. Die Gelenkgrenzen werden eingehalten.
+
+Die Kamera wird ausdrücklich per Knopf oder Befehl angefordert. Vorschau nur lokal, keine automatische Bildanalyse, kein Video-Upload. Ausschalten, Seitenwechsel oder eine überholte Freigabe beenden die Streams. Quest-Kamerazugriff ist vom Browser abhängig. Die Glasoptik ist UI-Gestaltung, keine echte Headset-Passthrough-Funktion. Weiterhin kein immersives WebXR oder realer Hardware-Arm.

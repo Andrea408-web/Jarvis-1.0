@@ -16,6 +16,7 @@ import zipfile
 PAYLOAD_B64='__PAYLOAD_B64__'
 PAYLOAD_SHA='__PAYLOAD_SHA__'
 ALLOWED={
+    'frontend/aeris-assistant.js',
     'frontend/aeris.html','frontend/aeris.js',
     'backend/everyday.py','frontend/discover.js',
     'backend/task_router.py',

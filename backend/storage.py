@@ -5,6 +5,8 @@ its own SQLite connection so HTTP request threads never share a connection.
 """
 from __future__ import annotations
 
+import threading
+from contextlib import contextmanager
 import json
 import os
 import platform
@@ -57,6 +59,7 @@ def default_data_dir() -> Path:
 
 class Store:
     def __init__(self, data_dir: str | Path | None = None):
+        self._identity=threading.local()
         self.data_dir = Path(data_dir) if data_dir is not None else default_data_dir()
         self.data_dir.mkdir(parents=True, exist_ok=True, mode=0o700)
         self.path = self.data_dir / "jarvis.sqlite3"
@@ -108,7 +111,14 @@ class Store:
                     result[row["name"]] = json.loads(row["value"])
         # Thorsten is the chosen voice, including installations with legacy settings.
         result["voice_engine"]="natural"
+        if getattr(self._identity,'name',None):result['assistant_identity']=self._identity.name
         return result
+
+    @contextmanager
+    def identity_context(self,name):
+        previous=getattr(self._identity,'name',None);self._identity.name=name
+        try:yield
+        finally:self._identity.name=previous
 
     def update_settings(self, values: dict) -> dict:
         if not isinstance(values, dict):

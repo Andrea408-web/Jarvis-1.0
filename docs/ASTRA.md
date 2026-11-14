@@ -149,3 +149,9 @@ Allgemeine Filmtipps öffnen eine lokale Kartenansicht mit Beschreibungen und FS
 Das Browser-Pop-up unter Astra sendet Text und Sprache selbst an Jarvis und spielt Thorsten selbst ab. Der große Jarvis-Tab kann geschlossen werden; der Python-Server muss weiterlaufen. „Gespräch starten“ startet die Spracherkennung dieses Fensters. Der Browser kann Mikrofonberechtigungen verlangen und Hintergrundaufnahme einschränken. Das native schwebende WKWebView-Fenster bietet auf manchen macOS-Versionen keine Web-Spracherkennung: Dann ist Schreiben mit eigener Thorsten-Ausgabe möglich; zum Sprechen das Browser-Pop-up verwenden. Diese Grenze wird im Fenster angezeigt. „Stopp“ bzw. „Aktionen stoppen“ stoppt den Desktopablauf, „Reden stoppen“ nur die Stimme.
 
 Astra wartet nach dem App-Öffnen kurz auf die tatsächliche Vordergrund-App. Bei einer anderen App wird keine Eingabe gesendet. „Mausfreigabe am Mac öffnen“ öffnet die passende Systemeinstellung; eine Freigabe muss der Nutzer selbst erteilen.
+
+## Aeris – erster 3D-Arbeitsbereich
+
+Unter `/aeris` öffnet sich eine gelbe Werkstatt in Glasoptik. Ziehen dreht die Ansicht; drei Regler bewegen einen virtuellen Roboterarm. Bis zu 30 Würfel lassen sich hinzufügen, entfernen und als echte OBJ-Geometrie speichern. Der Arm ist eine Simulation und wird nicht exportiert. Die Szene wird beim Neuladen zurückgesetzt. Links sind in der vollständigen und mobilen Jarvis-Ansicht vorhanden.
+
+Auf Quest über den gekoppelten Heimnetz-Zugang im Browser öffnen. Dies ist eine flache Browser-Ansicht, kein immersiver WebXR-Modus; kein Handtracking und keine echte Roboter-Hardwaresteuerung. Keine Meta-Brille wurde hier getestet, daher keine Zusage für alle Meta-Geräte.

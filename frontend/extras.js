@@ -39,6 +39,7 @@
   button('Profil im Finder zeigen',mobileTools,()=>bridge.api('/api/mobile/reveal',{method:'POST',body:'{}'}));
   button('Profil herunterladen',mobileTools,async()=>{const data=await bridge.api('/api/mobile/profile',{method:'POST',body:'{}'});const url=URL.createObjectURL(new Blob([data.content],{type:'application/x-apple-aspen-config'}));const a=element('a',null,document.body);a.href=url;a.download=data.filename;a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);});
   button('Verbindung beenden',mobileTools,async()=>{await bridge.api('/api/mobile/stop',{method:'POST',body:'{}'});qr.replaceChildren();link.removeAttribute('href');link.textContent='';fingerprint.textContent='';mobileStatus.textContent='Handyzugang beendet; gekoppelte Sitzungen sind ungültig.';});
+  const aerisLink=element('a','Aeris · 3D',nav);aerisLink.href='/aeris';aerisLink.className='secondary-button';
   const connectPhone=button('Handy verbinden',nav,()=>open(mobile));
   const install=dialog('install-dialog','JARVIS auf dem Home-Bildschirm');
   element('p','iPhone/iPad: Öffne die gekoppelte JARVIS-Adresse in Safari. Tippe auf Teilen (Quadrat mit Pfeil) → Zum Home-Bildschirm → Hinzufügen. Falls nötig im Teilen-Menü nach unten scrollen. In einem eingebauten Browser zuerst „In Safari öffnen“ wählen.',install);

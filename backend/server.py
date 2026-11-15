@@ -17,7 +17,7 @@ import ssl
 import threading
 import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from urllib.parse import urlsplit
+from urllib.parse import urlsplit, unquote
 
 from .ai import GeminiClient, ProviderError, provider_status
 from .voice import VoiceClient
@@ -497,6 +497,14 @@ class Handler(BaseHTTPRequestHandler):
         elif method == 'DELETE' and path == '/api/history':
             return self._json(app.clear_chat())
         elif method in {'POST', 'PUT', 'PATCH'}:
+            if method=='POST' and path=='/api/video-editor/upload':
+                if self.server.device_auth or not ipaddress.ip_address(self.client_address[0]).is_loopback:return self._json({'error':'Videoimport bitte direkt am Mac verwenden.'},403)
+                # Raw bytes are streamed before the small JSON-body reader.
+                self.close_connection=True
+                if self.headers.get('Transfer-Encoding') or self.headers.get_content_type()!='application/octet-stream':raise ValueError('Videodatei mit bekannter Länge erforderlich.')
+                try:length=int(self.headers.get('Content-Length','0'))
+                except ValueError:raise ValueError('Ungültige Dateigröße.') from None
+                return self._json({'assets':app.video_editor.upload(self.rfile,length,unquote(self.headers.get('X-Video-Name','clip.mp4')))})
             body = self._body()
             if method=='POST' and path.startswith('/api/desktop/'):
                 if self.server.device_auth:raise ValueError('Desktop-Steuerung ist nur direkt am Mac verfügbar, nicht über die Handy-Kopplung.')
@@ -553,7 +561,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError('Ungültige Kopplungsanfrage.')
                 session=self.server.device_auth.pair(body['ticket'])
                 return self._json({'ok':True},cookie='jarvis_device='+session+'; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=2592000')
-            if method=='POST' and path in {'/api/video-editor/choose','/api/video-editor/start','/api/video-editor/stop'}:
+            if method=='POST' and path in {'/api/video-editor/choose','/api/video-editor/start','/api/video-editor/stop','/api/video-editor/assist'}:
                 if self.server.device_auth or not ipaddress.ip_address(self.client_address[0]).is_loopback:return self._json({'error':'Videoschnitt bitte direkt am Mac verwenden.'},403)
                 if path.endswith('/choose'):
                     if body:raise ValueError('Keine Dateipfade aus dem Browser angeben. Die Dateiauswahl am Mac verwenden.')
@@ -561,6 +569,10 @@ class Handler(BaseHTTPRequestHandler):
                 if path.endswith('/stop'):
                     if set(body)!={'id'}:raise ValueError('Auftragskennung erforderlich.')
                     return self._json(app.video_editor.stop(body['id']))
+                if path.endswith('/assist'):
+                    if not app.chat_lock.acquire(blocking=False):raise ProviderError('Eine KI-Anfrage läuft bereits. Bitte kurz warten.',409)
+                    try:return self._json(app.video_editor.assist(app,body),202)
+                    finally:app.chat_lock.release()
                 return self._json(app.video_editor.start(body),202)
             if method=='POST' and path in {'/api/companion/open','/api/companion/mode','/api/companion/close','/api/companion/browser','/api/companion/screen','/api/companion/motion','/api/companion/editor'}:
                 if self.server.device_auth or not ipaddress.ip_address(self.client_address[0]).is_loopback:return self._json({'error':'Das Mac-Fenster bitte direkt am Mac öffnen.'},403)

@@ -1,7 +1,7 @@
 """Actual local video cuts and exports, bounded work and read-only input files."""
-import hashlib,json,shutil,subprocess,sys,tempfile,time,unittest
+import hashlib,io,json,shutil,subprocess,sys,tempfile,time,unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import patch,MagicMock
 from backend.video_editor import VideoEditor
 @unittest.skipUnless(shutil.which('ffmpeg') and shutil.which('ffprobe'),'FFmpeg fixture tools not installed')
 class VideoEditorTests(unittest.TestCase):
@@ -32,3 +32,20 @@ class VideoEditorTests(unittest.TestCase):
   for cuts in [[{'asset':'../../etc/passwd','start':0,'end':1}],[{'asset':self.asset['id'],'start':float('nan'),'end':1}],[{'asset':self.asset['id'],'start':1.5,'end':1}]]:
    with self.assertRaises(ValueError):self.editor.start({'cuts':cuts,'formats':['youtube']})
   with self.assertRaises(ValueError):self.editor.file('../../private','youtube')
+
+ def test_stream_upload_and_interrupted_import_cleanup(self):
+  data=self.source.read_bytes();assets=self.editor.upload(io.BytesIO(data),len(data),'Mein Clip.mp4');asset=assets[0]
+  self.assertEqual(asset['name'],'Mein Clip.mp4');self.assertEqual(self.editor.file(asset['id'])[0].read_bytes(),data)
+  before=set((self.editor.root/'imports').iterdir())
+  with self.assertRaises(ValueError):self.editor.upload(io.BytesIO(b'short'),100,'broken.mp4')
+  self.assertEqual(set((self.editor.root/'imports').iterdir()),before)
+  with self.assertRaises(ValueError):self.editor.upload(io.BytesIO(data),len(data),'script.py')
+ def test_local_ai_plan_executes_valid_cut_and_rejects_unselected_source(self):
+  app=MagicMock();app.store.settings.return_value={'ai_provider':'llamacpp','local_model':'small'}
+  app.llamacpp.transport.return_value={'done':True,'message':{'content':json.dumps({'cuts':[{'clip':1,'start':1,'end':2}],'remove_silence':False})}}
+  result=self.editor.assist(app,{'assets':[self.asset['id']],'instruction':'Entferne die erste Sekunde','formats':['youtube'],'budget_minutes':1})
+  job=self.wait(result['job']);self.assertEqual(job['state'],'completed');self.assertEqual(job['cuts'][0]['start'],1)
+  app.llamacpp.transport.return_value={'done':True,'message':{'content':json.dumps({'cuts':[{'clip':99,'start':0,'end':1}],'remove_silence':False})}}
+  with self.assertRaises(ValueError):self.editor.assist(app,{'assets':[self.asset['id']],'instruction':'Schneide'})
+  app.llamacpp.transport.return_value={'done':True,'message':{'content':'Anfrage erfüllt'}}
+  with self.assertRaises(ValueError):self.editor.assist(app,{'assets':[self.asset['id']],'instruction':'Schneide'})

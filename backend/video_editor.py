@@ -26,6 +26,55 @@ class VideoEditor:
   try:raw=subprocess.run(['/usr/bin/osascript','-l','JavaScript','-e',script],capture_output=True,text=True,check=True,timeout=180).stdout;paths=json.loads(raw)
   except (OSError,subprocess.SubprocessError,ValueError):raise ValueError('Dateiauswahl abgebrochen oder nicht verfügbar.') from None
   return self.import_paths(paths)
+ def upload(self,stream,length,name):
+  # Bounded streaming import: never hold a full video in Python memory.
+  if not isinstance(length,int) or not 1<=length<=4*1024**3:raise ValueError('Bitte eine Videodatei bis 4 GB auswählen.')
+  name=Path(name).name;suffix=Path(name).suffix.lower()
+  if suffix not in {'.mp4','.mov','.m4v','.mkv','.webm'}:raise ValueError('MP4, MOV, M4V, MKV oder WebM auswählen.')
+  folder=self.root/'imports';folder.mkdir(parents=True,exist_ok=True,mode=0o700)
+  if shutil.disk_usage(folder).free<length+128*1024**2:raise ValueError('Nicht genug freier Speicher für die Videokopie.')
+  path=folder/(secrets.token_hex(16)+suffix)
+  try:
+   with path.open('xb') as output:
+    path.chmod(0o600);remaining=length
+    while remaining:
+     chunk=stream.read(min(1024*1024,remaining))
+     if not chunk:raise ValueError('Videoübertragung wurde unterbrochen.')
+     output.write(chunk);remaining-=len(chunk)
+   assets=self.import_paths([str(path)])
+   with self.lock:self.assets[assets[0]['id']]['name']=name[:240]
+   assets[0]['name']=name[:240];return assets
+  except Exception:
+   path.unlink(missing_ok=True);raise
+ def assist(self,app,body):
+  if set(body)-{'assets','instruction','formats','budget_minutes','short_seconds'}:raise ValueError('Unbekannte Schnittfelder.')
+  ids=body.get('assets');instruction=body.get('instruction','')
+  if not isinstance(ids,list) or not 1<=len(ids)<=8 or any(not isinstance(i,str) or i not in self.assets for i in ids) or len(set(ids))!=len(ids):raise ValueError('Zuerst 1 bis 8 Clips auswählen.')
+  if not isinstance(instruction,str) or len(instruction)>1500:raise ValueError('Schnittwunsch bis 1500 Zeichen eingeben.')
+  selected=[self.public_asset(self.assets[i]) for i in ids]
+  cuts=[{'asset':a['id'],'start':0,'end':a['duration']} for a in selected]
+  silence=self.tools()['silence'];message='Automatischer technischer Schnitt: Clips zusammenfügen, Formate anpassen'+(' und längere stille Stellen kürzen.' if silence else '. Pausenkürzen ist ohne FFmpeg nicht verfügbar.')
+  if instruction.strip():
+   settings=app.store.settings();provider=settings['ai_provider']
+   if provider not in {'llamacpp','ollama'}:raise ValueError('Für einen freien Schnittwunsch muss die lokale KI laufen. Ohne Text kannst du den automatischen technischen Schnitt starten.')
+   system=('Du planst einen Videoschnitt. Du siehst KEINE Bilder und hörst KEIN Audio. Du kennst nur Dateinamen und Dauer. '
+           'Erlaubt: Clips nach Wunsch anordnen, Bereiche in Sekunden ausschneiden, stille Stellen kürzen. '
+           'Keine erfundenen Szenen, Highlights, Untertitel, Musik oder Effekte. Bei nicht unterstütztem Wunsch antworte nur mit JSON {"error":"kurze Erklärung"}. '
+           'Sonst nur JSON {"cuts":[{"clip":1,"start":0,"end":10}],"remove_silence":true}. '
+           'Maximal 32 Bereiche. Nummeriere Clips ab 1 wie in den Clipdaten. Nutze gültige Zeitgrenzen. Ohne Zeitwunsch vollständige Clips behalten. '
+           'Pausenkürzen verfügbar: '+str(silence)+'. Clipdaten: '+json.dumps([{'clip':i+1,'name':a['name'],'duration':a['duration']} for i,a in enumerate(selected)],ensure_ascii=False))
+   client=app.llamacpp if provider=='llamacpp' else app.local_ai
+   result=client.transport('/api/chat',{'model':settings['local_model'],'messages':[{'role':'system','content':system},{'role':'user','content':instruction.strip()}],'stream':False,'options':{'num_ctx':4096,'num_predict':1000,'temperature':0},'keep_alive':'5m'})
+   try:
+    if result.get('done') is not True or result.get('message',{}).get('tool_calls'):raise ValueError()
+    raw=result['message']['content'].strip();raw=re.sub(r'^```(?:json)?\s*|\s*```$','',raw);plan=json.loads(raw)
+    if not isinstance(plan,dict):raise ValueError()
+   except (KeyError,TypeError,ValueError):raise ValueError('Die lokale KI hat keinen gültigen Schnittplan geliefert. Formuliere konkrete Sekundenangaben oder nutze den automatischen Schnitt ohne Text.') from None
+   if 'error' in plan:raise ValueError('Schnittwunsch noch nicht unterstützt: '+str(plan['error'])[:300])
+   if set(plan)!={'cuts','remove_silence'} or not isinstance(plan['cuts'],list) or any(not isinstance(c,dict) or set(c)!={'clip','start','end'} or type(c.get('clip')) is not int or not 1<=c['clip']<=len(ids) for c in plan['cuts']):raise ValueError('Die KI hat einen ungültigen Schnittplan geliefert. Es wurde nichts gestartet.')
+   cuts=[{'asset':ids[c['clip']-1],'start':c['start'],'end':c['end']} for c in plan['cuts']];silence=plan['remove_silence'];message='Schnittplan der lokalen KI geprüft und zur Ausführung gestartet.'
+  job=self.start({'cuts':cuts,'formats':body.get('formats',['youtube','shorts']),'budget_minutes':body.get('budget_minutes',10),'short_seconds':body.get('short_seconds',60),'remove_silence':silence})
+  return {'job':job,'message':message}
  def probe(self,path,deadline=None):
   tools=self.tools()
   if tools['ffprobe']:

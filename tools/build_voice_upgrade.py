@@ -18,7 +18,7 @@ with zipfile.ZipFile(buffer,'w',zipfile.ZIP_DEFLATED,compresslevel=9) as archive
         data=(ROOT/name).read_bytes()
         previous=subprocess.run(['git','show',BASE+':'+name],cwd=ROOT,capture_output=True)
         accepted=[]
-        for ref in ['bd17dfd','9bf0a4e','539bd30','4490b8e','9b30d32','ef0726f','2c234cb','43d6239','edbc0a0','a4f53df','6d16c7b','4129eb0','be6f74a','11c02f4','28d00a8','fd37579','c9eb5d3','108dc26','cf70d99','b57c755','fbe15c9','f683031','eb91d58','61babf6','a3b2dd8','24d8f0d','3dd8c69','04dce3c','38a72d6']:
+        for ref in ['bd17dfd','9bf0a4e','539bd30','4490b8e','9b30d32','ef0726f','2c234cb','43d6239','edbc0a0','a4f53df','6d16c7b','4129eb0','be6f74a','11c02f4','28d00a8','fd37579','c9eb5d3','108dc26','cf70d99','b57c755','fbe15c9','f683031','eb91d58','61babf6','a3b2dd8','24d8f0d','3dd8c69','04dce3c','38a72d6','504a8bb']:
             old=subprocess.run(['git','show',ref+':'+name],cwd=ROOT,capture_output=True)
             if old.returncode==0:
                 checksum=hashlib.sha256(old.stdout).hexdigest()

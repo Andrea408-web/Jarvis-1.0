@@ -7,7 +7,7 @@ class CompanionTests(unittest.TestCase):
  def test_floating_window_config_has_no_image_or_token_and_mode_changes_reuse_process(self):
   with tempfile.TemporaryDirectory() as folder:
    panel=CompanionWindow(folder);process=Mock();process.poll.return_value=None
-   with patch('backend.companion_window.platform.system',return_value='Darwin'),patch('backend.companion_window.subprocess.Popen',return_value=process) as spawn:
+   with patch('backend.companion_window.platform.system',return_value='Darwin'),patch('backend.companion_window.subprocess.Popen',side_effect=lambda *args,**kwargs:((Path(folder)/'jarvis-companion.ready').write_text('visible') and process)) as spawn:
     panel.open('http://localhost:8765/companion?native=1','helper');panel.change('island');self.assertEqual(spawn.call_count,1);data=json.loads((Path(folder)/'jarvis-companion.json').read_text());self.assertEqual(data['mode'],'island');self.assertEqual(set(data),{'url','mode','sequence','wandering'});self.assertNotIn('#',data['url']);self.assertEqual((Path(folder)/'jarvis-companion.json').stat().st_mode&0o777,0o600);panel.close();process.terminate.assert_called_once();self.assertFalse(panel.screen.enabled)
  def test_invalid_modes_and_closed_window_never_capture(self):
   with tempfile.TemporaryDirectory() as folder:
@@ -37,3 +37,16 @@ class CompanionTests(unittest.TestCase):
    panel=CompanionWindow(folder)
    with self.assertRaises(ValueError):panel.motion('no')
    panel.motion(False);self.assertFalse(json.loads((Path(folder)/'jarvis-companion.json').read_text())['wandering'])
+
+ def test_failed_native_launch_is_never_reported_as_open(self):
+  with tempfile.TemporaryDirectory() as folder:
+   panel=CompanionWindow(folder);process=Mock();process.poll.return_value=1
+   with patch('backend.companion_window.platform.system',return_value='Darwin'),patch('backend.companion_window.subprocess.Popen',return_value=process):
+    with self.assertRaisesRegex(ValueError,'konnte nicht starten'):panel.open('http://localhost:8765/companion?native=1')
+   self.assertIsNone(panel.process)
+ def test_invisible_native_window_times_out_and_stops_process(self):
+  with tempfile.TemporaryDirectory() as folder:
+   panel=CompanionWindow(folder);process=Mock();process.poll.return_value=None
+   with patch('backend.companion_window.platform.system',return_value='Darwin'),patch('backend.companion_window.subprocess.Popen',return_value=process),patch('backend.companion_window.time.monotonic',side_effect=[0,7]):
+    with self.assertRaisesRegex(ValueError,'kein sichtbares'):panel.open('http://localhost:8765/companion?native=1')
+   process.terminate.assert_called_once();self.assertIsNone(panel.process)

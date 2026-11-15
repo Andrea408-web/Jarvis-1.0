@@ -5,13 +5,6 @@
 /* Compact by default; larger portrait is an explicit choice. */
 #video-call-dialog{width:min(560px,94vw);max-width:94vw;padding:16px;max-height:88dvh}#video-call-dialog .dialog-heading h2{font-size:23px}#call-expand{font-size:10px;padding:6px 9px;margin-left:auto;margin-right:10px}.call-layout{grid-template-columns:170px minmax(0,1fr);gap:14px}.call-stage{min-height:245px}.call-side{max-height:300px}#call-avatar{height:245px}.call-name{font-size:10px;left:12px;top:12px;letter-spacing:.12em}.call-name small{font-size:6px}.call-preview{width:36%;right:7px;bottom:7px}.call-controls{margin-top:12px;gap:5px}.call-controls button{font-size:10px!important;padding:8px 10px!important}.call-privacy-options>summary{font-size:10px;cursor:pointer;color:#b8bba4}.call-side #call-transcript{min-height:65px}.call-side #call-transcript p{font-size:11px;padding:8px}.call-side form input{font-size:11px;padding:8px}.call-side form button{font-size:11px;padding:7px}.call-side p{font-size:11px}.call-expanded{width:min(900px,94vw)!important}.call-expanded .call-layout{grid-template-columns:1fr 1fr}.call-expanded #call-avatar{height:400px}.call-expanded .call-stage{min-height:400px}.call-expanded .call-side{max-height:440px}@media(max-width:600px){.call-layout{grid-template-columns:110px minmax(0,1fr);gap:10px}.call-stage{min-height:190px}#call-avatar{height:210px}.call-name{font-size:8px;left:8px;top:8px}.call-name small{font-size:5px}.call-side{max-height:300px}.call-side form input{min-width:90px;width:100%}.call-side form button{width:100%}.call-preview{width:48%}.call-expanded .call-layout{grid-template-columns:1fr}.call-expanded #call-avatar{height:220px}.call-expanded .call-stage{min-height:220px}}
 
-/* Small call card; expansion stays an explicit choice. Companion sizes are separate. */
-body:not([data-companion]) #video-call-dialog:not(.call-expanded){width:min(430px,94vw);padding:12px;max-height:70dvh}
-body:not([data-companion]) #video-call-dialog:not(.call-expanded) .dialog-heading h2{font-size:17px}
-body:not([data-companion]) #video-call-dialog:not(.call-expanded) .call-layout{grid-template-columns:100px minmax(0,1fr);gap:10px}
-body:not([data-companion]) #video-call-dialog:not(.call-expanded) .call-stage{min-height:150px;height:150px}
-body:not([data-companion]) #video-call-dialog:not(.call-expanded) #call-avatar{height:150px}
-body:not([data-companion]) #video-call-dialog:not(.call-expanded) .call-side{max-height:200px}
-body:not([data-companion]) #video-call-dialog:not(.call-expanded) .call-name{font-size:8px;left:7px;top:7px}
-body:not([data-companion]) #video-call-dialog:not(.call-expanded) .call-name small{display:none}
-body:not([data-companion]) #video-call-dialog:not(.call-expanded) .call-controls button{padding:6px 8px!important;font-size:9px!important}
+/* Compact navigation entry, independently of the call dialog. */
+#video-call-open{padding:7px 9px;min-height:0;height:auto;font-size:11px;gap:7px}
+#video-call-open>span:first-child{font-size:15px}

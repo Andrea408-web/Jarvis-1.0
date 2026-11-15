@@ -808,7 +808,10 @@ def main(argv=None):
     except (OSError,ValueError):print('Handy-Zugang konnte nicht starten. Am Mac „Handy verbinden“ öffnen und das WLAN prüfen.',flush=True)
     if args.open_companion:
         try:app.companion_window.open(('https' if args.cert else 'http')+f'://localhost:{server.server_port}/companion?native=1','island')
-        except (OSError,ValueError) as error:print(str(error)+f' Browser-Helfer: http://localhost:{server.server_port}/companion',flush=True)
+        except (OSError,ValueError) as error:
+            print(str(error)+f' Browser-Helfer: http://localhost:{server.server_port}/companion',flush=True)
+            import webbrowser
+            webbrowser.open(f'http://localhost:{server.server_port}/companion?mode=helper')
     if args.open_browser:
         import webbrowser
         address = f'[{args.host}]' if ':' in args.host else args.host

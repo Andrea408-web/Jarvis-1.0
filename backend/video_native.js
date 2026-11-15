@@ -2,7 +2,7 @@
 ObjC.import('Cocoa');ObjC.import('AVFoundation');ObjC.import('CoreMedia');ObjC.import('CoreGraphics');
 function run(args){
  function asset(path){return $.AVURLAsset.URLAssetWithURLOptions($.NSURL.fileURLWithPath(path),null);}
- function seconds(t){return Number(t.value)/Number(t.timescale);}
+ function seconds(t){return Number($.CMTimeGetSeconds(t));}
  if(args[0]==='probe'){const a=asset(args[1]),tracks=a.tracksWithMediaType($.AVMediaTypeVideo);if(!tracks.count)throw Error('Keine Videospur.');const v=tracks.objectAtIndex(0);return JSON.stringify({duration:seconds(v.timeRange.start)+seconds(v.timeRange.duration),width:Math.round(v.naturalSize.width),height:Math.round(v.naturalSize.height),audio:a.tracksWithMediaType($.AVMediaTypeAudio).count>0});}
  const raw=$.NSString.stringWithContentsOfFileEncodingError(args[1],$.NSUTF8StringEncoding,null),config=JSON.parse(ObjC.unwrap(raw)),composition=$.AVMutableComposition.composition,vt=composition.addMutableTrackWithMediaTypePreferredTrackID($.AVMediaTypeVideo,0),at=composition.addMutableTrackWithMediaTypePreferredTrackID($.AVMediaTypeAudio,0),instructions=$.NSMutableArray.new,params=$.AVMutableAudioMixInputParameters.audioMixInputParametersWithTrack(at);let cursor=0;
  const w=config.kind==='shorts'?1080:1920,h=config.kind==='shorts'?1920:1080,time=s=>$.CMTimeMakeWithSeconds(s,600);

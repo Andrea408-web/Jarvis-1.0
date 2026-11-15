@@ -20,13 +20,17 @@ with tempfile.TemporaryDirectory() as folder:
    with page.expect_download() as download:page.get_by_role('link',name='MP4 herunterladen',exact=True).first.click()
    path=root/'download.mp4';download.value.save_as(path);assert path.stat().st_size>1000;assert app.video_editor.probe(path)['width']==1920;assert source.exists();page.screenshot(path='/tmp/astra-video-editor.png');assert not errors,errors
    # Real browser multi-file selection, sequential bounded uploads, direct cut list.
-   page.locator('#files').set_input_files([str(source),str(path)])
-   page.get_by_text('2 Clips geladen.',exact=False).wait_for();assert page.locator('#cuts .cut').count()==2
+   with page.expect_file_chooser() as chooser:page.locator('#files').click()
+   chooser.value.set_files([str(source),str(path)])
+   page.get_by_text('2 von 2 Clips geladen.',exact=False).wait_for();assert page.locator('#cuts .cut').count()==2
    assert page.locator('#asset-list').inner_text().count('Zur Schnittliste')>=3
    assert page.locator('#preview').get_attribute('src').startswith('/edit-media/')
    page.locator('#shorts').uncheck();page.locator('#assist').click();page.get_by_text('Automatischer technischer Schnitt:',exact=False).wait_for();app.video_editor.worker.join(40)
    assert list(app.video_editor.jobs.values())[-1]['state']=='completed'
    invalid=context.request.post(url+'/api/video-editor/upload',headers={'X-Jarvis-Token':app.token,'Content-Type':'application/octet-stream','X-Video-Name':'no.py'},data=b'bad');assert invalid.status==400
-   assert not errors,errors
+   page.route('**/api/video-editor/upload',lambda route:route.fulfill(status=404,content_type='application/json',body='{}'))
+   page.locator('#files').set_input_files(str(source));page.get_by_text('Kein Clip importiert.',exact=False).wait_for()
+   assert 'Strg+C' in page.locator('#imports').inner_text()
+   assert page.locator('#files').is_enabled();assert not errors,errors
    print('PASS: actual clip/time UI, both formats exported, original remains, no raw paths accepted, partial HTTP preview, job completes after editor closes, playable MP4 download. AVFoundation fallback not tested on physical Mac.');browser.close()
  finally:app.video_editor.close();app.office.stop();server.shutdown();server.server_close();thread.join(3)

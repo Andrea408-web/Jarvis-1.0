@@ -34,3 +34,10 @@ class VideoCallTests(unittest.TestCase):
     try:self.assertEqual(request(self.app.token),409)
     finally:self.app.chat_lock.release()
   finally:server.shutdown();server.server_close();thread.join(3)
+
+ def test_native_screen_is_requested_per_question_and_never_saved(self):
+  self.app.llamacpp.endpoint_transport=Mock(return_value={'choices':[{'finish_reason':'stop','message':{'content':'Sir, hier steht Projekt.'}}]})
+  with patch.object(self.app.companion_window,'capture',return_value=JPEG) as capture,patch('backend.video_call.native_vision.analyze',return_value={'available':True,'labels':[],'text':'Projekt'}) as analyze,patch.object(self.app.store,'append') as append:
+   answer(self.app,{'text':'Hallo'});capture.assert_not_called();analyze.assert_not_called()
+   answer(self.app,{'text':'Was steht hier?','native_screen':True,'source':'screen'});capture.assert_called_once();analyze.assert_called_once_with(JPEG);append.assert_not_called();self.assertEqual(self.app.store.history(),[])
+   with self.assertRaises(ValueError):answer(self.app,{'text':'Was?','native_screen':True,'image':base64.b64encode(JPEG).decode()})

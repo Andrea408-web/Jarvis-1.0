@@ -18,7 +18,7 @@ def _free_port(port):
         raise ValueError(f'Port {port} ist noch belegt. Bitte die alte JARVIS-/KI-Sitzung in ihrem Terminal mit Control+C beenden. Es wird kein fremder Prozess gestoppt.') from None
 
 
-def run(setup=False):
+def run(setup=False,companion=False):
     architecture = easy_setup.preflight(check_space=False)
     executable, model = easy_setup.prepare() if setup else easy_setup.read_installation(architecture)
     _free_port(8081)
@@ -57,7 +57,7 @@ def run(setup=False):
         Store().update_settings({'ai_provider': 'llamacpp', 'cloud_enabled': False, 'elevenlabs_enabled': False, 'voice_enabled': True})
         print('Lokale Textantwort geprüft. Öffne JARVIS mit der integrierten JARVIS-Stimme …', flush=True)
         from .server import main
-        main(['--open-browser', '--local-only'])
+        main(['--open-companion' if companion else '--open-browser', '--local-only'])
     except OSError:
         raise ValueError('Das lokale Startprogramm konnte nicht ausgeführt werden. Bitte die macOS-Sicherheitsmeldung prüfen. Es werden keine Sicherheitseinstellungen geändert.') from None
     finally:

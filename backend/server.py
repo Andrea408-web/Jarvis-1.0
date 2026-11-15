@@ -67,6 +67,10 @@ class Application:
         self.mobile = MobileLink(self)
         from .quest_window import QuestWindow
         self.quest_window=QuestWindow()
+        from .companion_window import CompanionWindow
+        self.companion_window=CompanionWindow(self.store.data_dir)
+        from .video_editor import VideoEditor
+        self.video_editor=VideoEditor(self.store.data_dir)
         self.office = AgentOffice(self)
         self.hub = MiniHub(self.store)
         self.desktop = Desktop(self)
@@ -454,7 +458,33 @@ class Handler(BaseHTTPRequestHandler):
             if path == '/api/reminders':
                 return self._json({'reminders': app.store.reminders()})
             # Exact static allowlist: no arbitrary files, keys or directory listings.
-            static = {'/': 'mobile.html' if self.server.device_auth or re.search(r'iPhone|iPad|iPod|Macintosh.*Mobile',self.headers.get('User-Agent',''),re.I) else 'index.html', '/index.html': 'index.html', '/mobile':'mobile.html','/mobile-app.js':'mobile-app.js','/boot.js':'boot.js','/task-board.js':'task-board.js','/discover.js':'discover.js','/aeris':'aeris.html','/aeris.js':'aeris.js','/aeris-assistant.js':'aeris-assistant.js','/aeris-xr.js':'aeris-xr.js','/aeris-pose.js':'aeris-pose.js','/vr-guide':'vr-guide.html','/call':'call.html','/call-bridge.js':'call-bridge.js','/aeris-model.js':'aeris-model.js','/aeris-projects.js':'aeris-projects.js','/aeris-tracking.js':'aeris-tracking.js','/video-call.js':'video-call.js','/video-call.css':'video-call.css','/aeris-gestures.js':'aeris-gestures.js','/aeris-shell.css':'aeris-shell.css','/aeris-shell.js':'aeris-shell.js','/aeris-icon.svg':'aeris-icon.svg','/aeris-sw.js':'aeris-sw.js',
+            media=re.fullmatch(r'/edit-media/([a-f0-9]{32})',path);render=re.fullmatch(r'/edit-result/([a-f0-9]{32})/(youtube|shorts)',path)
+            if media or render:
+                if self.server.device_auth or not ipaddress.ip_address(self.client_address[0]).is_loopback:return self._json({'error':'Videoschnitt-Dateien sind nur direkt am Mac verfügbar.'},403)
+                source,name=app.video_editor.file(media[1]) if media else app.video_editor.file(render[1],render[2]);size=source.stat().st_size;start=0;end=size-1;status=200;range_header=self.headers.get('Range')
+                if range_header:
+                    match=re.fullmatch(r'bytes=(\d*)-(\d*)',range_header)
+                    if not match or not (match[1] or match[2]) or (match[1] and int(match[1])>=size) or (not match[1] and int(match[2])==0):
+                        self.send_response(416);self.send_header('Content-Range','bytes */'+str(size));self.send_header('Content-Length','0');self.end_headers();return
+                    if match[1]:start=int(match[1]);end=min(end,int(match[2]) if match[2] else end)
+                    else:start=max(0,size-int(match[2]))
+                    if end<start:raise ValueError('Ungültiger Medienbereich.')
+                    status=206
+                self.send_response(status);self.send_header('Content-Type',mimetypes.guess_type(source.name)[0] or 'application/octet-stream');self.send_header('Content-Length',str(end-start+1));self.send_header('Accept-Ranges','bytes');self.send_header('Cache-Control','no-store');self.send_header('X-Content-Type-Options','nosniff')
+                if status==206:self.send_header('Content-Range',f'bytes {start}-{end}/{size}')
+                if urlsplit(self.path).query=='download=1':self.send_header('Content-Disposition','attachment; filename="Astra-'+(render[2]+'-'+render[1][:8] if render else 'Original')+'.mp4"')
+                self.end_headers()
+                with source.open('rb') as data:
+                    data.seek(start);remaining=end-start+1
+                    while remaining>0:
+                        chunk=data.read(min(65536,remaining))
+                        if not chunk:break
+                        self.wfile.write(chunk);remaining-=len(chunk)
+                return
+            if path=='/api/video-editor':
+                if self.server.device_auth or not ipaddress.ip_address(self.client_address[0]).is_loopback:return self._json({'error':'Videoschnitt bitte direkt am Mac verwenden.'},403)
+                return self._json(app.video_editor.snapshot())
+            static = {'/': 'mobile.html' if self.server.device_auth or re.search(r'iPhone|iPad|iPod|Macintosh.*Mobile',self.headers.get('User-Agent',''),re.I) else 'index.html', '/index.html': 'index.html', '/mobile':'mobile.html','/mobile-app.js':'mobile-app.js','/boot.js':'boot.js','/task-board.js':'task-board.js','/discover.js':'discover.js','/aeris':'aeris.html','/aeris.js':'aeris.js','/aeris-assistant.js':'aeris-assistant.js','/aeris-xr.js':'aeris-xr.js','/aeris-pose.js':'aeris-pose.js','/vr-guide':'vr-guide.html','/video-editor':'video-editor.html','/video-editor.js':'video-editor.js','/companion':'call.html','/companion-actions.js':'companion-actions.js','/companion.js':'companion.js','/companion.css':'companion.css','/jarvis-orb.js':'jarvis-orb.js','/call':'call.html','/call-bridge.js':'call-bridge.js','/aeris-model.js':'aeris-model.js','/aeris-projects.js':'aeris-projects.js','/aeris-tracking.js':'aeris-tracking.js','/video-call.js':'video-call.js','/video-call.css':'video-call.css','/aeris-gestures.js':'aeris-gestures.js','/aeris-shell.css':'aeris-shell.css','/aeris-shell.js':'aeris-shell.js','/aeris-icon.svg':'aeris-icon.svg','/aeris-sw.js':'aeris-sw.js',
                       '/manifest.webmanifest':'manifest.webmanifest','/app-icon.png':'app-icon.png','/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js','/office-3d.js':'office-3d.js', '/lowpoly-stage.js':'lowpoly-stage.js', '/artifacts.js':'artifacts.js', '/jarvis-voice.js':'jarvis-voice.js', '/voice-worker.js':'voice-worker.js', '/conversation.js':'conversation.js', '/mini-hub.js':'mini-hub.js', '/world-news.js':'world-news.js', '/astra.js':'astra.js', '/astra.css':'astra.css', '/astra-panel.html':'astra-panel.html', '/astra-panel.js':'astra-panel.js'}
             for name in ['ESpeak.js','mespeak.js','config.json','jarvis-de.json','de.json','COPYING','NOTICE.txt','UPSTREAM-README.md','mespeak-2.0.2-source.tgz','speak-source-9c6f642.tar.gz']:
                 static['/vendor/voice/'+name]='vendor/voice/'+name
@@ -523,6 +553,39 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError('Ungültige Kopplungsanfrage.')
                 session=self.server.device_auth.pair(body['ticket'])
                 return self._json({'ok':True},cookie='jarvis_device='+session+'; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=2592000')
+            if method=='POST' and path in {'/api/video-editor/choose','/api/video-editor/start','/api/video-editor/stop'}:
+                if self.server.device_auth or not ipaddress.ip_address(self.client_address[0]).is_loopback:return self._json({'error':'Videoschnitt bitte direkt am Mac verwenden.'},403)
+                if path.endswith('/choose'):
+                    if body:raise ValueError('Keine Dateipfade aus dem Browser angeben. Die Dateiauswahl am Mac verwenden.')
+                    return self._json({'assets':app.video_editor.choose()})
+                if path.endswith('/stop'):
+                    if set(body)!={'id'}:raise ValueError('Auftragskennung erforderlich.')
+                    return self._json(app.video_editor.stop(body['id']))
+                return self._json(app.video_editor.start(body),202)
+            if method=='POST' and path in {'/api/companion/open','/api/companion/mode','/api/companion/close','/api/companion/browser','/api/companion/screen','/api/companion/motion','/api/companion/editor'}:
+                if self.server.device_auth or not ipaddress.ip_address(self.client_address[0]).is_loopback:return self._json({'error':'Das Mac-Fenster bitte direkt am Mac öffnen.'},403)
+                if path.endswith('/motion'):
+                    if set(body)!={'enabled'}:raise ValueError('Nur den Bewegungsstatus angeben.')
+                    return self._json(app.companion_window.motion(body['enabled']))
+                if path.endswith('/editor'):
+                    if set(body)-{'budget_minutes'}:raise ValueError('Nur die Arbeitszeit angeben.')
+                    budget=body.get('budget_minutes')
+                    if budget is not None and (isinstance(budget,bool) or not isinstance(budget,(int,float)) or not 1<=budget<=120):raise ValueError('Arbeitszeit zwischen 1 und 120 Minuten angeben.')
+                    import webbrowser
+                    webbrowser.open(('https' if self.server.secure else 'http')+'://localhost:'+str(self.server.server_port)+'/video-editor'+('?budget='+str(budget) if budget else ''));return self._json({'ok':True})
+                if path.endswith('/browser'):
+                    if body:raise ValueError('Keine Parameter erforderlich.')
+                    import webbrowser
+                    webbrowser.open(('https' if self.server.secure else 'http')+'://localhost:'+str(self.server.server_port)+'/companion?mode=helper');return self._json({'ok':True})
+                if path.endswith('/screen'):
+                    if set(body)!={'action'} or body['action'] not in {'start','stop'}:raise ValueError('Bildschirmfreigabe starten oder stoppen.')
+                    return self._json(app.companion_window.start_screen() if body['action']=='start' else app.companion_window.screen.stop())
+                if path.endswith('/close'):
+                    if body:raise ValueError('Keine Parameter erforderlich.')
+                    app.companion_window.close();return self._json({'ok':True})
+                if set(body)!={'mode'}:raise ValueError('Nur die Helferansicht angeben.')
+                if path.endswith('/mode'):return self._json(app.companion_window.change(body['mode']))
+                return self._json(app.companion_window.open(('https' if self.server.secure else 'http')+'://localhost:'+str(self.server.server_port)+'/companion?native=1',body['mode']))
             if method=='POST' and path in {'/api/quest-window/start','/api/quest-window/stop'}:
                 if self.server.device_auth or not ipaddress.ip_address(self.client_address[0]).is_loopback:return self._json({'error':'Den Brillen-Link bitte direkt am Mac erstellen.'},403)
                 if body:raise ValueError('Keine Parameter erforderlich.')
@@ -559,6 +622,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError('Ungültige Felder für die Schlüsselkonfiguration.')
                 return self._json(configure_credential(body.get('provider'), body.get('api_key'), body.get('persist', True)))
             if method=='POST' and path=='/api/video-call':
+                if body.get('native_screen') and (self.server.device_auth or not ipaddress.ip_address(self.client_address[0]).is_loopback):return self._json({'error':'Native Bildschirmaufnahme ist nur direkt am Mac erlaubt.'},403)
                 if not app.chat_lock.acquire(blocking=False):raise ProviderError('Eine Anfrage läuft bereits. Bitte kurz warten.',409)
                 try:
                     from .video_call import answer
@@ -657,12 +721,15 @@ def main(argv=None):
     parser.add_argument('--start-small-ai', action='store_true', help='Vorhandene kleine lokale KI ohne Download starten')
     parser.add_argument('--setup-small-ai', action='store_true', help='Kleine lokale KI ausdrücklich herunterladen, prüfen und JARVIS starten')
     parser.add_argument('--easy-local', action='store_true', help='Bereits eingerichtete lokale KI und JARVIS zusammen offline starten')
+    parser.add_argument('--easy-companion',action='store_true',help='Vorhandene lokale KI mit schwebendem Helfer statt Hauptbrowser starten')
+    parser.add_argument('--open-companion',action='store_true',help='Schwebenden Jarvis-Helfer am Mac öffnen')
     parser.add_argument('--local-only', action='store_true', help='Lokalen Modus ohne API-Schlüsselbund starten')
     args = parser.parse_args(argv)
-    if args.setup_small_ai or args.easy_local:
+    if args.setup_small_ai or args.easy_local or args.easy_companion:
         from .easy_start import run
         try:
-            run(setup=args.setup_small_ai)
+            if args.easy_companion:run(setup=False,companion=True)
+            else:run(setup=args.setup_small_ai)
         except KeyboardInterrupt:
             pass
         except (ValueError, OSError) as error:
@@ -727,6 +794,9 @@ def main(argv=None):
     try:
         if app.mobile.resume():print('Handy-Zugang im Heimnetz wieder gestartet.',flush=True)
     except (OSError,ValueError):print('Handy-Zugang konnte nicht starten. Am Mac „Handy verbinden“ öffnen und das WLAN prüfen.',flush=True)
+    if args.open_companion:
+        try:app.companion_window.open(('https' if args.cert else 'http')+f'://localhost:{server.server_port}/companion?native=1','island')
+        except (OSError,ValueError) as error:print(str(error)+f' Browser-Helfer: http://localhost:{server.server_port}/companion',flush=True)
     if args.open_browser:
         import webbrowser
         address = f'[{args.host}]' if ':' in args.host else args.host
@@ -746,6 +816,8 @@ def main(argv=None):
             app.office.stop()
             app.mobile.stop(revoke=False)
             app.quest_window.stop()
+            app.companion_window.close()
+            app.video_editor.close()
         finally:
             server.server_close()
 

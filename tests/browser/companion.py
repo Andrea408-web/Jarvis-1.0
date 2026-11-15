@@ -1,0 +1,30 @@
+"""Orb helper, page dragging, explicit screen sharing, native request path, and cleanup."""
+import io,math,struct,sys,tempfile,threading,wave
+from pathlib import Path
+from unittest.mock import patch,Mock
+sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
+from backend.server import Application,JarvisServer
+from playwright.sync_api import sync_playwright
+buf=io.BytesIO()
+with wave.open(buf,'wb') as wav:
+ wav.setnchannels(1);wav.setsampwidth(2);wav.setframerate(16000);wav.writeframes(b''.join(struct.pack('<h',int(math.sin(i*.1)*1500)) for i in range(24000)))
+with tempfile.TemporaryDirectory() as folder:
+ app=Application(folder);app.store.update_settings({'ai_provider':'llamacpp','voice_engine':'natural'});app.llamacpp.endpoint_transport=lambda *a,**k:{'choices':[{'finish_reason':'stop','message':{'content':'Sir, die Texterkennung meldet PROJEKT.'}}]};app.natural_voice.status=lambda:{'installed':True,'name':'Thorsten'};app.natural_voice.synthesize=lambda *a,**k:buf.getvalue()
+ server=JarvisServer(('127.0.0.1',0),app);thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start();url='http://127.0.0.1:'+str(server.server_port)
+ try:
+  with patch('backend.video_call.native_vision.analyze',return_value={'available':True,'labels':[],'text':'PROJEKT'}),sync_playwright() as p:
+   browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox']);page=browser.new_page(viewport={'width':1200,'height':800});errors=[];posts=[];page.on('pageerror',lambda e:errors.append(str(e)));page.on('request',lambda r:posts.append(r.post_data_json) if r.url.endswith('/api/video-call') else None)
+   page.add_init_script("""window.screenPrompts=0;window.cameraPrompts=0;window.SpeechRecognition=class{start(){this.onstart?.()}stop(){}};navigator.mediaDevices.getUserMedia=async()=>{cameraPrompts++;throw Error('Camera must not start automatically');};navigator.mediaDevices.getDisplayMedia=async()=>{screenPrompts++;const c=document.createElement('canvas');c.width=640;c.height=480;const x=c.getContext('2d');x.fillStyle='#203943';x.fillRect(0,0,640,480);x.fillStyle='white';x.font='60px sans-serif';x.fillText('PROJEKT',120,240);window.sharedScreen=c.captureStream(8);setInterval(()=>x.fillRect(0,0,1,1),100);return sharedScreen;};""")
+   page.goto(url+'/companion');page.wait_for_function('()=>document.body.dataset.companion==="island"');page.locator('#video-call-dialog').wait_for();assert page.locator('#video-call-dialog').bounding_box()['width']<500;assert page.evaluate('screenPrompts+cameraPrompts')==0
+   grip=page.locator('#companion-grip').bounding_box();before=page.locator('#video-call-dialog').bounding_box();page.mouse.move(grip['x']+4,grip['y']+4);page.mouse.down();page.mouse.move(grip['x']+104,grip['y']+84);page.mouse.up();after=page.locator('#video-call-dialog').bounding_box();assert after['x']>before['x']+50 and after['y']>before['y']+50
+   page.locator('#companion-tools').get_by_role('button',name='Helfer',exact=True).click();page.locator('#call-start').click();page.locator('#allow-mic').click();assert page.evaluate('cameraPrompts')==0
+   page.locator('#call-input').fill('Schau auf meinen Bildschirm');page.locator('#call-form button').click();page.locator('#call-status').get_by_text('Gern, Sir. Tippe einmal',exact=False).wait_for();assert not posts;assert page.evaluate('screenPrompts')==0
+   page.locator('#call-screen').click();page.get_by_text('● Bildschirm freigegeben',exact=True).wait_for();assert page.evaluate('screenPrompts')==1;assert not posts
+   page.locator('#call-input').fill('Was steht auf diesem Fenster?');page.locator('#call-form button').click();page.wait_for_function('()=>document.querySelectorAll("#call-transcript .assistant").length===2');assert posts[-1]['source']=='screen' and posts[-1]['image'].startswith('/9j/');assert app.store.history()==[]
+   page.evaluate('Object.defineProperty(document,"hidden",{configurable:true,value:true});document.dispatchEvent(new Event("visibilitychange"))');assert page.evaluate('sharedScreen.getTracks()[0].readyState')=='live';page.evaluate('Object.defineProperty(document,"hidden",{configurable:true,value:false});document.dispatchEvent(new Event("visibilitychange"))')
+   page.locator('#video-call-dialog').screenshot(path='/tmp/jarvis-orb-helper.png');page.evaluate('sharedScreen.getVideoTracks()[0].dispatchEvent(new Event("ended"))');page.wait_for_function('()=>document.getElementById("call-sharing").hidden');assert page.evaluate('sharedScreen.getTracks()[0].readyState')=='ended';page.locator('#call-end').click();assert page.locator('#call-transcript').inner_text()==''
+   native=browser.new_page(viewport={'width':420,'height':470});native.on('pageerror',lambda e:errors.append(str(e)));nativePosts=[];native.on('request',lambda r:nativePosts.append(r.post_data_json) if r.url.endswith('/api/video-call') else None)
+   with patch.object(app.companion_window,'start_screen',return_value={'active':True,'message':'Hauptbildschirm freigegeben.'}),patch.object(app.companion_window,'capture',return_value=b'\xff\xd8\xfftest') as capture:
+    native.goto(url+'/companion?native=1&mode=helper');native.locator('#call-screen').click();native.get_by_text('● Hauptbildschirm freigegeben',exact=True).wait_for();capture.assert_not_called();native.locator('#call-input').fill('Was steht hier?');native.locator('#call-form button').click();native.locator('#call-transcript .assistant').wait_for();capture.assert_called_once();assert nativePosts[-1]['native_screen'] is True and 'image' not in nativePosts[-1];assert app.store.history()==[];native.locator('#call-end').click()
+   assert not errors,errors;print('PASS: compact orb helper is draggable, no camera/screen access on load, spoken intent requires explicit share, frame only per question, sharing survives background by consent, OS stop ends sharing, native path captures only on question, no DB history. Native AppKit/CoreGraphics still need physical Mac verification.');browser.close()
+ finally:app.companion_window.close();app.office.stop();server.shutdown();server.server_close();thread.join(3)

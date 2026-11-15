@@ -188,3 +188,10 @@ class EntryPointTests(unittest.TestCase):
         server.server_close.assert_called_once()
 
 if __name__=='__main__':unittest.main()
+
+class CompanionEntryTests(unittest.TestCase):
+    def test_helper_entry_routes_without_initializing_a_dashboard_app(self):
+        from backend.server import main
+        with patch('backend.easy_start.run') as run,patch('backend.server.Application') as app:
+            main(['--easy-companion'])
+        run.assert_called_once_with(setup=False,companion=True);app.assert_not_called()

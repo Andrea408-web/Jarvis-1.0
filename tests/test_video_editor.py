@@ -1,0 +1,34 @@
+"""Actual local video cuts and exports, bounded work and read-only input files."""
+import hashlib,json,shutil,subprocess,sys,tempfile,time,unittest
+from pathlib import Path
+from unittest.mock import patch
+from backend.video_editor import VideoEditor
+@unittest.skipUnless(shutil.which('ffmpeg') and shutil.which('ffprobe'),'FFmpeg fixture tools not installed')
+class VideoEditorTests(unittest.TestCase):
+ def setUp(self):
+  self.tmp=tempfile.TemporaryDirectory();self.addCleanup(self.tmp.cleanup);self.root=Path(self.tmp.name);self.editor=VideoEditor(self.root);self.addCleanup(self.editor.close)
+  self.source=self.root/'source.mp4';subprocess.run(['ffmpeg','-v','error','-y','-f','lavfi','-i','color=red:s=320x180:r=30:d=1','-f','lavfi','-i','color=blue:s=320x180:r=30:d=1','-filter_complex','[0:v][1:v]concat=n=2:v=1:a=0[v]','-map','[v]','-c:v','libx264','-threads','1',str(self.source)],check=True,capture_output=True)
+  self.asset=self.editor.import_paths([str(self.source)])[0];self.original=hashlib.sha256(self.source.read_bytes()).hexdigest()
+ def wait(self,job):
+  self.editor.worker.join(45);self.assertFalse(self.editor.worker.is_alive());return self.editor.jobs[job['id']]
+ def test_real_both_formats_correct_selected_frames_and_audio_track(self):
+  job=self.editor.start({'cuts':[{'asset':self.asset['id'],'start':1,'end':2}],'formats':['youtube','shorts'],'budget_minutes':1,'short_seconds':5});result=self.wait(job);self.assertEqual(result['state'],'completed',result);self.assertEqual(len(result['outputs']),2)
+  for output in result['outputs']:
+   self.assertEqual((output['width'],output['height']),(1920,1080) if output['format']=='youtube' else (1080,1920));self.assertTrue(output['audio']);self.assertAlmostEqual(output['duration'],1,delta=.2);path,_=self.editor.file(job['id'],output['format']);pixel=subprocess.run(['ffmpeg','-v','error','-ss','0.4','-i',str(path),'-vf','scale=1:1','-frames:v','1','-f','rawvideo','-pix_fmt','rgb24','-'],capture_output=True,check=True).stdout;self.assertGreater(pixel[2],pixel[0]+150,'Selected blue second must replace red first second')
+  self.assertEqual(hashlib.sha256(self.source.read_bytes()).hexdigest(),self.original);self.assertNotIn('path',self.asset)
+ def test_deadline_stops_real_process_and_preserves_verified_first_output(self):
+  before=time.monotonic()
+  with self.assertRaises(TimeoutError):self.editor._command([sys.executable,'-c','import time;time.sleep(10)'],time.monotonic()+.15)
+  self.assertLess(time.monotonic()-before,3);self.assertIsNone(self.editor.process)
+  original=self.editor._ffmpeg
+  def render(cuts,kind,path,tools,deadline):
+   if kind=='shorts':path.write_bytes(b'partial');raise TimeoutError('limit')
+   return original(cuts,kind,path,tools,deadline)
+  with patch.object(self.editor,'_ffmpeg',side_effect=render):result=self.wait(self.editor.start({'cuts':[{'asset':self.asset['id'],'start':0,'end':.5}],'formats':['youtube','shorts'],'budget_minutes':1}))
+  self.assertEqual(result['state'],'timed_out');self.assertEqual(len(result['outputs']),1);self.assertTrue(self.editor.file(result['id'],'youtube')[0].is_file());self.assertFalse(list((self.editor.root/result['id']).glob('*.partial.mp4')))
+ def test_silence_analysis_removes_only_middle_pause(self):
+  path=self.root/'speech.mp4';subprocess.run(['ffmpeg','-v','error','-y','-f','lavfi','-i','color=green:s=160x90:r=30:d=2.2','-f','lavfi','-i','sine=frequency=500:duration=0.5','-f','lavfi','-i','anullsrc=r=44100:cl=mono:d=1.2','-f','lavfi','-i','sine=frequency=500:duration=0.5','-filter_complex','[1:a][2:a][3:a]concat=n=3:v=0:a=1[a]','-map','0:v','-map','[a]','-c:v','libx264','-threads','1','-c:a','aac',str(path)],check=True,capture_output=True);asset=self.editor.import_paths([str(path)])[0];cuts=self.editor._silence({'asset':asset['id'],'start':0,'end':2.2},self.editor.tools(),time.monotonic()+20);duration=sum(c['end']-c['start'] for c in cuts);self.assertGreater(duration,1);self.assertLess(duration,1.7);self.assertEqual(len(cuts),2)
+ def test_invalid_cut_paths_and_nonfinite_times_are_rejected(self):
+  for cuts in [[{'asset':'../../etc/passwd','start':0,'end':1}],[{'asset':self.asset['id'],'start':float('nan'),'end':1}],[{'asset':self.asset['id'],'start':1.5,'end':1}]]:
+   with self.assertRaises(ValueError):self.editor.start({'cuts':cuts,'formats':['youtube']})
+  with self.assertRaises(ValueError):self.editor.file('../../private','youtube')

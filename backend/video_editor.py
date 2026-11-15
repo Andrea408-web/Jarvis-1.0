@@ -46,21 +46,24 @@ class VideoEditor:
    assets[0]['name']=name[:240];return assets
   except Exception:
    path.unlink(missing_ok=True);raise
- def assist(self,app,body):
-  if set(body)-{'assets','instruction','formats','budget_minutes','short_seconds'}:raise ValueError('Unbekannte Schnittfelder.')
+ def assist(self,app,body,plan_only=False):
+  if set(body)-{'assets','instruction','formats','budget_minutes','short_seconds','style','captions','remove_silence','caption_spread'}:raise ValueError('Unbekannte Schnittfelder.')
   ids=body.get('assets');instruction=body.get('instruction','')
   if not isinstance(ids,list) or not 1<=len(ids)<=8 or any(not isinstance(i,str) or i not in self.assets for i in ids) or len(set(ids))!=len(ids):raise ValueError('Zuerst 1 bis 8 Clips auswählen.')
   if not isinstance(instruction,str) or len(instruction)>1500:raise ValueError('Schnittwunsch bis 1500 Zeichen eingeben.')
+  from .video_style import validate
+  style,captions=validate(body.get('style'),body.get('captions'))
+  if re.search(r'untertitel|captions?',instruction,re.I) and not captions:raise ValueError('Bitte zuerst Untertiteltext oder eine SRT-Datei eintragen. Die kleine Text-KI kann die Tonspur nicht automatisch transkribieren.')
   selected=[self.public_asset(self.assets[i]) for i in ids]
   cuts=[{'asset':a['id'],'start':0,'end':a['duration']} for a in selected]
-  silence=self.tools()['silence'];message='Automatischer technischer Schnitt: Clips zusammenfügen, Formate anpassen'+(' und längere stille Stellen kürzen.' if silence else '. Pausenkürzen ist ohne FFmpeg nicht verfügbar.')
+  silence=body.get('remove_silence',self.tools()['silence']);message='Automatischer technischer Schnitt: Clips zusammenfügen, Formate anpassen'+(' und längere stille Stellen kürzen.' if silence else '. Pausenkürzen ist ohne FFmpeg nicht verfügbar.')
   if instruction.strip():
    settings=app.store.settings();provider=settings['ai_provider']
    if provider not in {'llamacpp','ollama'}:raise ValueError('Für einen freien Schnittwunsch muss die lokale KI laufen. Ohne Text kannst du den automatischen technischen Schnitt starten.')
    system=('Du planst einen Videoschnitt. Du siehst KEINE Bilder und hörst KEIN Audio. Du kennst nur Dateinamen und Dauer. '
            'Erlaubt: Clips nach Wunsch anordnen, Bereiche in Sekunden ausschneiden, stille Stellen kürzen. '
-           'Keine erfundenen Szenen, Highlights, Untertitel, Musik oder Effekte. Bei nicht unterstütztem Wunsch antworte nur mit JSON {"error":"kurze Erklärung"}. '
-           'Sonst nur JSON {"cuts":[{"clip":1,"start":0,"end":10}],"remove_silence":true}. '
+           'Keine erfundenen Szenen, Highlights, gesprochenen Untertitel oder Musik. Bei nicht unterstütztem Wunsch antworte nur mit JSON {"error":"kurze Erklärung"}. '
+           'Sonst nur JSON {"cuts":[{"clip":1,"start":0,"end":10}],"remove_silence":false,"style":{}}. Stil darf look (natural, cinematic, neon, mono, warm), transition (cut, fade), zoom, vignette, sharpen (bool), speed (0.5 bis 2) enthalten. Nur gewünschte Effekte setzen. '
            'Maximal 32 Bereiche. Nummeriere Clips ab 1 wie in den Clipdaten. Nutze gültige Zeitgrenzen. Ohne Zeitwunsch vollständige Clips behalten. '
            'Pausenkürzen verfügbar: '+str(silence)+'. Clipdaten: '+json.dumps([{'clip':i+1,'name':a['name'],'duration':a['duration']} for i,a in enumerate(selected)],ensure_ascii=False))
    client=app.llamacpp if provider=='llamacpp' else app.local_ai
@@ -71,10 +74,24 @@ class VideoEditor:
     if not isinstance(plan,dict):raise ValueError()
    except (KeyError,TypeError,ValueError):raise ValueError('Die lokale KI hat keinen gültigen Schnittplan geliefert. Formuliere konkrete Sekundenangaben oder nutze den automatischen Schnitt ohne Text.') from None
    if 'error' in plan:raise ValueError('Schnittwunsch noch nicht unterstützt: '+str(plan['error'])[:300])
-   if set(plan)!={'cuts','remove_silence'} or not isinstance(plan['cuts'],list) or any(not isinstance(c,dict) or set(c)!={'clip','start','end'} or type(c.get('clip')) is not int or not 1<=c['clip']<=len(ids) for c in plan['cuts']):raise ValueError('Die KI hat einen ungültigen Schnittplan geliefert. Es wurde nichts gestartet.')
+   if set(plan)-{'cuts','remove_silence','style'} or not {'cuts','remove_silence'}<=set(plan) or not isinstance(plan['cuts'],list) or any(not isinstance(c,dict) or set(c)!={'clip','start','end'} or type(c.get('clip')) is not int or not 1<=c['clip']<=len(ids) for c in plan['cuts']):raise ValueError('Die KI hat einen ungültigen Schnittplan geliefert. Es wurde nichts gestartet.')
+   style,_=validate({**style,**plan.get('style',{})},captions)
    cuts=[{'asset':ids[c['clip']-1],'start':c['start'],'end':c['end']} for c in plan['cuts']];silence=plan['remove_silence'];message='Schnittplan der lokalen KI geprüft und zur Ausführung gestartet.'
-  job=self.start({'cuts':cuts,'formats':body.get('formats',['youtube','shorts']),'budget_minutes':body.get('budget_minutes',10),'short_seconds':body.get('short_seconds',60),'remove_silence':silence})
+  job=self.start({'cuts':cuts,'formats':body.get('formats',['youtube','shorts']),'budget_minutes':body.get('budget_minutes',10),'short_seconds':body.get('short_seconds',60),'remove_silence':silence,'style':style,'captions':captions,'caption_spread':body.get('caption_spread',False)},plan_only=plan_only)
   return {'job':job,'message':message}
+ def story(self,app,body):
+  prompt=body.get('prompt')
+  if set(body)!={'prompt'} or not isinstance(prompt,str) or not 1<=len(prompt.strip())<=1500:raise ValueError('Animationswunsch bis 1500 Zeichen angeben.')
+  settings=app.store.settings();provider=settings['ai_provider']
+  if provider not in {'llamacpp','ollama'}:raise ValueError('Bitte die vorhandene lokale Text-KI starten oder den Sprechertext selbst eintragen.')
+  client=app.llamacpp if provider=='llamacpp' else app.local_ai
+  result=client.transport('/api/chat',{'model':settings['local_model'],'messages':[{'role':'system','content':'Schreibe drei kurze deutsche Sprechersätze für einen Animationsfilm mit einer eigenen Jarvis-Figur. Jeder Satz höchstens 120 Zeichen. Antworte ausschließlich mit JSON {"lines":["Satz 1","Satz 2","Satz 3"],"style":"lowpoly"}. style kann lowpoly, hologram oder kinetic sein. Keine behauptete freie Filmszenen-Generierung. Keine Regieanweisungen im gesprochenen Text.'},{'role':'user','content':prompt.strip()}],'stream':False,'options':{'num_ctx':2048,'num_predict':350,'temperature':.4}})
+  try:
+   if result.get('done') is not True:raise ValueError()
+   raw=result['message']['content'].strip();data=json.loads(re.sub(r'^```(?:json)?\s*|\s*```$','',raw));lines=data['lines'];kind=data.get('style','lowpoly')
+   if not isinstance(lines,list) or not 1<=len(lines)<=3 or any(not isinstance(s,str) or not 1<=len(s.strip())<=120 for s in lines) or kind not in {'lowpoly','hologram','kinetic'}:raise ValueError()
+  except (KeyError,TypeError,ValueError):raise ValueError('Die kleine KI hat kein gültiges Kurzskript geliefert. Bitte drei kurze Sätze selbst eintragen oder den Wunsch einfacher formulieren.') from None
+  return {'lines':lines,'style':kind,'message':'Kurzskript erstellt. Der lokale Animationsrenderer erzeugt den Film.'}
  def probe(self,path,deadline=None):
   tools=self.tools()
   if tools['ffprobe']:
@@ -111,15 +128,18 @@ class VideoEditor:
   with self.lock:return {'tools':{k:v for k,v in self.tools().items() if k not in {'ffmpeg','ffprobe'}},'assets':[self.public_asset(a) for a in self.assets.values()],'jobs':json.loads(json.dumps(list(self.jobs.values())[-30:]))}
  def _save(self,job):
   folder=self.root/job['id'];folder.mkdir(parents=True,exist_ok=True,mode=0o700);path=folder/'job.json';temporary=path.with_suffix('.tmp');temporary.write_text(json.dumps(job,ensure_ascii=False));temporary.chmod(0o600);temporary.replace(path)
- def start(self,body):
-  if set(body)-{'cuts','formats','budget_minutes','short_seconds','remove_silence'}:raise ValueError('Unbekannte Schnittfelder.')
+ def start(self,body,plan_only=False):
+  if set(body)-{'cuts','formats','budget_minutes','short_seconds','remove_silence','style','captions','caption_spread'}:raise ValueError('Unbekannte Schnittfelder.')
   cuts=body.get('cuts');formats=body.get('formats');budget=body.get('budget_minutes',10);short=body.get('short_seconds',60);silence=body.get('remove_silence',False)
   if not isinstance(cuts,list) or not 1<=len(cuts)<=32:raise ValueError('Bitte 1 bis 32 Schnittbereiche angeben.')
   if not isinstance(formats,list) or not formats or len(formats)>2 or len(set(formats))!=len(formats) or any(f not in {'youtube','shorts'} for f in formats):raise ValueError('YouTube und/oder Shorts auswählen.')
   if isinstance(budget,bool) or not isinstance(budget,(float,int)) or not math.isfinite(budget) or not 1<=budget<=120:raise ValueError('Arbeitszeit zwischen 1 und 120 Minuten angeben.')
   if isinstance(short,bool) or not isinstance(short,(float,int)) or not math.isfinite(short) or not 5<=short<=180 or not isinstance(silence,bool):raise ValueError('Shorts-Länge 5 bis 180 Sekunden angeben.')
+  from .video_style import validate,active
+  style,captions=validate(body.get('style'),body.get('captions'))
   tools=self.tools()
-  if not tools['engine']:raise ValueError(tools['message'])
+  if not plan_only and active(style,captions) and tools['engine']!='ffmpeg':raise ValueError('Untertitel und Effekte bitte mit Browser-Export verwenden; FFmpeg ist auf diesem Mac nicht vorhanden.')
+  if not tools['engine'] and not plan_only:raise ValueError(tools['message'])
   if silence and not tools['silence']:raise ValueError('Pausenkürzen benötigt bereits installiertes FFmpeg. Ohne diese Option kann macOS schneiden und exportieren.')
   checked=[]
   with self.lock:
@@ -129,11 +149,16 @@ class VideoEditor:
     a,b=cut['start'],cut['end'];asset=self.assets[cut['asset']]
     if any(isinstance(v,bool) or not isinstance(v,(int,float)) or not math.isfinite(v) for v in [a,b]) or not 0<=a<b<=asset['duration']+.03 or b-a<.1:raise ValueError('Schnittzeiten liegen außerhalb der Datei oder sind zu kurz.')
     checked.append({'asset':asset['id'],'start':float(a),'end':min(float(b),asset['duration'])})
-   ident=secrets.token_hex(16);job={'id':ident,'state':'queued','stage':'Schnittliste geprüft','message':'Noch kein Export erstellt.','created':time.time(),'budget_minutes':budget,'short_seconds':short,'formats':formats,'remove_silence':silence,'cuts':checked,'sources':[{'id':a['id'],'name':a['name']} for a in self.assets.values() if a['id'] in {c['asset'] for c in checked}],'outputs':[],'engine':tools['engine']};self.jobs[ident]=job;self._save(job);self.cancel.clear();self.active_id=ident;self.worker=threading.Thread(target=self._run,args=(job,tools),daemon=True);self.worker.start();return json.loads(json.dumps(job))
- def _command(self,args,deadline):
+   if type(body.get('caption_spread',False)) is not bool:raise ValueError('Ungültige Untertitel-Verteilung.')
+   if body.get('caption_spread'):
+    from .video_style import spread
+    captions=spread(captions,sum(c['end']-c['start'] for c in checked)/style['speed'])
+   if plan_only:return {'cuts':checked,'formats':formats,'budget_minutes':budget,'short_seconds':short,'remove_silence':silence,'style':style,'captions':captions}
+   ident=secrets.token_hex(16);job={'id':ident,'state':'queued','stage':'Schnittliste geprüft','message':'Noch kein Export erstellt.','created':time.time(),'budget_minutes':budget,'short_seconds':short,'formats':formats,'remove_silence':silence,'style':style,'captions':captions,'caption_spread':body.get('caption_spread',False),'cuts':checked,'sources':[{'id':a['id'],'name':a['name']} for a in self.assets.values() if a['id'] in {c['asset'] for c in checked}],'outputs':[],'engine':tools['engine']};self.jobs[ident]=job;self._save(job);self.cancel.clear();self.active_id=ident;self.worker=threading.Thread(target=self._run,args=(job,tools),daemon=True);self.worker.start();return json.loads(json.dumps(job))
+ def _command(self,args,deadline,cwd=None):
   if self.cancel.is_set():raise InterruptedError('Vom Nutzer gestoppt.')
   if time.monotonic()>=deadline:raise TimeoutError('Arbeitszeit erreicht.')
-  process=subprocess.Popen(args,stdout=subprocess.PIPE,stderr=subprocess.PIPE);self.process=process
+  process=subprocess.Popen(args,cwd=cwd,stdout=subprocess.PIPE,stderr=subprocess.PIPE);self.process=process
   try:
    while True:
     if self.cancel.is_set():raise InterruptedError('Vom Nutzer gestoppt.')
@@ -175,16 +200,22 @@ class VideoEditor:
    out.append({**cut,'end':cut['start']+length});limit-=length
    if limit<=.01:break
   return out
- def _ffmpeg(self,cuts,kind,path,tools,deadline):
-  w,h=(1920,1080) if kind=='youtube' else (1080,1920);args=[tools['ffmpeg'],'-hide_banner','-loglevel','error','-nostdin','-y','-filter_complex_threads','1'];filters=[]
+ def _ffmpeg(self,cuts,kind,path,tools,deadline,job=None):
+  from .video_style import validate,filters as style_filters,ass
+  style,captions=validate((job or {}).get('style'),(job or {}).get('captions'));w,h=(1920,1080) if kind=='youtube' else (1080,1920);args=[tools['ffmpeg'],'-hide_banner','-loglevel','error','-nostdin','-y','-filter_complex_threads','1'];filters=[]
   for i,cut in enumerate(cuts):
    asset=self.assets[cut['asset']];length=cut['end']-cut['start'];args+=['-protocol_whitelist','file,pipe','-ss',str(cut['start']),'-t',str(length),'-threads','1','-i',asset['path']]
    fit=f'scale={w}:{h}:force_original_aspect_ratio=decrease,pad={w}:{h}:(ow-iw)/2:(oh-ih)/2' if kind=='youtube' else f'scale={w}:{h}:force_original_aspect_ratio=increase,crop={w}:{h}'
-   filters.append(f'[{i}:v:0]trim=duration={length},setpts=PTS-STARTPTS,{fit},setsar=1,fps=30,format=yuv420p[v{i}]')
+   fade=f',fade=t=in:d=0.15,fade=t=out:st={max(0,length-.15)}:d=0.15' if style['transition']=='fade' else ''
+   filters.append(f'[{i}:v:0]trim=duration={length},setpts=PTS-STARTPTS,{fit},setsar=1,fps=30,format=yuv420p{fade}[v{i}]')
    audio=f'[{i}:a:0]atrim=duration={length},asetpts=PTS-STARTPTS' if asset['audio'] else f'anullsrc=r=48000:cl=stereo,atrim=duration={length}'
    filters.append(audio+f',aformat=sample_rates=48000:channel_layouts=stereo,afade=t=in:d=0.03,afade=t=out:st={max(0,length-.03)}:d=0.03[a{i}]')
-  filters.append(''.join(f'[v{i}][a{i}]' for i in range(len(cuts)))+f'concat=n={len(cuts)}:v=1:a=1[v][a]');filters.append('[a]dynaudnorm=f=150:g=15:p=0.89:m=8,alimiter=limit=0.89[aout]')
-  args+=['-filter_complex',';'.join(filters),'-map','[v]','-map','[aout]','-c:v','libx264','-preset','fast','-crf','20','-threads','2','-c:a','aac','-b:a','192k','-movflags','+faststart',str(path)];self._command(args,deadline)
+  filters.append(''.join(f'[v{i}][a{i}]' for i in range(len(cuts)))+f'concat=n={len(cuts)}:v=1:a=1[v][a]');filters.append('[a]dynaudnorm=f=150:g=15:p=0.89:m=8,alimiter=limit=0.89'+(',atempo='+str(style['speed']) if style['speed']!=1 else '')+'[aout]')
+  video_filters=style_filters(style,w,h)
+  if captions:
+   caption_file=path.parent/'captions.ass';caption_file.write_text(ass(captions,w,h,style['subtitle_style']),encoding='utf-8');caption_file.chmod(0o600);video_filters.append('subtitles=filename=captions.ass')
+  filters.append('[v]'+','.join(video_filters or ['null'])+'[styled]')
+  args+=['-filter_complex',';'.join(filters),'-map','[styled]','-map','[aout]','-c:v','libx264','-preset','fast','-crf','20','-threads','2','-c:a','aac','-b:a','192k','-movflags','+faststart',str(path.resolve())];self._command(args,deadline,cwd=path.parent)
  def _native(self,cuts,kind,path,folder,deadline):
   config=folder/'export.json';config.write_text(json.dumps({'cuts':[{**cut,'path':self.assets[cut['asset']]['path']} for cut in cuts],'kind':kind,'output':str(path)}));config.chmod(0o600)
   self._command(['/usr/bin/osascript','-l','JavaScript',str(Path(__file__).with_name('video_native.js')),'export',str(config)],deadline)
@@ -196,10 +227,13 @@ class VideoEditor:
     if job['remove_silence']:job['stage']='Stille Stellen analysieren';self._save(job);cuts.extend(self._silence(cut,tools,deadline))
     else:cuts.append(cut)
    if len(cuts)>128:raise ValueError('Mehr als 128 Teilstücke erkannt. Kleinere Auswahl wählen oder Pausenkürzen ausschalten.')
+   if job.get('caption_spread'):
+    from .video_style import spread
+    job['captions']=spread(job.get('captions',[]),sum(c['end']-c['start'] for c in cuts)/job.get('style',{}).get('speed',1))
    job['actual_cuts']=cuts;self._save(job)
    for kind in job['formats']:
-    selected=self.short_cuts(cuts,job['short_seconds']) if kind=='shorts' else cuts;job['stage']='Export '+('YouTube 16:9' if kind=='youtube' else 'Shorts 9:16');self._save(job);temporary=folder/(kind+'.partial.mp4');final=folder/(kind+'.mp4')
-    if tools['engine']=='ffmpeg':self._ffmpeg(selected,kind,temporary,tools,deadline)
+    selected=self.short_cuts(cuts,job['short_seconds']*job.get('style',{}).get('speed',1)) if kind=='shorts' else cuts;job['stage']='Export '+('YouTube 16:9' if kind=='youtube' else 'Shorts 9:16');self._save(job);temporary=folder/(kind+'.partial.mp4');final=folder/(kind+'.mp4')
+    if tools['engine']=='ffmpeg':self._ffmpeg(selected,kind,temporary,tools,deadline,job=job)
     else:self._native(selected,kind,temporary,folder,deadline)
     info=self.probe(temporary,deadline);temporary.replace(final);job['outputs'].append({'format':kind,'name':'Astra-'+kind+'-'+job['id'][:8]+'.mp4',**info});self._save(job)
    job['state']='completed';job['stage']='Export geprüft';job['message']='Neue Videodatei'+('en' if len(job['outputs'])>1 else '')+' tatsächlich erstellt. Originaldateien unverändert.'

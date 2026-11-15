@@ -50,13 +50,11 @@ class CompanionTests(unittest.TestCase):
    with patch('backend.companion_window.platform.system',return_value='Darwin'),patch('backend.companion_window.subprocess.Popen',return_value=process),patch('backend.companion_window.time.monotonic',side_effect=[0,7]):
     with self.assertRaisesRegex(ValueError,'kein sichtbares'):panel.open('http://localhost:8765/companion?native=1',_simple=True)
    process.terminate.assert_called_once();self.assertIsNone(panel.process)
- def test_failed_panel_retries_standard_window_and_requires_visible_confirmation(self):
+ def test_native_window_uses_python_tk_instead_of_osascript(self):
+  import sys
   with tempfile.TemporaryDirectory() as folder:
-   panel=CompanionWindow(folder);failed=Mock();failed.poll.return_value=1;working=Mock();working.poll.return_value=None;calls=[]
+   panel=CompanionWindow(folder);working=Mock();working.poll.return_value=None;calls=[]
    def spawn(args,**kwargs):
-    calls.append(args)
-    if len(calls)==1:return failed
-    (Path(folder)/'jarvis-companion.ready').write_text('visible');return working
-   with patch('backend.companion_window.platform.system',return_value='Darwin'),patch('backend.companion_window.subprocess.Popen',side_effect=spawn):
-    self.assertTrue(panel.open('http://localhost:8765/companion?native=1')['visible'])
-   self.assertEqual([args[-1] for args in calls],['panel','simple']);panel.close()
+    calls.append(args);(Path(folder)/'jarvis-companion.ready').write_text('visible');return working
+   with patch('backend.companion_window.platform.system',return_value='Darwin'),patch('backend.companion_window.subprocess.Popen',side_effect=spawn):self.assertTrue(panel.open('http://localhost:8765/companion?native=1')['visible'])
+   self.assertEqual(calls[0][:3],[sys.executable,'-m','backend.companion_tk']);self.assertFalse(any('osascript' in arg for arg in calls[0]));panel.close()

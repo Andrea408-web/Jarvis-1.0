@@ -1,5 +1,5 @@
 """Local opt-in floating Jarvis panel. No automatic screen capture or startup registration."""
-import json,os,platform,subprocess,threading,time
+import json,os,platform,subprocess,sys,threading,time
 from pathlib import Path
 class CompanionWindow:
  def __init__(self,directory):
@@ -17,22 +17,20 @@ class CompanionWindow:
    self.screen.stop()
    ready=self.directory/'jarvis-companion.ready';ready.unlink(missing_ok=True)
    log=self.directory/'jarvis-companion.log'
-   with log.open('w') as output:self.process=subprocess.Popen(['/usr/bin/osascript','-l','JavaScript',str(Path(__file__).with_name('companion_window.js')),str(config),str(ready),'simple' if _simple else 'panel'],stdout=output,stderr=subprocess.STDOUT)
+   with log.open('w') as output:self.process=subprocess.Popen([sys.executable,'-m','backend.companion_tk',str(config),str(ready)],cwd=str(Path(__file__).resolve().parents[1]),stdout=output,stderr=subprocess.STDOUT)
    log.chmod(0o600)
    deadline=time.monotonic()+6;visible_since=None
    while time.monotonic()<deadline:
     if self.process.poll() is not None:
      self.process=None
-     if not _simple:return self.open(url,mode,_simple=True)
      try:detail=log.read_text(errors='replace').strip().splitlines()[-1][:350]
      except (OSError,IndexError):detail='Keine weitere Diagnose verfügbar.'
-     raise ValueError('Das Mac-Helferfenster konnte nicht starten. '+detail+' · Der Browser-Helfer bleibt nutzbar.')
+     raise ValueError('Das Python-Helferfenster konnte nicht starten. Falls tkinter fehlt, den Browser-Helfer verwenden; es wird nichts automatisch installiert. '+detail+' · Der Browser-Helfer bleibt nutzbar.')
     if ready.is_file():
      if visible_since is None:visible_since=time.monotonic()
      elif time.monotonic()-visible_since>=.3:return {'ok':True,'mode':mode,'visible':True}
     time.sleep(.05)
    self.process.terminate();self.process=None
-   if not _simple:return self.open(url,mode,_simple=True)
    raise ValueError('macOS hat kein sichtbares Helferfenster bestätigt. Bitte den Browser-Helfer verwenden; kein Fenster wurde als geöffnet gemeldet.')
  def change(self,mode):
   if mode not in {'island','helper','expanded'}:raise ValueError('Unbekannte Helferansicht.')

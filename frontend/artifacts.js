@@ -12,7 +12,7 @@ window.JarvisArtifacts={
     const voice=option('Thorsten-Sprecher',!/(?:ohne|kein(?:e[nr]?)?)\s+(?:stimme|sprecher|ton|sprache|sprachausgabe)/i.test(job.task||''));
     const subtitles=option('Untertitel',!/(?:ohne|kein(?:e[nr]?)?)\s+untertitel/i.test(job.task||''));
     const styleLabel=make('label','Filmstil ',section),style=make('select',null,styleLabel);
-    for(const [value,text] of [['lowpoly','Low-Poly · eigene JARVIS-Figur'],['photo','Eigenes Produktfoto']]){const item=make('option',text,style);item.value=value;}style.value=job.image_mime?'photo':'lowpoly';
+    for(const [value,text] of [['lowpoly','Low-Poly · eigene JARVIS-Figur'],['photo','Eigenes Produktfoto'],['hologram','Hologramm · Jarvis-Kugel'],['kinetic','Motion Design · Titel und Formen']]){const item=make('option',text,style);item.value=value;if(value==='photo'&&!job.image_mime)item.disabled=true;}style.value=job.image_mime?'photo':'lowpoly';
     const canvas=make('canvas',null,section);canvas.width=720;canvas.height=720;canvas.style.width='100%';canvas.style.maxWidth='420px';
     const status=make('p','Vorschau und Export verwenden dieselbe Thorsten-Tonspur.',section);status.setAttribute('role','status');
     const context=canvas.getContext('2d'),lines=this.lines(job).slice(0,3).map(line=>line.replace(/^szene\s*\d+\s*[:.-]\s*/i,'').slice(0,120));
@@ -23,8 +23,9 @@ window.JarvisArtifacts={
     function draw(time){
       canvas.dataset.frame=String(Math.round(time));const cue=caption(time),scene=cue.index,phase=Math.min(1,time/duration),lowpoly=style.value==='lowpoly';
       if(lowpoly)window.JarvisLowPoly.draw(context,time,720,720,{speaking:cue.speaking});
-      else{const gradient=context.createLinearGradient(0,0,720,720);gradient.addColorStop(0,'#123a3c');gradient.addColorStop(1,'#080d0f');context.fillStyle=gradient;context.fillRect(0,0,720,720);}
+      else if(style.value==='hologram'&&window.JarvisOrb){window.JarvisOrb.draw(canvas,time,{speaking:cue.speaking,working:true});}else{const gradient=context.createLinearGradient(0,0,720,720);gradient.addColorStop(0,'#123a3c');gradient.addColorStop(1,'#080d0f');context.fillStyle=gradient;context.fillRect(0,0,720,720);}
       if(photo&&!lowpoly){const scale=Math.max(720/photo.width,720/photo.height)*(1+phase*.12),w=photo.width*scale,h=photo.height*scale;context.drawImage(photo,(720-w)/2+(phase-.5)*20,(720-h)/2,w,h);}
+      if(style.value==='kinetic'){for(let i=0;i<9;i++){const a=time/1200+i*.7,x=360+Math.cos(a)*190,y=300+Math.sin(a*.7)*150;context.fillStyle=['#70d6ff','#ffe183','#d4b3ff'][i%3];context.save();context.translate(x,y);context.rotate(a);context.fillRect(-12,-12,24+i*3,24+i*3);context.restore();}context.fillStyle='#f1f7ff';context.font='bold 48px sans-serif';context.textAlign='center';context.fillText('JARVIS',360,340);context.textAlign='start';}
       context.fillStyle='#e8d087';context.font='18px sans-serif';context.fillText('JARVIS / STUDIO',55,70);
       const text=lines[scene]||'';canvas.dataset.caption=subtitles.checked?text:'';canvas.dataset.speaking=String(cue.speaking);
       if(subtitles.checked&&text){
@@ -66,13 +67,13 @@ window.JarvisArtifacts={
       }catch(error){if(generation!==previewGeneration)return;stopPreview();status.textContent='Vorschau fehlgeschlagen: '+error.message;}
     };
     for(const input of [style,voice,subtitles])input.onchange=()=>{stopPreview();draw(0);};
-    const exportButton=make('button','Video exportieren',section);exportButton.type='button';exportButton.className='secondary-button';
+    const exportButton=make('button','Video exportieren',section);exportButton.type='button';exportButton.className='secondary-button';const cancelExport=make('button','Export stoppen',section);cancelExport.type='button';cancelExport.hidden=true;let stopExport=null;cancelExport.onclick=()=>stopExport?.();
     exportButton.onclick=async()=>{
       if(recording)return;if(!canvas.captureStream||!window.MediaRecorder){status.textContent='Dieser Browser unterstützt keinen lokalen Videoexport.';return;}
-      const mime=['video/webm;codecs=vp9,opus','video/webm','video/mp4'].find(type=>MediaRecorder.isTypeSupported(type));if(!mime){status.textContent='Kein unterstütztes Videoformat verfügbar.';return;}
+      const mime=['video/mp4','video/webm;codecs=vp9,opus','video/webm'].find(type=>MediaRecorder.isTypeSupported(type));if(!mime){status.textContent='Kein unterstütztes Videoformat verfügbar.';return;}
       stopPreview();recording=true;const inputs=[style,voice,subtitles,exportButton,play,...editors];inputs.forEach(input=>input.disabled=true);
       let stream=null,source=null,destination=null,recorder=null,aborted=false,visibility=null;
-      const cleanup=()=>{cancelAnimationFrame(animation);try{source?.stop();}catch(_){}source?.disconnect();destination?.disconnect();stream?.getTracks().forEach(track=>track.stop());if(visibility)document.removeEventListener('visibilitychange',visibility);recording=false;inputs.forEach(input=>input.disabled=false);};
+      const cleanup=()=>{cancelAnimationFrame(animation);try{source?.stop();}catch(_){}source?.disconnect();destination?.disconnect();stream?.getTracks().forEach(track=>track.stop());if(visibility)document.removeEventListener('visibilitychange',visibility);recording=false;stopExport=null;cancelExport.hidden=true;inputs.forEach(input=>input.disabled=false);};
       try{
         window.JarvisConversation?.stop();window.JarvisBridge.stopAudio();await photoReady;const narration=await speech();
         stream=canvas.captureStream(24);
@@ -80,8 +81,8 @@ window.JarvisArtifacts={
         recorder=new MediaRecorder(stream,{mimeType:mime});const chunks=[];recorder.ondataavailable=event=>{if(event.data.size)chunks.push(event.data);};
         recorder.onerror=()=>{aborted=true;cleanup();status.textContent='Videoexport fehlgeschlagen.';};
         visibility=()=>{if(document.hidden&&recorder.state!=='inactive'){aborted=true;recorder.stop();}};document.addEventListener('visibilitychange',visibility);
-        recorder.onstop=()=>{cleanup();if(aborted||!canvas.isConnected){status.textContent='Export unterbrochen. Bitte sichtbar geöffnet lassen und erneut starten.';return;}const blob=new Blob(chunks,{type:mime});if(blob.size<1024){status.textContent='Keine verwertbare Videodatei erzeugt.';return;}const url=URL.createObjectURL(blob),link=make('a','Fertiges Video herunterladen',section);link.href=url;link.download='Jarvis-Werbeclip.'+(mime.includes('mp4')?'mp4':'webm');status.textContent='Video fertig'+(narration?' · mit Thorsten-Sprecher':' · ohne Ton')+(subtitles.checked?' und eingebrannten Untertiteln.':'.');setTimeout(()=>URL.revokeObjectURL(url),120000);};
-        recorder.start(250);draw(0);stream.getVideoTracks()[0]?.requestFrame?.();source?.start();run();status.textContent='Video wird lokal gerendert · etwa '+Math.ceil(duration/1000)+' Sekunden. Bitte sichtbar geöffnet lassen.';
+        recorder.onstop=()=>{cleanup();if(aborted||!canvas.isConnected){status.textContent='Export unterbrochen. Bitte sichtbar geöffnet lassen und erneut starten.';return;}const blob=new Blob(chunks,{type:mime});if(blob.size<1024){status.textContent='Keine verwertbare Videodatei erzeugt.';return;}window.dispatchEvent(new CustomEvent('jarvis:video-created',{detail:{blob,name:'Jarvis-Animation.'+(mime.includes('mp4')?'mp4':'webm')}}));const url=URL.createObjectURL(blob),link=make('a','Fertiges Video herunterladen',section);link.href=url;link.download='Jarvis-Werbeclip.'+(mime.includes('mp4')?'mp4':'webm');status.textContent='Video fertig'+(narration?' · mit Thorsten-Sprecher':' · ohne Ton')+(subtitles.checked?' und eingebrannten Untertiteln.':'.');setTimeout(()=>URL.revokeObjectURL(url),120000);};
+        cancelExport.hidden=false;stopExport=()=>{aborted=true;if(recorder.state!=='inactive')recorder.stop();};recorder.start(250);draw(0);stream.getVideoTracks()[0]?.requestFrame?.();source?.start();run();status.textContent='Video wird lokal gerendert · etwa '+Math.ceil(duration/1000)+' Sekunden. Bitte sichtbar geöffnet lassen.';
         setTimeout(()=>{if(recorder.state!=='inactive')recorder.stop();},duration+250);
       }catch(error){cleanup();status.textContent='Export fehlgeschlagen: '+error.message;}
     };

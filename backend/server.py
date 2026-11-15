@@ -395,7 +395,7 @@ class Handler(BaseHTTPRequestHandler):
             length = int(self.headers.get('Content-Length', '0'))
         except ValueError:
             raise ValueError('Ungültige Nachrichtenlänge.') from None
-        maximum = 512000 if urlsplit(self.path).path in {'/api/aeris/pose','/api/video-call'} else 6 * 1024 * 1024 if urlsplit(self.path).path in {'/api/image','/api/agents','/api/agents/dispatch','/api/aeris/pose'} else MAX_BODY
+        maximum = 512000 if urlsplit(self.path).path in {'/api/aeris/pose','/api/video-call','/api/video-editor/start','/api/video-editor/assist','/api/video-editor/plan','/api/video-editor/assist-plan','/api/video-editor/story'} else 6 * 1024 * 1024 if urlsplit(self.path).path in {'/api/image','/api/agents','/api/agents/dispatch','/api/aeris/pose'} else MAX_BODY
         if length < 1 or length > maximum:
             raise ValueError('Die Anfrage ist leer oder überschreitet das Größenlimit.')
         if self.headers.get_content_type() != 'application/json':
@@ -484,7 +484,7 @@ class Handler(BaseHTTPRequestHandler):
             if path=='/api/video-editor':
                 if self.server.device_auth or not ipaddress.ip_address(self.client_address[0]).is_loopback:return self._json({'error':'Videoschnitt bitte direkt am Mac verwenden.'},403)
                 return self._json(app.video_editor.snapshot())
-            static = {'/': 'mobile.html' if self.server.device_auth or re.search(r'iPhone|iPad|iPod|Macintosh.*Mobile',self.headers.get('User-Agent',''),re.I) else 'index.html', '/index.html': 'index.html', '/mobile':'mobile.html','/mobile-app.js':'mobile-app.js','/boot.js':'boot.js','/task-board.js':'task-board.js','/discover.js':'discover.js','/quest':'aeris.html','/quest-assistant.js':'quest-assistant.js','/quest-hands.js':'quest-hands.js','/aeris':'aeris.html','/aeris.js':'aeris.js','/aeris-assistant.js':'aeris-assistant.js','/aeris-xr.js':'aeris-xr.js','/aeris-pose.js':'aeris-pose.js','/vr-guide':'vr-guide.html','/video-editor':'video-editor.html','/video-editor.js':'video-editor.js','/companion':'call.html','/companion-actions.js':'companion-actions.js','/companion.js':'companion.js','/companion.css':'companion.css','/jarvis-orb.js':'jarvis-orb.js','/call':'call.html','/call-bridge.js':'call-bridge.js','/aeris-model.js':'aeris-model.js','/aeris-projects.js':'aeris-projects.js','/aeris-tracking.js':'aeris-tracking.js','/video-call.js':'video-call.js','/video-call.css':'video-call.css','/aeris-gestures.js':'aeris-gestures.js','/aeris-shell.css':'aeris-shell.css','/aeris-shell.js':'aeris-shell.js','/aeris-icon.svg':'aeris-icon.svg','/aeris-sw.js':'aeris-sw.js',
+            static = {'/': 'mobile.html' if self.server.device_auth or re.search(r'iPhone|iPad|iPod|Macintosh.*Mobile',self.headers.get('User-Agent',''),re.I) else 'index.html', '/index.html': 'index.html', '/mobile':'mobile.html','/mobile-app.js':'mobile-app.js','/boot.js':'boot.js','/task-board.js':'task-board.js','/discover.js':'discover.js','/quest':'aeris.html','/quest-assistant.js':'quest-assistant.js','/quest-hands.js':'quest-hands.js','/aeris':'aeris.html','/aeris.js':'aeris.js','/aeris-assistant.js':'aeris-assistant.js','/aeris-xr.js':'aeris-xr.js','/aeris-pose.js':'aeris-pose.js','/vr-guide':'vr-guide.html','/video-editor':'video-editor.html','/video-editor.js':'video-editor.js','/video-renderer.js':'video-renderer.js','/companion':'call.html','/companion-actions.js':'companion-actions.js','/companion.js':'companion.js','/companion.css':'companion.css','/jarvis-orb.js':'jarvis-orb.js','/call':'call.html','/call-bridge.js':'call-bridge.js','/aeris-model.js':'aeris-model.js','/aeris-projects.js':'aeris-projects.js','/aeris-tracking.js':'aeris-tracking.js','/video-call.js':'video-call.js','/video-call.css':'video-call.css','/aeris-gestures.js':'aeris-gestures.js','/aeris-shell.css':'aeris-shell.css','/aeris-shell.js':'aeris-shell.js','/aeris-icon.svg':'aeris-icon.svg','/aeris-sw.js':'aeris-sw.js',
                       '/manifest.webmanifest':'manifest.webmanifest','/app-icon.png':'app-icon.png','/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js','/office-3d.js':'office-3d.js', '/lowpoly-stage.js':'lowpoly-stage.js', '/artifacts.js':'artifacts.js', '/jarvis-voice.js':'jarvis-voice.js', '/voice-worker.js':'voice-worker.js', '/conversation.js':'conversation.js', '/mini-hub.js':'mini-hub.js', '/world-news.js':'world-news.js', '/astra.js':'astra.js', '/astra.css':'astra.css', '/astra-panel.html':'astra-panel.html', '/astra-panel.js':'astra-panel.js'}
             for name in ['ESpeak.js','mespeak.js','config.json','jarvis-de.json','de.json','COPYING','NOTICE.txt','UPSTREAM-README.md','mespeak-2.0.2-source.tgz','speak-source-9c6f642.tar.gz']:
                 static['/vendor/voice/'+name]='vendor/voice/'+name
@@ -561,7 +561,7 @@ class Handler(BaseHTTPRequestHandler):
                     raise ValueError('Ungültige Kopplungsanfrage.')
                 session=self.server.device_auth.pair(body['ticket'])
                 return self._json({'ok':True},cookie='jarvis_device='+session+'; Path=/; Secure; HttpOnly; SameSite=Strict; Max-Age=2592000')
-            if method=='POST' and path in {'/api/video-editor/choose','/api/video-editor/start','/api/video-editor/stop','/api/video-editor/assist'}:
+            if method=='POST' and path in {'/api/video-editor/choose','/api/video-editor/start','/api/video-editor/stop','/api/video-editor/assist','/api/video-editor/plan','/api/video-editor/assist-plan','/api/video-editor/story'}:
                 if self.server.device_auth or not ipaddress.ip_address(self.client_address[0]).is_loopback:return self._json({'error':'Videoschnitt bitte direkt am Mac verwenden.'},403)
                 if path.endswith('/choose'):
                     if body:raise ValueError('Keine Dateipfade aus dem Browser angeben. Die Dateiauswahl am Mac verwenden.')
@@ -569,9 +569,14 @@ class Handler(BaseHTTPRequestHandler):
                 if path.endswith('/stop'):
                     if set(body)!={'id'}:raise ValueError('Auftragskennung erforderlich.')
                     return self._json(app.video_editor.stop(body['id']))
-                if path.endswith('/assist'):
+                if path.endswith('/story'):
+                    if not app.chat_lock.acquire(blocking=False):raise ProviderError('Eine KI-Anfrage läuft bereits.',409)
+                    try:return self._json(app.video_editor.story(app,body))
+                    finally:app.chat_lock.release()
+                if path.endswith('/plan'):return self._json(app.video_editor.start(body,plan_only=True))
+                if path.endswith('/assist') or path.endswith('/assist-plan'):
                     if not app.chat_lock.acquire(blocking=False):raise ProviderError('Eine KI-Anfrage läuft bereits. Bitte kurz warten.',409)
-                    try:return self._json(app.video_editor.assist(app,body),202)
+                    try:return self._json(app.video_editor.assist(app,body,plan_only=path.endswith('/assist-plan')),202)
                     finally:app.chat_lock.release()
                 return self._json(app.video_editor.start(body),202)
             if method=='POST' and path in {'/api/companion/open','/api/companion/mode','/api/companion/close','/api/companion/browser','/api/companion/screen','/api/companion/motion','/api/companion/editor'}:
@@ -580,11 +585,15 @@ class Handler(BaseHTTPRequestHandler):
                     if set(body)!={'enabled'}:raise ValueError('Nur den Bewegungsstatus angeben.')
                     return self._json(app.companion_window.motion(body['enabled']))
                 if path.endswith('/editor'):
-                    if set(body)-{'budget_minutes'}:raise ValueError('Nur die Arbeitszeit angeben.')
+                    if set(body)-{'budget_minutes','animation'}:raise ValueError('Nur die Arbeitszeit angeben.')
                     budget=body.get('budget_minutes')
                     if budget is not None and (isinstance(budget,bool) or not isinstance(budget,(int,float)) or not 1<=budget<=120):raise ValueError('Arbeitszeit zwischen 1 und 120 Minuten angeben.')
+                    animation=body.get('animation')
+                    if animation is not None and (not isinstance(animation,str) or not 1<=len(animation)<=1500):raise ValueError('Animationswunsch bis 1500 Zeichen angeben.')
                     import webbrowser
-                    webbrowser.open(('https' if self.server.secure else 'http')+'://localhost:'+str(self.server.server_port)+'/video-editor'+('?budget='+str(budget) if budget else ''));return self._json({'ok':True})
+                    from urllib.parse import urlencode
+                    query=urlencode({**({'budget':budget} if budget else {}),**({'animation':animation} if animation else {})})
+                    webbrowser.open(('https' if self.server.secure else 'http')+'://localhost:'+str(self.server.server_port)+'/video-editor'+('?'+query if query else ''));return self._json({'ok':True})
                 if path.endswith('/browser'):
                     if body:raise ValueError('Keine Parameter erforderlich.')
                     import webbrowser

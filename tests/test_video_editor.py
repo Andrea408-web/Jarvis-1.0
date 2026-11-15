@@ -21,9 +21,9 @@ class VideoEditorTests(unittest.TestCase):
   with self.assertRaises(TimeoutError):self.editor._command([sys.executable,'-c','import time;time.sleep(10)'],time.monotonic()+.15)
   self.assertLess(time.monotonic()-before,3);self.assertIsNone(self.editor.process)
   original=self.editor._ffmpeg
-  def render(cuts,kind,path,tools,deadline):
+  def render(cuts,kind,path,tools,deadline,job=None):
    if kind=='shorts':path.write_bytes(b'partial');raise TimeoutError('limit')
-   return original(cuts,kind,path,tools,deadline)
+   return original(cuts,kind,path,tools,deadline,job=job)
   with patch.object(self.editor,'_ffmpeg',side_effect=render):result=self.wait(self.editor.start({'cuts':[{'asset':self.asset['id'],'start':0,'end':.5}],'formats':['youtube','shorts'],'budget_minutes':1}))
   self.assertEqual(result['state'],'timed_out');self.assertEqual(len(result['outputs']),1);self.assertTrue(self.editor.file(result['id'],'youtube')[0].is_file());self.assertFalse(list((self.editor.root/result['id']).glob('*.partial.mp4')))
  def test_silence_analysis_removes_only_middle_pause(self):
@@ -61,3 +61,14 @@ class VideoEditorTests(unittest.TestCase):
     self.assertAlmostEqual(self.editor.probe(target)['duration'],2,delta=.15);native.assert_not_called()
   broken=self.root/'broken.mp4';broken.write_bytes(b'\x00\x00\xff\xffmoovbad')
   with self.assertRaises(ValueError):probe(broken)
+ def test_real_subtitles_color_effect_and_tempo_are_in_exported_pixels(self):
+  job=self.editor.start({'cuts':[{'asset':self.asset['id'],'start':0,'end':2}],'formats':['youtube'],'budget_minutes':1,'style':{'look':'mono','speed':2,'vignette':True},'captions':[{'start':0,'end':1,'text':'Hallo Maxine!'}]});result=self.wait(job);self.assertEqual(result['state'],'completed',result);output=result['outputs'][0];self.assertAlmostEqual(output['duration'],1,delta=.2)
+  path,_=self.editor.file(job['id'],'youtube');frame=subprocess.run(['ffmpeg','-v','error','-ss','0.35','-i',str(path),'-vf','crop=1600:260:160:800,scale=320:52','-frames:v','1','-f','rawvideo','-pix_fmt','rgb24','-'],capture_output=True,check=True).stdout
+  pixels=list(zip(frame[::3],frame[1::3],frame[2::3]));self.assertGreater(sum(min(p)>210 for p in pixels),20,'Caption must be burned into video pixels');self.assertLess(max(abs(p[0]-p[2]) for p in pixels),15,'Monochrome look must affect the actual video')
+  from backend.video_style import ass,validate
+  text=ass([{'start':0,'end':1,'text':r'{\pos(0,0)} Test'}],1920,1080,'clean');self.assertNotIn(r'{\pos',text)
+  with self.assertRaises(ValueError):validate({'look':'arbitrary filter;command'})
+ def test_plan_only_needs_no_native_export_and_keeps_validated_effects(self):
+  with patch.object(self.editor,'tools',return_value={'engine':'avfoundation','silence':False}):
+   plan=self.editor.start({'cuts':[{'asset':self.asset['id'],'start':0,'end':1}],'formats':['youtube'],'style':{'look':'neon'},'captions':[{'start':0,'end':1,'text':'Sir'}]},plan_only=True)
+  self.assertEqual(plan['style']['look'],'neon');self.assertEqual(len(self.editor.jobs),0);self.assertIsNone(self.editor.worker)

@@ -318,7 +318,7 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Referrer-Policy', 'no-referrer')
         self.send_header('X-Frame-Options', 'DENY')
         self.send_header('Permissions-Policy', 'camera=(self), microphone=(self), xr-spatial-tracking=(self), geolocation=()')
-        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; worker-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: https://images.tagesschau.de https://www.tagesschau.de https://tagesschau.de https://i.ytimg.com; media-src 'self' blob:; connect-src 'self'; frame-src 'self' https://www.youtube-nocookie.com https://www.tiktok.com https://zugspitze.panomax.com https://www.muenchen.de https://www.berlin.de https://www.earthcam.com https://www.abbeyroad.com https://www.livefromiceland.is https://www.skylinewebcams.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
+        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; worker-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://images.tagesschau.de https://www.tagesschau.de https://tagesschau.de https://i.ytimg.com; media-src 'self' blob:; connect-src 'self'; frame-src 'self' https://www.youtube-nocookie.com https://www.tiktok.com https://zugspitze.panomax.com https://www.muenchen.de https://www.berlin.de https://www.earthcam.com https://www.abbeyroad.com https://www.livefromiceland.is https://www.skylinewebcams.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
         if self.server.secure:
             self.send_header('Strict-Transport-Security', 'max-age=86400')
         self.end_headers()

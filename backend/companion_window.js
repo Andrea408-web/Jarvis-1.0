@@ -2,9 +2,9 @@
 ObjC.import('Cocoa');ObjC.import('WebKit');
 function run(args){
  const read=()=>JSON.parse(ObjC.unwrap($.NSString.stringWithContentsOfFileEncodingError(args[0],$.NSUTF8StringEncoding,null))),initial=read();
- const app=$.NSApplication.sharedApplication;app.setActivationPolicy($.NSApplicationActivationPolicyAccessory);app.finishLaunching;
- const panel=$.NSPanel.alloc.initWithContentRectStyleMaskBackingDefer($.NSMakeRect(50,100,360,180),1|2|8,$.NSBackingStoreBuffered,false);
- panel.title='Jarvis · zum Verschieben oben ziehen';panel.titlebarAppearsTransparent=true;panel.becomesKeyOnlyIfNeeded=false;panel.level=$.NSFloatingWindowLevel;panel.hidesOnDeactivate=false;panel.releasedWhenClosed=false;panel.collectionBehavior=1|256;panel.opaque=false;panel.backgroundColor=$.NSColor.clearColor;
+ const simple=args[2]==='simple',app=$.NSApplication.sharedApplication;app.setActivationPolicy(simple?0:1);app.finishLaunching;
+ const panel=(simple?$.NSWindow:$.NSPanel).alloc.initWithContentRectStyleMaskBackingDefer($.NSMakeRect(50,100,360,180),1|2|8,$.NSBackingStoreBuffered,false);
+ panel.title='Jarvis · zum Verschieben oben ziehen';panel.titlebarAppearsTransparent=true;if(!simple){panel.becomesKeyOnlyIfNeeded=false;panel.hidesOnDeactivate=false;}panel.level=3;panel.releasedWhenClosed=false;panel.collectionBehavior=1|256;panel.opaque=false;panel.backgroundColor=$.NSColor.clearColor;
  const config=$.WKWebViewConfiguration.new;config.mediaTypesRequiringUserActionForPlayback=0;
  const web=$.WKWebView.alloc.initWithFrameConfiguration($.NSMakeRect(0,0,360,180),config);web.autoresizingMask=2|16;try{web.setValueForKey(false,'drawsBackground');}catch(_){}panel.contentView.addSubview(web);web.loadRequest($.NSURLRequest.requestWithURL($.NSURL.URLWithString(initial.url)));
  let sequence=-1,lastMode=null,lastInput=Date.now();

@@ -48,5 +48,15 @@ class CompanionTests(unittest.TestCase):
   with tempfile.TemporaryDirectory() as folder:
    panel=CompanionWindow(folder);process=Mock();process.poll.return_value=None
    with patch('backend.companion_window.platform.system',return_value='Darwin'),patch('backend.companion_window.subprocess.Popen',return_value=process),patch('backend.companion_window.time.monotonic',side_effect=[0,7]):
-    with self.assertRaisesRegex(ValueError,'kein sichtbares'):panel.open('http://localhost:8765/companion?native=1')
+    with self.assertRaisesRegex(ValueError,'kein sichtbares'):panel.open('http://localhost:8765/companion?native=1',_simple=True)
    process.terminate.assert_called_once();self.assertIsNone(panel.process)
+ def test_failed_panel_retries_standard_window_and_requires_visible_confirmation(self):
+  with tempfile.TemporaryDirectory() as folder:
+   panel=CompanionWindow(folder);failed=Mock();failed.poll.return_value=1;working=Mock();working.poll.return_value=None;calls=[]
+   def spawn(args,**kwargs):
+    calls.append(args)
+    if len(calls)==1:return failed
+    (Path(folder)/'jarvis-companion.ready').write_text('visible');return working
+   with patch('backend.companion_window.platform.system',return_value='Darwin'),patch('backend.companion_window.subprocess.Popen',side_effect=spawn):
+    self.assertTrue(panel.open('http://localhost:8765/companion?native=1')['visible'])
+   self.assertEqual([args[-1] for args in calls],['panel','simple']);panel.close()

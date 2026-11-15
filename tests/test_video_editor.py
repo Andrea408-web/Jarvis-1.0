@@ -49,3 +49,15 @@ class VideoEditorTests(unittest.TestCase):
   with self.assertRaises(ValueError):self.editor.assist(app,{'assets':[self.asset['id']],'instruction':'Schneide'})
   app.llamacpp.transport.return_value={'done':True,'message':{'content':'Anfrage erfüllt'}}
   with self.assertRaises(ValueError):self.editor.assist(app,{'assets':[self.asset['id']],'instruction':'Schneide'})
+ def test_mp4_metadata_without_any_native_framework_including_fragmented(self):
+  from backend.video_metadata import probe
+  for fragmented in [False,True]:
+   target=self.root/('fragment.mp4' if fragmented else 'regular.mov')
+   args=['ffmpeg','-v','error','-y','-i',str(self.source),'-c','copy']
+   if fragmented:args+=['-movflags','frag_keyframe+empty_moov']
+   subprocess.run(args+[str(target)],capture_output=True,check=True)
+   metadata=probe(target);self.assertAlmostEqual(metadata['duration'],2,delta=.15);self.assertEqual(metadata['width'],320)
+   with patch.object(self.editor,'tools',return_value={'engine':'avfoundation','ffprobe':None}),patch('backend.video_editor.subprocess.run') as native:
+    self.assertAlmostEqual(self.editor.probe(target)['duration'],2,delta=.15);native.assert_not_called()
+  broken=self.root/'broken.mp4';broken.write_bytes(b'\x00\x00\xff\xffmoovbad')
+  with self.assertRaises(ValueError):probe(broken)

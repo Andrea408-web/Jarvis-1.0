@@ -3,12 +3,12 @@ import json,os,platform,subprocess,threading,time
 from pathlib import Path
 class CompanionWindow:
  def __init__(self,directory):
-  self.directory=Path(directory);self.process=None;self.lock=threading.Lock();self.mode='island';self.wandering=True;self.url='';self.sequence=0
+  self.directory=Path(directory);self.process=None;self.lock=threading.RLock();self.mode='island';self.wandering=True;self.url='';self.sequence=0
   from .screen_view import ScreenView
   self.screen=ScreenView()
  def _write(self):
   self.directory.mkdir(parents=True,exist_ok=True);path=self.directory/'jarvis-companion.json';temporary=path.with_suffix('.tmp');temporary.write_text(json.dumps({'url':self.url,'mode':self.mode,'sequence':self.sequence,'wandering':self.wandering}));temporary.chmod(0o600);temporary.replace(path);return path
- def open(self,url,mode='island'):
+ def open(self,url,mode='island',_simple=False):
   if mode not in {'island','helper','expanded'}:raise ValueError('Unbekannte Helferansicht.')
   if platform.system()!='Darwin':raise ValueError('Das schwebende Mac-Fenster benötigt macOS. Der Browser-Helfer bleibt verfügbar.')
   with self.lock:
@@ -17,12 +17,13 @@ class CompanionWindow:
    self.screen.stop()
    ready=self.directory/'jarvis-companion.ready';ready.unlink(missing_ok=True)
    log=self.directory/'jarvis-companion.log'
-   with log.open('w') as output:self.process=subprocess.Popen(['/usr/bin/osascript','-l','JavaScript',str(Path(__file__).with_name('companion_window.js')),str(config),str(ready)],stdout=output,stderr=subprocess.STDOUT)
+   with log.open('w') as output:self.process=subprocess.Popen(['/usr/bin/osascript','-l','JavaScript',str(Path(__file__).with_name('companion_window.js')),str(config),str(ready),'simple' if _simple else 'panel'],stdout=output,stderr=subprocess.STDOUT)
    log.chmod(0o600)
    deadline=time.monotonic()+6;visible_since=None
    while time.monotonic()<deadline:
     if self.process.poll() is not None:
      self.process=None
+     if not _simple:return self.open(url,mode,_simple=True)
      try:detail=log.read_text(errors='replace').strip().splitlines()[-1][:350]
      except (OSError,IndexError):detail='Keine weitere Diagnose verfügbar.'
      raise ValueError('Das Mac-Helferfenster konnte nicht starten. '+detail+' · Der Browser-Helfer bleibt nutzbar.')
@@ -31,6 +32,7 @@ class CompanionWindow:
      elif time.monotonic()-visible_since>=.3:return {'ok':True,'mode':mode,'visible':True}
     time.sleep(.05)
    self.process.terminate();self.process=None
+   if not _simple:return self.open(url,mode,_simple=True)
    raise ValueError('macOS hat kein sichtbares Helferfenster bestätigt. Bitte den Browser-Helfer verwenden; kein Fenster wurde als geöffnet gemeldet.')
  def change(self,mode):
   if mode not in {'island','helper','expanded'}:raise ValueError('Unbekannte Helferansicht.')
@@ -58,7 +60,7 @@ def main():
   opener=urllib.request.build_opener(urllib.request.ProxyHandler({}))
   with opener.open('http://127.0.0.1:8765/api/session',timeout=3) as response:token=json.loads(response.read(8192))['token']
   request=urllib.request.Request('http://127.0.0.1:8765/api/companion/open',data=b'{"mode":"island"}',headers={'Content-Type':'application/json','X-Jarvis-Token':token})
-  with opener.open(request,timeout=10) as response:json.loads(response.read(8192))
+  with opener.open(request,timeout=20) as response:json.loads(response.read(8192))
   print('Jarvis-Helfer angefordert. Den großen Browser-Tab kannst du schließen. Das Server-Terminal muss geöffnet bleiben.');return 0
  except urllib.error.HTTPError as error:
   if error.code==404:print('Bitte Jarvis nach dem Update im gleichen Ordner neu starten. Der Helfer braucht die aktuelle Serverversion.')

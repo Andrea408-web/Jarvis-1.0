@@ -10,7 +10,7 @@ with tempfile.TemporaryDirectory() as folder:
  app=Application(root/'data');asset=app.video_editor.import_paths([str(source)])[0];server=JarvisServer(('127.0.0.1',0),app);thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start();url='http://127.0.0.1:'+str(server.server_port)
  try:
   with sync_playwright() as p:
-   browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox']);context=browser.new_context(accept_downloads=True);page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+   browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox']);context=browser.new_context(accept_downloads=True);context.add_init_script("window.SpeechRecognition=class{start(){window.editRecognition=this;}stop(){}};");page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
    with patch.object(app.video_editor,'choose',side_effect=lambda:app.video_editor.import_paths([str(source)])) as choose:
     page.goto(url+'/video-editor?budget=3');page.get_by_text('Videoschnitt bereit.',exact=False).wait_for();assert page.locator('#budget').input_value()=='3';page.evaluate("Object.defineProperty(document,'hidden',{get:()=>true,configurable:true})");page.locator('#choose').click();page.get_by_text('Clips ausgewählt.',exact=False).wait_for();choose.assert_called_once();assert page.locator('#cuts .cut').count()==1;page.evaluate('delete document.hidden')
     denied=context.request.post(url+'/api/video-editor/choose',headers={'X-Jarvis-Token':app.token},data={'path':'/etc/passwd'});assert denied.status==400;assert choose.call_count==1
@@ -28,9 +28,16 @@ with tempfile.TemporaryDirectory() as folder:
    page.locator('#shorts').uncheck();page.locator('#assist').click();page.get_by_text('Automatischer technischer Schnitt:',exact=False).wait_for();app.video_editor.worker.join(40)
    assert list(app.video_editor.jobs.values())[-1]['state']=='completed'
    invalid=context.request.post(url+'/api/video-editor/upload',headers={'X-Jarvis-Token':app.token,'Content-Type':'application/octet-stream','X-Video-Name':'no.py'},data=b'bad');assert invalid.status==400
+   image=root/'photo.png';subprocess.run(['ffmpeg','-v','error','-y','-i',str(source),'-frames:v','1',str(image)],capture_output=True,check=True)
+   page.locator('#files').set_input_files(str(image));page.wait_for_function("()=>!document.getElementById('files').disabled",timeout=20000);assert '1 von 1 Clips geladen.' in page.locator('#status').inner_text(),page.locator('#imports').inner_text();assert page.locator('#cuts .cut').count()==3
+   app.store.update_settings({'ai_provider':'llamacpp'});app.llamacpp.transport=lambda *a,**kw:{'done':True,'message':{'content':json.dumps({'cuts':[{'clip':1,'start':0,'end':0.5}],'remove_silence':False})}}
+   page.locator('#read-edit').uncheck();page.locator('#speech-consent').check();page.locator('#speak-edit').click();page.wait_for_function('()=>!!window.editRecognition')
+   before=len(app.video_editor.jobs);page.evaluate("window.editRecognition.onresult({results:[[{transcript:'Schneide den ersten Clip auf eine halbe Sekunde'}]]})")
+   page.get_by_text('Schnittplan der lokalen KI geprüft',exact=False).wait_for();assert len(app.video_editor.jobs)==before+1;app.video_editor.worker.join(40);assert list(app.video_editor.jobs.values())[-1]['state']=='completed'
+   page.locator('#speech-stop').click();assert 'Mikrofon und Stimme aus' in page.locator('#speech-status').inner_text()
    page.route('**/api/video-editor/upload',lambda route:route.fulfill(status=404,content_type='application/json',body='{}'))
    page.locator('#files').set_input_files(str(source));page.get_by_text('Kein Clip importiert.',exact=False).wait_for()
    assert 'Strg+C' in page.locator('#imports').inner_text()
    assert page.locator('#files').is_enabled();assert not errors,errors
-   print('PASS: actual clip/time UI, both formats exported, original remains, no raw paths accepted, partial HTTP preview, job completes after editor closes, playable MP4 download. AVFoundation fallback not tested on physical Mac.');browser.close()
+   print('PASS: image-to-clip import, spoken local cut plan starts without Send, actual clip/time UI, both formats exported, original remains, no raw paths accepted, partial HTTP preview, job completes after editor closes, playable MP4 download. AVFoundation fallback not tested on physical Mac.');browser.close()
  finally:app.video_editor.close();app.office.stop();server.shutdown();server.server_close();thread.join(3)

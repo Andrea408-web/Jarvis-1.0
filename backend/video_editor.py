@@ -30,7 +30,7 @@ class VideoEditor:
   # Bounded streaming import: never hold a full video in Python memory.
   if not isinstance(length,int) or not 1<=length<=4*1024**3:raise ValueError('Bitte eine Videodatei bis 4 GB auswählen.')
   name=Path(name).name;suffix=Path(name).suffix.lower()
-  if suffix not in {'.mp4','.mov','.m4v','.mkv','.webm'}:raise ValueError('MP4, MOV, M4V, MKV oder WebM auswählen.')
+  if suffix not in {'.mp4','.mov','.m4v','.mkv','.webm','.avi','.mpeg','.mpg','.mts','.m2ts','.ts','.3gp','.ogv','.mxf','.wmv','.flv','.vob'}:raise ValueError('Bitte eine unterstützte Videodatei auswählen, z. B. MP4, MOV, AVI oder WebM.')
   folder=self.root/'imports';folder.mkdir(parents=True,exist_ok=True,mode=0o700)
   if shutil.disk_usage(folder).free<length+128*1024**2:raise ValueError('Nicht genug freier Speicher für die Videokopie.')
   path=folder/(secrets.token_hex(16)+suffix)
@@ -82,11 +82,15 @@ class VideoEditor:
     command=[tools['ffprobe'],'-v','error','-protocol_whitelist','file,pipe','-show_entries','format=duration:stream=codec_type,width,height','-of','json',str(path)];raw=json.loads(self._command(command,deadline)[0] if deadline else subprocess.run(command,capture_output=True,text=True,check=True,timeout=20).stdout);video=next(s for s in raw['streams'] if s.get('codec_type')=='video');duration=float(raw['format']['duration']);width=int(video['width']);height=int(video['height']);audio=any(s.get('codec_type')=='audio' for s in raw['streams'])
    except (TimeoutError,InterruptedError):raise
    except (OSError,ValueError,KeyError,StopIteration,subprocess.SubprocessError):raise ValueError('Videodatei konnte nicht gelesen werden.') from None
+  elif tools['engine']=='avfoundation' and Path(path).suffix.lower() in {'.mp4','.mov','.m4v'}:
+   from .video_metadata import probe
+   try:raw=probe(path);duration=float(raw['duration']);width=int(raw['width']);height=int(raw['height']);audio=raw['audio']
+   except (OSError,ValueError,KeyError) as error:raise ValueError('MP4/MOV konnte nicht gelesen werden: '+str(error)) from None
   elif tools['engine']=='avfoundation':
    try:
     command=['/usr/bin/osascript','-l','JavaScript',str(Path(__file__).with_name('video_native.js')),'probe',str(path)];raw=json.loads(self._command(command,deadline)[0] if deadline else subprocess.run(command,capture_output=True,text=True,check=True,timeout=25).stdout);duration=float(raw['duration']);width=int(raw['width']);height=int(raw['height']);audio=bool(raw['audio'])
    except (TimeoutError,InterruptedError):raise
-   except (OSError,ValueError,KeyError,subprocess.SubprocessError):raise ValueError('macOS konnte die Videodatei nicht lesen.') from None
+   except (OSError,ValueError,KeyError,subprocess.SubprocessError):raise ValueError('macOS kann dieses Videoformat nicht lesen. MP4/MOV verwenden; weitere Formate benötigen vorhandenes FFmpeg.') from None
   else:raise ValueError(tools['message'])
   if not math.isfinite(duration) or not .05<=duration<=43200 or not 1<=width<=16384 or not 1<=height<=16384:raise ValueError('Ungeeignete Videodatei oder Dauer über 12 Stunden.')
   return {'duration':duration,'width':width,'height':height,'audio':audio}
@@ -95,7 +99,7 @@ class VideoEditor:
   pending=[]
   for value in paths:
    path=Path(value).expanduser().resolve()
-   if path.suffix.lower() not in {'.mp4','.mov','.m4v','.mkv','.webm'} or not path.is_file():raise ValueError('MP4, MOV, M4V, MKV oder WebM auswählen.')
+   if path.suffix.lower() not in {'.mp4','.mov','.m4v','.mkv','.webm','.avi','.mpeg','.mpg','.mts','.m2ts','.ts','.3gp','.ogv','.mxf','.wmv','.flv','.vob'} or not path.is_file():raise ValueError('Bitte eine unterstützte Videodatei auswählen, z. B. MP4, MOV, AVI oder WebM.')
    pending.append({'id':secrets.token_hex(16),'name':path.name,'path':str(path),**self.probe(path)})
   with self.lock:
    if len(self.assets)+len(pending)>64:raise ValueError('Zu viele ausgewählte Dateien. Jarvis neu starten oder vorhandene Clips weiterverwenden.')

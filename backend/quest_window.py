@@ -7,7 +7,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 from .mobile import private_ip
 FRONTEND=Path(__file__).resolve().parents[1]/'frontend'
-FILES={'/aeris':'aeris.html','/vr-guide':'vr-guide.html',**{('/'+name):name for name in ['aeris-shell.css','aeris-shell.js','aeris-icon.svg','aeris.js','aeris-model.js','aeris-projects.js','aeris-xr.js','aeris-assistant.js','aeris-gestures.js','aeris-tracking.js','aeris-pose.js','headset-window.js']}}
+FILES={'/aeris':'aeris.html','/vr-guide':'vr-guide.html',**{('/'+name):name for name in ['aeris-shell.css','aeris-shell.js','aeris-icon.svg','aeris.js','aeris-model.js','aeris-projects.js','aeris-xr.js','aeris-assistant.js','aeris-gestures.js','aeris-tracking.js','aeris-pose.js','headset-window.js','quest-hands.js','quest-assistant.js']}}
 class StaticHandler(BaseHTTPRequestHandler):
  def log_message(self,*args):pass
  def do_GET(self):
@@ -42,7 +42,8 @@ def main():
   with opener.open(request,timeout=10) as response:data=json.loads(response.read(16384))
   if stop:print('Einfacher WLAN-Zugang beendet.')
   else:
-   print('Diesen Link im Quest Browser öffnen:\n'+data['url']+'\n\n'+data['message']);webbrowser.open(data['url'])
+   print('Diesen Link im Quest Browser öffnen:\n'+data['url']+'\n\n'+data.get('message',data.get('instructions','')));webbrowser.open('http://localhost:8765/quest' if '--assistant' in sys.argv else data['url'])
+  if not stop and data.get('code'):print('Alternative: '+data['entry_url']+' öffnen · Code: '+data['code']+' (5 Minuten gültig)')
   return 0
  except Exception:print('Bitte zuerst 2-JARVIS-starten.command öffnen und Jarvis laufen lassen. Danach diesen Brillen-Helfer erneut öffnen. Alternativ in Aeris unter VR / MR den einfachen Brillen-Link anzeigen.');return 1
 if __name__=='__main__':raise SystemExit(main())

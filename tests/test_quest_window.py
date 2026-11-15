@@ -23,3 +23,20 @@ class QuestWindowTests(unittest.TestCase):
     data=link.start();self.assertEqual(data['mode'],'browser-window');self.assertIn('keine KI',data['message']);self.assertIsNotNone(link.server)
    finally:link.stop()
    self.assertIsNone(link.server)
+
+class QuestPairingTests(unittest.TestCase):
+ def test_short_code_is_single_use_and_eight_wrong_attempts_expire_pairing(self):
+  from backend.mobile import DeviceAuth
+  auth=DeviceAuth();ticket=auth.issue();code=auth.code;self.assertEqual(len(code),6);session=auth.pair(code);self.assertTrue(auth.valid('jarvis_device='+session))
+  with self.assertRaises(ValueError):auth.pair(code)
+  ticket=auth.issue()
+  for _ in range(8):
+   with self.assertRaises(ValueError):auth.pair('wrong')
+  with self.assertRaises(ValueError):auth.pair(ticket)
+ def test_quest_link_uses_ip_and_preserves_one_time_pairing(self):
+  from backend.mobile import MobileLink
+  from unittest.mock import Mock
+  with tempfile.TemporaryDirectory() as folder:
+   app=Mock();app.store.data_dir=__import__('pathlib').Path(folder);link=MobileLink(app);ticket=link.auth.issue()
+   with patch.object(link,'start',return_value={'url':'https://mac.local:8766/#pair='+ticket,'ip_url':'https://192.168.1.5:8766/#pair='+ticket}):data=link.start_quest()
+   self.assertTrue(data['url'].startswith('https://192.168.1.5:8766/quest#pair='));self.assertEqual(data['entry_url'],'https://192.168.1.5:8766/quest');self.assertEqual(data['code'],link.auth.code)

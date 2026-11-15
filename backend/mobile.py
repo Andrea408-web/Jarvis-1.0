@@ -7,7 +7,7 @@ from http.cookies import SimpleCookie
 class DeviceAuth:
     SESSION_SECONDS=30*24*3600
     def __init__(self,path=None):
-        self.lock=threading.Lock();self.ticket=None;self.expires=0;self.sessions={};self.path=Path(path) if path else None
+        self.lock=threading.Lock();self.ticket=None;self.code=None;self.failures=0;self.expires=0;self.sessions={};self.path=Path(path) if path else None
         if self.path and self.path.is_file():
             try:
                 data=json.loads(self.path.read_text())
@@ -21,13 +21,17 @@ class DeviceAuth:
         with os.fdopen(fd,'w') as stream:json.dump(self.sessions,stream)
         os.replace(tmp,self.path)
     def revoke(self):
-        with self.lock:self.sessions={};self.ticket=None;self._save()
+        with self.lock:self.sessions={};self.ticket=None;self.code=None;self._save()
     def issue(self):
-        with self.lock:self.ticket=secrets.token_urlsafe(32);self.expires=time.monotonic()+300;return self.ticket
+        with self.lock:self.ticket=secrets.token_urlsafe(32);self.code=f'{secrets.randbelow(1000000):06d}';self.failures=0;self.expires=time.monotonic()+300;return self.ticket
     def pair(self,ticket):
         with self.lock:
-            if not isinstance(ticket,str) or not self.ticket or time.monotonic()>self.expires or not hmac.compare_digest(ticket.encode(),self.ticket.encode()):raise ValueError('Kopplung ungültig oder abgelaufen. Bitte am Mac einen neuen QR-Code anzeigen.')
-            token=secrets.token_urlsafe(32);self.ticket=None
+            valid=isinstance(ticket,str) and self.ticket and time.monotonic()<=self.expires and (hmac.compare_digest(ticket.encode(),self.ticket.encode()) or (self.code and hmac.compare_digest(ticket.encode(),self.code.encode())))
+            if not valid:
+                self.failures+=1
+                if self.failures>=8:self.ticket=None;self.code=None
+                raise ValueError('Kopplung ungültig oder abgelaufen. Bitte am Mac einen neuen Kopplungslink anzeigen.')
+            token=secrets.token_urlsafe(32);self.ticket=None;self.code=None
             self.sessions={key:end for key,end in self.sessions.items() if end>time.time()}
             if len(self.sessions)>=8:self.sessions.pop(next(iter(self.sessions)))
             self.sessions[hashlib.sha256(token.encode()).hexdigest()]=time.time()+self.SESSION_SECONDS;self._save();return token
@@ -102,6 +106,10 @@ class MobileLink:
             self.enabled_path.parent.mkdir(parents=True,exist_ok=True,mode=0o700);self.enabled_path.touch(mode=0o600)
             ticket=self.auth.issue();address=self.server.server_address[0];display=self.hostname or address
             return {'url':f'https://{display}:8766/#pair='+ticket,'ip_url':f'https://{address}:8766/#pair='+ticket,'fingerprint':self.fingerprint,'expires_seconds':300,'instructions':'Mac und Handy im selben vertrauenswürdigen WLAN. Erst das Zertifikatsprofil per AirDrop übertragen, auf iOS installieren und das Vertrauen bewusst aktivieren. Danach QR-Code scannen. Ohne Zertifikatsvertrauen kann iOS die Kamera nicht freigeben.'}
+    def start_quest(self):
+        data=self.start();data['url']=data['ip_url'].replace('/#pair=','/quest#pair=');data['ip_url']=data['url'];data['entry_url']=data['url'].split('#')[0];data['code']=self.auth.code
+        data['instructions']='Mac und Meta Quest im selben privaten WLAN. Link innerhalb von 5 Minuten nur in der Brille öffnen. Die einmalige Kopplung verbindet Jarvis, Astra und Aeris. Chat und Thorsten laufen am Mac. Räumliches WebXR-Handtracking verlangt zusätzlich vom Quest Browser anerkanntes HTTPS; eine Zertifikatswarnung zu übergehen reicht dafür nicht zuverlässig. Kein Entwicklerkonto nötig für den Browserzugang.'
+        return data
     def profile_data(self):
         if self.server is None:raise ValueError('Bitte zuerst Handykopplung vorbereiten.')
         return {'filename':self.profile.name,'content':self.profile.read_text(),'fingerprint':self.fingerprint}

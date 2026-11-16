@@ -65,6 +65,10 @@ class Application:
         self.token = secrets.token_urlsafe(32)
         self.chat_lock = threading.Lock()
         self.mobile = MobileLink(self)
+        from .device_ai import DeviceAI
+        from .brands import Brands
+        self.device_ai=DeviceAI(self.store.data_dir)
+        self.brands=Brands(self.store.data_dir)
         from .quest_window import QuestWindow
         self.quest_window=QuestWindow()
         from .companion_window import CompanionWindow
@@ -318,7 +322,10 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Referrer-Policy', 'no-referrer')
         self.send_header('X-Frame-Options', 'DENY')
         self.send_header('Permissions-Policy', 'camera=(self), microphone=(self), xr-spatial-tracking=(self), geolocation=()')
-        self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; worker-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://images.tagesschau.de https://www.tagesschau.de https://tagesschau.de https://i.ytimg.com; media-src 'self' blob:; connect-src 'self'; frame-src 'self' https://www.youtube-nocookie.com https://www.tiktok.com https://zugspitze.panomax.com https://www.muenchen.de https://www.berlin.de https://www.earthcam.com https://www.abbeyroad.com https://www.livefromiceland.is https://www.skylinewebcams.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
+        device= urlsplit(self.path).path in {'/tablet','/brands'}
+        script_policy="'self' 'wasm-unsafe-eval'" if device else "'self'"
+        worker_policy="'self' blob:" if device else "'self'"
+        self.send_header('Content-Security-Policy', f"default-src 'self'; script-src {script_policy}; worker-src {worker_policy}; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://images.tagesschau.de https://www.tagesschau.de https://tagesschau.de https://i.ytimg.com; media-src 'self' blob:; connect-src 'self'; frame-src 'self' https://www.youtube-nocookie.com https://www.tiktok.com https://zugspitze.panomax.com https://www.muenchen.de https://www.berlin.de https://www.earthcam.com https://www.abbeyroad.com https://www.livefromiceland.is https://www.skylinewebcams.com; object-src 'none'; base-uri 'none'; frame-ancestors 'none'; form-action 'self'")
         if self.server.secure:
             self.send_header('Strict-Transport-Security', 'max-age=86400')
         self.end_headers()
@@ -377,7 +384,7 @@ class Handler(BaseHTTPRequestHandler):
             if path == '/api/mobile/pair' and self.command == 'POST':
                 return True
             if not self.server.device_auth.valid(self.headers.get('Cookie')):
-                if self.command == 'GET' and path in {'/','/mobile','/quest','/pair.js','/style.css','/manifest.webmanifest','/app-icon.png'}:
+                if self.command == 'GET' and path in {'/','/mobile','/quest','/tablet','/brands','/pair.js','/style.css','/manifest.webmanifest','/app-icon.png'}:
                     return True
                 self._json({'error':'Bitte dieses Gerät über den aktuellen QR-Code am Mac koppeln.'},401)
                 return False
@@ -416,7 +423,7 @@ class Handler(BaseHTTPRequestHandler):
         app = self.server.app
         method = self.command
         if method == 'GET':
-            if self.server.device_auth and not self.server.device_auth.valid(self.headers.get('Cookie')) and path in {'/','/mobile','/quest'}:
+            if self.server.device_auth and not self.server.device_auth.valid(self.headers.get('Cookie')) and path in {'/','/mobile','/quest','/tablet','/brands'}:
                 body=(FRONTEND/'pair.html').read_bytes()
                 self._headers(200,'text/html; charset=utf-8',len(body))
                 return self.wfile.write(body)
@@ -425,6 +432,21 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_response(200);self.send_header('Content-Type','text/html; charset=utf-8');self.send_header('Content-Length',str(len(data)));self.send_header('Cache-Control','no-store');self.send_header('X-Content-Type-Options','nosniff');self.send_header('Content-Security-Policy',"sandbox; default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'")
                 if 'download=1' in urlsplit(self.path).query:self.send_header('Content-Disposition','attachment; filename="Jarvis-Website.html"')
                 self.end_headers();return self.wfile.write(data)
+            if path=='/api/device-ai/status':return self._json(app.device_ai.status())
+            if path=='/api/brands':return self._json(app.brands.all())
+            if path=='/api/device-ai/model' or path.startswith('/device-runtime/'):
+                if path=='/api/device-ai/model':source,_=app.device_ai.model();kind='application/octet-stream'
+                else:
+                    match=re.fullmatch(r'/device-runtime/3\.13\.0/(wllama\.js|wllama\.wasm|compat\.js|compat\.wasm|LICENSE)',path)
+                    if not match:raise ValueError('Unbekannte Browser-Laufzeitdatei.')
+                    source,kind=app.device_ai.asset(match[1])
+                self._headers(200,kind,source.stat().st_size)
+                with source.open('rb') as stream:
+                    while True:
+                        chunk=stream.read(256*1024)
+                        if not chunk:break
+                        self.wfile.write(chunk)
+                return
             if path == '/api/session':
                 return self._json({'token': app.token,'remote_device':bool(self.server.device_auth)})
             if re.fullmatch(r'/api/agents/[0-9a-f]{32}/image',path):
@@ -485,7 +507,7 @@ class Handler(BaseHTTPRequestHandler):
                 if self.server.device_auth or not ipaddress.ip_address(self.client_address[0]).is_loopback:return self._json({'error':'Videoschnitt bitte direkt am Mac verwenden.'},403)
                 return self._json(app.video_editor.snapshot())
             static = {'/': 'mobile.html' if self.server.device_auth or re.search(r'iPhone|iPad|iPod|Macintosh.*Mobile',self.headers.get('User-Agent',''),re.I) else 'index.html', '/index.html': 'index.html', '/mobile':'mobile.html','/mobile-app.js':'mobile-app.js','/boot.js':'boot.js','/task-board.js':'task-board.js','/discover.js':'discover.js','/quest':'aeris.html','/quest-assistant.js':'quest-assistant.js','/quest-hands.js':'quest-hands.js','/aeris':'aeris.html','/aeris.js':'aeris.js','/aeris-assistant.js':'aeris-assistant.js','/aeris-xr.js':'aeris-xr.js','/aeris-pose.js':'aeris-pose.js','/vr-guide':'vr-guide.html','/video-editor':'video-editor.html','/video-editor.js':'video-editor.js','/video-renderer.js':'video-renderer.js','/companion':'call.html','/companion-actions.js':'companion-actions.js','/companion.js':'companion.js','/companion.css':'companion.css','/jarvis-orb.js':'jarvis-orb.js','/call':'call.html','/call-bridge.js':'call-bridge.js','/aeris-model.js':'aeris-model.js','/aeris-projects.js':'aeris-projects.js','/aeris-tracking.js':'aeris-tracking.js','/video-call.js':'video-call.js','/video-call.css':'video-call.css','/aeris-gestures.js':'aeris-gestures.js','/aeris-shell.css':'aeris-shell.css','/aeris-shell.js':'aeris-shell.js','/aeris-icon.svg':'aeris-icon.svg','/aeris-sw.js':'aeris-sw.js',
-                      '/manifest.webmanifest':'manifest.webmanifest','/app-icon.png':'app-icon.png','/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js','/office-3d.js':'office-3d.js', '/lowpoly-stage.js':'lowpoly-stage.js', '/artifacts.js':'artifacts.js', '/jarvis-voice.js':'jarvis-voice.js', '/voice-worker.js':'voice-worker.js', '/conversation.js':'conversation.js', '/mini-hub.js':'mini-hub.js', '/world-news.js':'world-news.js', '/astra.js':'astra.js', '/astra.css':'astra.css', '/astra-panel.html':'astra-panel.html', '/astra-panel.js':'astra-panel.js'}
+                      '/tablet':'device.html','/brands':'device.html','/device-app.js':'device-app.js','/device-ai.js':'device-ai.js','/device-store.js':'device-store.js','/device-style.css':'device-style.css','/manifest.webmanifest':'manifest.webmanifest','/app-icon.png':'app-icon.png','/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js','/office-3d.js':'office-3d.js', '/lowpoly-stage.js':'lowpoly-stage.js', '/artifacts.js':'artifacts.js', '/jarvis-voice.js':'jarvis-voice.js', '/voice-worker.js':'voice-worker.js', '/conversation.js':'conversation.js', '/mini-hub.js':'mini-hub.js', '/world-news.js':'world-news.js', '/astra.js':'astra.js', '/astra.css':'astra.css', '/astra-panel.html':'astra-panel.html', '/astra-panel.js':'astra-panel.js'}
             for name in ['ESpeak.js','mespeak.js','config.json','jarvis-de.json','de.json','COPYING','NOTICE.txt','UPSTREAM-README.md','mespeak-2.0.2-source.tgz','speak-source-9c6f642.tar.gz']:
                 static['/vendor/voice/'+name]='vendor/voice/'+name
             if path in static:
@@ -607,6 +629,19 @@ class Handler(BaseHTTPRequestHandler):
                 if set(body)!={'mode'}:raise ValueError('Nur die Helferansicht angeben.')
                 if path.endswith('/mode'):return self._json(app.companion_window.change(body['mode']))
                 return self._json(app.companion_window.open(('https' if self.server.secure else 'http')+'://localhost:'+str(self.server.server_port)+'/companion?native=1',body['mode']))
+            if method=='POST' and path=='/api/device-ai/chat':
+                if set(body)-{'mode','text','history'}:raise ValueError('Unbekannte Geräte-Chatfelder.')
+                mode=body.get('mode','jarvis')
+                if mode not in {'jarvis','astra','aeris'}:raise ValueError('Unbekannter Assistent.')
+                from .video_call import answer
+                payload={k:v for k,v in body.items() if k!='mode'}
+                if not app.chat_lock.acquire(blocking=False):raise ProviderError('Eine lokale KI-Anfrage läuft bereits.',409)
+                try:return self._json(answer(app,payload,identity=mode,text_only=True))
+                finally:app.chat_lock.release()
+            if method=='POST' and path=='/api/device-ai/prepare':
+                if body:raise ValueError('Keine Parameter für die Geräte-Einrichtung erforderlich.')
+                return self._json(app.device_ai.prepare())
+            if method=='POST' and path=='/api/brands':return self._json({'profile':app.brands.save(body)})
             if method=='POST' and path=='/api/quest-link/start':
                 if self.server.device_auth or not ipaddress.ip_address(self.client_address[0]).is_loopback:return self._json({'error':'Den Brillen-Kopplungslink bitte direkt am Mac erstellen.'},403)
                 if body:raise ValueError('Keine Parameter erforderlich.')

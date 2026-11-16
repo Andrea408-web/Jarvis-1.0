@@ -182,3 +182,7 @@ Der echte Modellbetrieb auf deinem Mac ist noch nicht verifiziert; die Tests pr�
 
 
 Agentenaufträge werden vor dem Sprachmodell durch das Backend erkannt; nur tatsächlich angelegte Jobs erhalten eine Auftragskennung. Bildanhänge bleiben auf dem eigenen Server. Ein Vergleich mit sämtlichen TikTok-Videos von Moritz Maacker ist mangels erreichbarer Quelle in der Cloud nicht verifiziert.
+
+## iPad und unterwegs
+
+Eigener iPad-Modus, lokale Notizen, Planer, Pencil-Skizzen und Markenstudio auf allen Geräten: [Einrichtung und Offline-Grenzen](docs/IPAD-UNTERWEGS.md). Im Kontrollzentrum „iPad / Unterwegs“ bzw. „Markenstudio“ wählen.

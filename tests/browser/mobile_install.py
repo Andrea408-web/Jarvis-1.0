@@ -18,7 +18,7 @@ with tempfile.TemporaryDirectory() as folder:
    safari=browser.new_context(ignore_https_errors=True,viewport={'width':390,'height':844},is_mobile=True,has_touch=True)
    page=safari.new_page();ticket=server.device_auth.issue();page.goto(url+'/#pair='+ticket);page.get_by_text('Mit Jarvis auf deinem Mac verbunden.',exact=True).wait_for();assert page.url==url+'/'
    manifest=page.evaluate("async()=>await (await fetch(document.querySelector('link[rel=manifest]').href)).json()")
-   assert manifest['start_url']=='/' and '#' not in manifest['start_url'];assert manifest['display']=='standalone'
+   assert manifest['start_url']=='/tablet' and '#' not in manifest['start_url'];assert manifest['display']=='standalone'
    assert page.locator('link[rel=apple-touch-icon]').count()==1
    # Home-screen Safari may have independent cookie storage. Pair there without scanning back into Safari.
    home=browser.new_context(ignore_https_errors=True,viewport={'width':390,'height':844},is_mobile=True,has_touch=True);icon=home.new_page();errors=[];icon.on('pageerror',lambda e:errors.append(str(e)))

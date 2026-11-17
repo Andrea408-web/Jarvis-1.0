@@ -1,0 +1,4 @@
+chess.js 1.0.0; BSD-2-Clause License (see LICENSE).
+Source: https://registry.npmjs.org/chess.js/-/chess.js-1.0.0.tgz
+Archive SHA-256: c1e65b5fcad70703d481e5bd289130af2ba0e9c11b1ed06655cc8b56ea890990
+Unmodified ES module.

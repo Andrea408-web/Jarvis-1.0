@@ -1,0 +1,35 @@
+"""Actual local chess worker, optional talk/audio/recognition and lifecycle checks."""
+import sys,tempfile,threading,io,wave,json
+from pathlib import Path
+sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
+from backend.server import Application,JarvisServer
+from playwright.sync_api import sync_playwright
+root=Path(__file__).resolve().parents[2]
+with tempfile.TemporaryDirectory()as folder:
+ app=Application(folder);app.store.update_settings({'voice_enabled':False,'ai_provider':'llamacpp'});calls=[];voices=[]
+ app.llamacpp.transport=lambda path,payload:(calls.append((path,payload)),{'done':True,'message':{'content':'Sir, Weltraumreisen sind spannend. Am Brett bleibe ich trotzdem hier.'}})[1]
+ audio=io.BytesIO()
+ with wave.open(audio,'wb')as w:w.setnchannels(1);w.setsampwidth(2);w.setframerate(16000);w.writeframes(b'\0\0'*4000)
+ app.natural_voice.synthesize=lambda text,preset:(voices.append((text,preset)),audio.getvalue())[1]
+ server=JarvisServer(('127.0.0.1',0),app);thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start();url='http://127.0.0.1:'+str(server.server_port)
+ try:
+  with sync_playwright()as pw:
+   browser=pw.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox']);page=browser.new_page(viewport={'width':1380,'height':1100});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
+   page.add_init_script("window.chessMicStarts=0;window.chessMicAborts=0;window.SpeechRecognition=class{constructor(){window.chessFakeMic=this;}start(){window.chessMicStarts++;}abort(){window.chessMicAborts++;}};window.chessSystemSpeech=0;if(window.speechSynthesis)window.speechSynthesis.speak=()=>{window.chessSystemSpeech++;};")
+   page.goto(url+'/index.html');page.locator('#chat-input').fill('Jarvis, spiele Schach mit mir');page.locator('#send-button').click();page.locator('#play-dialog[open]').wait_for();page.locator('[data-game-tab="chess"][aria-pressed="true"]').wait_for();assert page.locator('#chess-board button').count()==64;assert 'dark' in page.locator('[data-square="a1"]').get_attribute('class');assert 'light' in page.locator('[data-square="h1"]').get_attribute('class');assert not page.locator('#chess-voice-on').is_checked();assert not voices;assert page.locator('#chess-mic').is_disabled()
+   page.locator('#chess-level').select_option('1');page.locator('[data-square="e2"]').click();assert page.locator('[data-square="e4"]').get_attribute('class').find('legal')>=0;page.locator('[data-square="e5"]').click();assert 'Bauer' in page.locator('[data-square="e2"]').get_attribute('aria-label');assert page.locator('#chess-moves').inner_text()==''
+   page.locator('[data-square="e2"]').click();page.locator('[data-square="e4"]').click();page.wait_for_function("()=>document.getElementById('chess-status').textContent.startsWith('Du bist dran')",timeout=10000);assert '1. e4' in page.locator('#chess-moves').inner_text();assert 'Deine' in page.locator('#chess-banter').inner_text()or page.locator('#chess-banter').inner_text();assert not calls
+   page.mouse.move(0,0);page.screenshot(path=str(root/'artifacts/schach-jarvis.png'))
+   page.locator('#chess-undo').click();assert page.locator('#chess-moves').inner_text()=='';assert 'Bauer' in page.locator('[data-square="e2"]').get_attribute('aria-label')
+   page.locator('[data-square="d2"]').click();page.locator('[data-square="d4"]').click();page.locator('#chess-new').click();page.wait_for_timeout(600);assert page.locator('#chess-moves').inner_text()=='';assert 'Bauer' in page.locator('[data-square="d2"]').get_attribute('aria-label')
+   page.locator('#chess-side').select_option('b');page.wait_for_function("()=>document.getElementById('chess-status').textContent.startsWith('Du bist dran')",timeout=10000);assert page.locator('#chess-board button').first.get_attribute('data-square')=='h1';assert page.locator('#chess-undo').is_disabled();page.locator('#chess-side').select_option('w')
+   page.locator('[data-square="g1"]').click();page.locator('[data-square="f3"]').click();page.wait_for_function("()=>document.getElementById('chess-status').textContent.startsWith('Du bist dran')",timeout=10000);history=page.locator('#chess-moves').inner_text();page.locator('[data-game-tab="memory"]').click();page.locator('[data-game-tab="chess"]').click();assert page.locator('#chess-moves').inner_text()==history
+   page.locator('#chess-chat-input').fill('haha du bist frech');page.locator('#chess-chat-send').click();assert 'Sir' in page.locator('#chess-chat-reply').inner_text();assert not calls
+   page.locator('#chess-chat-input').fill('Was denkst du über Weltraumreisen?');page.locator('#chess-chat-send').click();page.get_by_text('Sir, Weltraumreisen sind spannend. Am Brett bleibe ich trotzdem hier.',exact=True).wait_for();assert len(calls)==1;assert 'FEN:' in calls[0][1]['messages'][-1]['content']
+   page.locator('#chess-voice-on').check();page.wait_for_function("()=>/^Thorsten (spricht|ist bereit)/.test(document.getElementById('chess-voice-status').textContent)");assert voices and all(preset=='jarvis'for _,preset in voices);assert page.evaluate('()=>window.chessSystemSpeech')==0
+   assert page.evaluate('()=>window.chessMicStarts')==0;page.locator('#chess-mic-consent').check();page.locator('#chess-mic').click();assert page.evaluate('()=>window.chessMicStarts')==1;page.evaluate("()=>window.chessFakeMic.onresult({results:[Object.assign([{transcript:'haha'}],{isFinal:true})]})");page.wait_for_function("()=>document.getElementById('chess-mic').textContent==='Sprechen'");page.locator('#chess-stop-voice').click();assert not page.locator('#chess-voice-on').is_checked()
+   page.set_viewport_size({'width':390,'height':844});assert page.locator('.chess-chat').is_visible();assert page.locator('#chess-board').bounding_box()['width']<=366;assert page.locator('#play-dialog').evaluate('(e)=>e.scrollWidth<=e.clientWidth+1');page.locator('#chess-board').scroll_into_view_if_needed();page.screenshot(path=str(root/'artifacts/schach-handy.png'))
+   page.locator('#chess-mic').click();starts=page.evaluate('()=>window.chessMicAborts');page.locator('#play-close').click();page.wait_for_function("()=>!document.getElementById('play-dialog').open");assert page.evaluate('()=>window.chessMicAborts')>starts
+   page.locator('#play-open').click();page.locator('[data-game-tab="chess"]').click();assert page.locator('#chess-moves').inner_text()=='';assert not page.locator('#chess-mic-consent').is_checked();assert not page.locator('#chess-voice-on').is_checked();assert not errors,errors
+   assert 'Weltraumreisen' not in json.dumps(app.store.history());browser.close();print('PASS: real worker opponent and legal board interaction, no auto-talk, illegal move blocked, takeback, stale worker cancelled on reset, play black, tab resume, local chat without saved history, Thorsten-only WAV, opt-in recognition, stop and close cleanup, mobile board/chat visible.')
+ finally:app.office.stop();app.desktop.stop();server.shutdown();server.server_close();thread.join(3)

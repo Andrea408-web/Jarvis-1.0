@@ -1,7 +1,7 @@
 """Explicit, single-use confirmation before native Mac Mail/Messages submission.
 Pending payloads stay in RAM for two minutes. No credentials, cloud service or log.
 """
-import json,platform,re,secrets,subprocess,threading,time
+import base64,hashlib,json,platform,re,secrets,subprocess,threading,time
 
 SCRIPT=r'''function run() {
  ObjC.import('Foundation');
@@ -33,6 +33,9 @@ class NativeSendError(Exception):
 
 def native_send(payload):
  if platform.system()!='Darwin':raise NativeSendError('Direkter Versand benötigt Jarvis auf dem verbundenen Mac.')
+ if payload.get('audio'):
+  from .audio_send import native_audio_send
+  return native_audio_send(payload)
  try:
   result=subprocess.run(['/usr/bin/osascript','-l','JavaScript','-e',SCRIPT],input=json.dumps(payload,ensure_ascii=False),text=True,capture_output=True,timeout=60)
  except subprocess.TimeoutExpired:raise NativeSendError('Keine rechtzeitige Bestätigung vom Mac. Prüfe Mail/Nachrichten vor einem neuen Versandversuch.',True) from None
@@ -46,13 +49,13 @@ def native_send(payload):
  raise NativeSendError(reasons.get(status.get('reason'),'Unbekannter Versandstatus. Bitte in der Mac-App prüfen.'),status.get('reason') not in {'no_account','no_service','permission','not_configured'})
 
 def validate(body):
- if not isinstance(body,dict) or set(body)!={'kind','name','address','subject','text'}:raise ValueError('Bitte Empfänger, Kanal, Betreff und Nachricht angeben.')
+ if not isinstance(body,dict) or set(body)-{'kind','name','address','subject','text','audio'} or not {'kind','name','address','subject','text'}<=set(body):raise ValueError('Bitte Empfänger, Kanal, Betreff und Nachricht angeben.')
  p={}
  for key,limit in {'kind':4,'name':100,'address':200,'subject':180,'text':8000}.items():
   v=body[key]
   if not isinstance(v,str) or len(v)>limit or '\0' in v:raise ValueError('Ungültiges Nachrichtenfeld.')
   p[key]=v.strip()
- if p['kind'] not in {'mail','sms'} or not p['name'] or not p['text']:raise ValueError('Kanal, Kontakt und Nachricht vollständig angeben.')
+ if p['kind'] not in {'mail','sms'} or not p['name'] or (not p['text'] and 'audio' not in body):raise ValueError('Kanal, Kontakt und Nachricht vollständig angeben.')
  if '\n' in p['subject'] or '\r' in p['subject']:raise ValueError('Der Betreff muss eine Zeile sein.')
  if p['kind']=='mail':
   if not re.fullmatch(r"[A-Za-z0-9.!#$%&'*+/=?^_`{|}~-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}",p['address']):raise ValueError('Genau eine gültige E-Mail-Adresse auswählen.')
@@ -60,6 +63,19 @@ def validate(body):
   if not re.fullmatch(r'\+?[0-9 ()/.-]{3,60}',p['address']):raise ValueError('Genau eine Telefonnummer auswählen.')
   p['address']=re.sub(r'[^+0-9]','',p['address'])
   if not re.fullmatch(r'\+?\d{3,30}',p['address']):raise ValueError('Ungültige Telefonnummer.')
+ if 'audio' in body:
+  audio=body['audio'];limit=4*1024*1024
+  if p['kind']!='mail':raise ValueError('Direkter Audio-Versand nutzt Apple Mail. Für Nachrichten bitte ausdrücklich Audio teilen wählen.')
+  if not isinstance(audio,dict) or set(audio)!={'mime','data'} or not isinstance(audio.get('mime'),str) or not isinstance(audio.get('data'),str) or len(audio['data'])>limit*4//3+16:raise ValueError('Ungültige oder zu große Audioaufnahme (maximal 4 MB).')
+  mime=audio['mime'].split(';',1)[0].strip().lower()
+  try:raw=base64.b64decode(audio['data'],validate=True)
+  except ValueError:raise ValueError('Ungültige Audiodaten.') from None
+  if not 16<=len(raw)<=limit:raise ValueError('Audioaufnahme muss zwischen 16 Byte und 4 MB groß sein.')
+  formats={'audio/wav':('wav',raw[:4]==b'RIFF' and raw[8:12]==b'WAVE'),'audio/x-wav':('wav',raw[:4]==b'RIFF' and raw[8:12]==b'WAVE'),'audio/mp4':('m4a',raw[4:8]==b'ftyp'),'audio/webm':('webm',raw[:4]==bytes.fromhex('1a45dfa3')),'audio/ogg':('ogg',raw[:4]==b'OggS')}
+  if mime not in formats or not formats[mime][1]:raise ValueError('Bitte eine gültige WAV-, M4A-, WebM- oder Ogg-Aufnahme verwenden.')
+  p['audio']={'bytes':raw,'mime':mime,'size':len(raw),'sha256':hashlib.sha256(raw).hexdigest(),'filename':'Jarvis-Sprachnachricht.'+formats[mime][0]}
+  if not p['subject']:p['subject']='Sprachnachricht'
+  if not p['text']:p['text']='Sprachnachricht im Anhang.'
  return p
 
 class ConfirmedSend:
@@ -78,7 +94,9 @@ class ConfirmedSend:
    self._clean()
    if len(self.pending)>=16:raise ValueError('Zu viele offene Versandbestätigungen. Alte Bestätigung schließen oder kurz warten.')
    ident=secrets.token_urlsafe(24);timer=threading.Timer(120,self._expire,args=(ident,));timer.daemon=True;self.pending[ident]={'payload':p,'actor':actor,'until':self.clock()+120,'timer':timer};timer.start()
-  return {'id':ident,'expires_in':120,'preview':dict(p),'app':'Apple Mail' if p['kind']=='mail' else 'Apple Nachrichten (SMS/iMessage je nach Einrichtung)','sender':'Das in der Mac-App eingerichtete Konto'}
+  preview={key:value for key,value in p.items() if key!='audio'}
+  if p.get('audio'):preview['audio']={key:value for key,value in p['audio'].items() if key!='bytes'}
+  return {'id':ident,'expires_in':120,'preview':preview,'app':'Apple Mail' if p['kind']=='mail' else 'Apple Nachrichten (SMS/iMessage je nach Einrichtung)','sender':'Das in der Mac-App eingerichtete Konto'}
  def cancel(self,ident,actor):
   with self.lock:
    self._clean();receipt=self.receipts.get(ident)

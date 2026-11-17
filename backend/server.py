@@ -406,7 +406,7 @@ class Handler(BaseHTTPRequestHandler):
             length = int(self.headers.get('Content-Length', '0'))
         except ValueError:
             raise ValueError('Ungültige Nachrichtenlänge.') from None
-        maximum = 512000 if urlsplit(self.path).path in {'/api/aeris/pose','/api/video-call','/api/video-editor/start','/api/video-editor/assist','/api/video-editor/plan','/api/video-editor/assist-plan','/api/video-editor/story'} else 6 * 1024 * 1024 if urlsplit(self.path).path in {'/api/image','/api/agents','/api/agents/dispatch','/api/aeris/pose'} else MAX_BODY
+        maximum = 6*1024*1024 if urlsplit(self.path).path=='/api/communication/prepare' else 512000 if urlsplit(self.path).path in {'/api/aeris/pose','/api/video-call','/api/video-editor/start','/api/video-editor/assist','/api/video-editor/plan','/api/video-editor/assist-plan','/api/video-editor/story'} else 6 * 1024 * 1024 if urlsplit(self.path).path in {'/api/image','/api/agents','/api/agents/dispatch','/api/aeris/pose'} else MAX_BODY
         if length < 1 or length > maximum:
             raise ValueError('Die Anfrage ist leer oder überschreitet das Größenlimit.')
         if self.headers.get_content_type() != 'application/json':

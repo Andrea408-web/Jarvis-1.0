@@ -47,3 +47,18 @@ Unter **Ablage** funktionieren ohne Mac und ohne zusätzlichen Modelldownload:
 Die Offline-KI bleibt unverändert: vorhandenes kleines GGUF plus ungefähr 30 MB Laufzeit, keine Cloud-Inferenz. Die neuen Werkzeuge brauchen keinen weiteren Modelldownload. Thorsten braucht weiterhin den Mac. 3D-Kameratracking braucht die schon vorhandene Mac-Anbindung; die neue Optik ersetzt kein Tracking-Modell.
 
 `python tests/browser/hud_and_desk.py` prüft echte Projektzähler, Textimport und automatisches Speichern, Kontakte und Entwürfe ohne Versand, ICS-Export, Sicherungskonflikte und einen Neustart ohne Netz. Screenshots aus der echten Anwendung: `artifacts/aeris-kontrollzentrum.png`, `artifacts/ipad-astra.png`, `artifacts/ipad-ablage.png`, `artifacts/handy-jarvis-hud.png`. Keine physische iPad-/iPhone-Prüfung in der Cloud.
+
+
+## Business & Prompts
+
+Im **Markenstudio → Business & Prompts** die aktive Marke übernehmen oder Name, Idee, Zielgruppe, Ziel und Testbudget eingeben. „Angebot & Testplan erstellen“ erzeugt einen bearbeitbaren Vorlagenentwurf, drei mögliche Testformen und einen konkreten 7-Tage-Plan. Es wird nichts veröffentlicht und kein Kunde automatisch kontaktiert.
+
+Der Preis-/Kostenrechner verwendet ausschließlich deine Zahlen: Preis minus variable Stückkosten ergibt den Beitrag je Verkauf; Fixkosten geteilt durch positiven Stückbeitrag ergibt die aufgerundete Verkaufszahl zur Kostendeckung. Beträge werden in ganzen Cent berechnet. Das Monatsergebnis ist Stückbeitrag mal angenommene Verkäufe minus Fixkosten, vor weiteren Kosten und Steuern. Diese Rechnung prognostiziert keine Nachfrage.
+
+In der **Promptwerkstatt** Positionierung, Angebot, Inhalte, Kundeninterview, Website, Ideenprüfung oder eine eigene Aufgabe wählen. Ein kurzer Prompt wird aus dem Briefing und Zusatzwunsch zusammengestellt; er ist bearbeitbar und kopierbar. „Jetzt lokale KI fragen“ übergibt ausdrücklich eine Anfrage an die vorhandene Geräte-KI oder lokale Mac-KI. KI-Prompts dürfen hier höchstens 1.400 Zeichen haben. Auch **„Gib mir einen Prompt für …“** im Geräte-Dialog öffnet die Promptwerkstatt mit einem passenden Entwurf. Längere aktuelle Fragen werden nicht mehr wie zuvor nach 700 Zeichen abgeschnitten.
+
+Business-Eingaben, Rechnungsannahmen und bearbeitete Entwürfe werden auf diesem Gerät gespeichert und funktionieren ohne Mac. Ein Business-Entwurf kann separat als JSON-Datei gesichert/importiert werden. Die private Gerätesicherung enthält den Business-Bereich zusätzlich. Ein ausgewählter Business-Import ersetzt den aktuellen Business-Entwurf; ältere Gesamtsicherungen ohne Business-Daten lassen ihn bestehen. Für die neuen Vorlagen, Berechnungen und Prompts ist kein weiterer Modelldownload nötig. Individuelle KI-Ausarbeitungen benötigen weiterhin eine eingerichtete lokale KI.
+
+Anrufe/Mail/SMS: Unter Ablage gespeicherte Kontakte lassen sich auswählen, native Telefon-/Mail-/SMS-Entwürfe öffnen und selbst bestätigen. **Sprachbefehle wie „Schick eine Mail an Lea“ werden derzeit nicht automatisch anhand der Kontaktliste ausgeführt.** Es gibt keinen Hintergrundversand und Jarvis ruft den Nutzer nicht eigenständig an.
+
+`python tests/browser/business_lab.py` prüft Markenübernahme, Vorlagen, centgenaue Kostendeckung, Nullmarge, Prompt-Übergabe an einen ausdrücklich simulierten lokalen Testtransport, Datei-/Gesamtsicherung und Offline-Neustart. Bilder aus dem echten UI: `artifacts/business-angebot.png`, `artifacts/business-zahlen-prompts.png`, `artifacts/business-handy.png`.

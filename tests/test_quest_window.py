@@ -13,7 +13,7 @@ class QuestWindowTests(unittest.TestCase):
    code,body,headers=request('/aeris');self.assertEqual(code,200);self.assertIn(b'data-headset-window="true"',body);self.assertIn(b'/headset-window.js',body);self.assertNotIn(b'<script src="/mobile-app.js"',body);self.assertNotIn('Set-Cookie',headers)
    for path in ['/api/session','/api/settings','/api/natural-voice/speak','/api/history']:self.assertEqual(request(path)[0],403)
    for path in ['/backend/server.py','/.env','/../README.md','/aeris-sw.js']:self.assertEqual(request(path)[0],404)
-   self.assertEqual(request('/api/chat','POST')[0],403);self.assertEqual(request('/aeris-model.js')[0],200)
+   self.assertEqual(request('/api/chat','POST')[0],403);self.assertEqual(request('/aeris-model.js')[0],200);self.assertEqual(request('/hud-core.js')[0],200)
   finally:server.shutdown();server.server_close();thread.join(3)
  def test_start_reports_window_mode_and_stop_closes_listener(self):
   real=ThreadingHTTPServer

@@ -93,3 +93,8 @@ Es wird keine komplette Apple-Kontaktliste importiert. Die ausgewählte Person w
 Die Funktion meldet dich nicht bei Apple an und ändert keine Apple-/iCloud-Einstellungen. Auf iPhone/iPad nutzt diese Lösung den verbundenen Mac; die Web-App hat dafür keinen direkten Zugriff auf das iPhone-Adressbuch. Ohne Mac steht diese Apple-Auswahl nicht bereit. Es gibt weiterhin keine selbstständigen KI-Telefonate.
 
 Prüfung: `python -m unittest tests.test_apple_contacts` prüft Plattformgrenzen und das feste Skript. `python tests/browser/apple_contacts.py` prüft die reale lokale API und Browser-Ansicht mit einer simulierten macOS-Auswahl: ausdrückliche Nummernwahl, kein Kontakt in lokalen Ablagen/Sicherungen/Serverdateien und keine Modell-Anfragen. Die echte Apple-Kontakte-App konnte auf dem Linux-Cloudrechner nicht ausgeführt werden. Screenshot mit Beispielperson: `artifacts/apple-kontakte-voruebergehend.png`.
+
+
+## Kontakte direkt im Mac-Modus
+
+Kontaktbefehle im ursprünglichen Mac-Kontrollzentrum öffnen jetzt ein eigenes Kontaktfenster über der bestehenden Seite. Es gibt keinen Wechsel zum Tablet-Arbeitsraum. Schließen bringt dich sofort zur unveränderten Mac-Ansicht zurück; das eingebettete Kontaktfenster wird dabei entladen, einschließlich seiner vorübergehenden Apple-Auswahl. Nur die spezielle Kontaktfenster-Seite darf vom eigenen Jarvis-Ursprung eingebettet werden; andere Seiten behalten den bisherigen Schutz gegen Einbettung. Handy-/iPad-Arbeitsräume behalten ihre direkte Kontaktauswahl.

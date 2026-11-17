@@ -69,6 +69,8 @@ class Application:
         from .brands import Brands
         self.device_ai=DeviceAI(self.store.data_dir)
         self.brands=Brands(self.store.data_dir)
+        from .confirmed_send import ConfirmedSend
+        self.confirmed_send=ConfirmedSend()
         from .quest_window import QuestWindow
         self.quest_window=QuestWindow()
         from .companion_window import CompanionWindow
@@ -631,6 +633,12 @@ class Handler(BaseHTTPRequestHandler):
                 if set(body)!={'mode'}:raise ValueError('Nur die Helferansicht angeben.')
                 if path.endswith('/mode'):return self._json(app.companion_window.change(body['mode']))
                 return self._json(app.companion_window.open(('https' if self.server.secure else 'http')+'://localhost:'+str(self.server.server_port)+'/companion?native=1',body['mode']))
+            if method=='POST' and path in {'/api/communication/prepare','/api/communication/send','/api/communication/cancel'}:
+                actor=self.client_address[0]+'|'+self.headers.get('Cookie','')
+                if path.endswith('/prepare'):return self._json(app.confirmed_send.prepare(body,actor))
+                if path.endswith('/send'):return self._json(app.confirmed_send.execute(body,actor))
+                if set(body)!={'id'} or not isinstance(body['id'],str):raise ValueError('Ungültige Versandbestätigung.')
+                return self._json(app.confirmed_send.cancel(body['id'],actor))
             if method=='POST' and path in {'/api/apple-contacts/open','/api/apple-contacts/selected'}:
                 if body:raise ValueError('Keine Suchbegriffe oder Kontaktdaten angeben.')
                 from . import apple_contacts

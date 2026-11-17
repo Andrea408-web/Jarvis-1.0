@@ -10,10 +10,8 @@ window.HUDCore={draw(canvas,time=0,{mode='jarvis',working=false,speaking=false}=
  for(let i=0;i<144;i++){const a=i*Math.PI/72,r=i%6===0?313:322;c.beginPath();c.moveTo(Math.cos(a)*r,Math.sin(a)*r);c.lineTo(Math.cos(a)*330,Math.sin(a)*330);c.strokeStyle=ink(i%6===0?.8:.27);c.lineWidth=i%6===0?2:1;c.stroke();}
  for(let i=0;i<4;i++){const a=i*Math.PI/2+t*.00006;ring(295,a,a+1.02,5,.65);ring(277,-a,-a+.72,1,.5);ring(251,a*1.7,a*1.7+.42,9,i%2?.3:.9);}ring(230,0,Math.PI*2,1,.36);
  if(mode==='aeris'){
-  // Two interlocking wireframe tetrahedra, projected and depth shaded.
-  const a=t*.00019,b=.45+Math.sin(t*.00012)*.2,points=[[-1,-1,-1],[-1,1,1],[1,-1,1],[1,1,-1]].map(p=>p.map(v=>v*86));
-  function project(p){const x=p[0]*Math.cos(a)-p[2]*Math.sin(a),z=p[0]*Math.sin(a)+p[2]*Math.cos(a),y=p[1]*Math.cos(b)-z*Math.sin(b),depth=p[1]*Math.sin(b)+z*Math.cos(b);return [x*1.13,y*1.13,depth];}
-  for(const sign of [-1,1]){const v=points.map(p=>project(p.map(n=>n*sign)));for(let i=0;i<4;i++)for(let j=i+1;j<4;j++){c.beginPath();c.moveTo(...v[i].slice(0,2));c.lineTo(...v[j].slice(0,2));c.strokeStyle=ink(.35+(v[i][2]+v[j][2]+300)/900);c.lineWidth=sign===1?2.8:1.2;c.shadowColor=ink();c.shadowBlur=8;c.stroke();}for(const p of v){c.fillStyle='#fff5cf';c.beginPath();c.arc(p[0],p[1],3,0,7);c.fill();}}
+  // Aether: three amber orbital ribbons around a bright energy seed.
+  for(let k=0;k<3;k++){c.save();c.rotate(k*Math.PI/3+t*.00012);c.scale(1,.37);c.strokeStyle=ink(.72);c.lineWidth=4;c.shadowColor=ink();c.shadowBlur=15;c.beginPath();c.arc(0,0,153,0,Math.PI*2);c.stroke();c.strokeStyle=ink(.26);c.lineWidth=1;c.beginPath();c.arc(0,0,175,0,Math.PI*2);c.stroke();const a=t*.0008+k*2;c.fillStyle='#fff5ce';c.beginPath();c.ellipse(Math.cos(a)*153,Math.sin(a)*153,4,9,0,0,Math.PI*2);c.fill();c.restore();}ring(58,0,Math.PI*2,1,.55);
  }else if(mode==='astra'){
   for(let k=0;k<3;k++){c.save();c.rotate(k*Math.PI*2/3+t*.0002);c.strokeStyle=ink(.8);c.lineWidth=3;c.shadowColor=ink();c.shadowBlur=15;c.beginPath();c.moveTo(0,-18);c.bezierCurveTo(170,-150,160,80,25,16);c.stroke();c.restore();}
  }else{for(let i=0;i<6;i++){const a=i*Math.PI/3+t*.00009;ring(176,a,a+.82,2,.7);ring(148,-a,-a+.56,6,.5);}ring(103,0,Math.PI*2,1,.6);}

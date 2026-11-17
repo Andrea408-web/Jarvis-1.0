@@ -1,0 +1,3 @@
+/* Route communication requests to explicit contact selection, never to a sender. */
+'use strict';
+window.JarvisContactRequest=text=>{if(typeof text!=='string')return null;const heard=text.trim().slice(0,500),t=heard.replace(/^(?:jarvis|astra|aeris|aether|iris)[, :]+/i,'').replace(/^bitte\s+/i,'');if(/^(?:ruf(?:e)?\s+.+\s+an[.!?]*|wähl(?:e)?\s+.+)$/i.test(t))return {kind:'call',heard};if(!/^(?:schreib(?:e)?|schick(?:e)?|sende|verfasse)\b/i.test(t))return null;if(/\b(?:e-?mail|mail)\b/i.test(t))return {kind:'mail',heard};if(/\b(?:sms|nachricht)\b/i.test(t))return {kind:'sms',heard};return null;};

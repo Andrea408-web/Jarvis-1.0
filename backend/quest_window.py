@@ -7,7 +7,7 @@ from pathlib import Path
 from urllib.parse import urlsplit
 from .mobile import private_ip
 FRONTEND=Path(__file__).resolve().parents[1]/'frontend'
-FILES={'/aeris':'aeris.html','/vr-guide':'vr-guide.html',**{('/'+name):name for name in ['aeris-shell.css','aeris-shell.js','hud-core.js','aeris-icon.svg','aeris.js','aeris-model.js','aeris-projects.js','aeris-xr.js','aeris-assistant.js','aeris-gestures.js','aeris-tracking.js','aeris-pose.js','headset-window.js','quest-hands.js','quest-assistant.js']}}
+FILES={'/aeris':'aeris.html','/vr-guide':'vr-guide.html',**{('/'+name):name for name in ['aeris-shell.css','aeris-shell.js','hud-core.js','contact-request.js','aeris-icon.svg','aeris.js','aeris-model.js','aeris-projects.js','aeris-xr.js','aeris-assistant.js','aeris-gestures.js','aeris-tracking.js','aeris-pose.js','headset-window.js','quest-hands.js','quest-assistant.js']}}
 class StaticHandler(BaseHTTPRequestHandler):
  def log_message(self,*args):pass
  def do_GET(self):

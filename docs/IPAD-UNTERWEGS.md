@@ -62,3 +62,19 @@ Business-Eingaben, Rechnungsannahmen und bearbeitete Entwürfe werden auf diesem
 Anrufe/Mail/SMS: Unter Ablage gespeicherte Kontakte lassen sich auswählen, native Telefon-/Mail-/SMS-Entwürfe öffnen und selbst bestätigen. **Sprachbefehle wie „Schick eine Mail an Lea“ werden derzeit nicht automatisch anhand der Kontaktliste ausgeführt.** Es gibt keinen Hintergrundversand und Jarvis ruft den Nutzer nicht eigenständig an.
 
 `python tests/browser/business_lab.py` prüft Markenübernahme, Vorlagen, centgenaue Kostendeckung, Nullmarge, Prompt-Übergabe an einen ausdrücklich simulierten lokalen Testtransport, Datei-/Gesamtsicherung und Offline-Neustart. Bilder aus dem echten UI: `artifacts/business-angebot.png`, `artifacts/business-zahlen-prompts.png`, `artifacts/business-handy.png`.
+
+
+## MacBook-Ansicht und mobile Ansichten
+
+„MacBook-Modus“ unter Gerät bzw. oben in der iPad-Ansicht öffnet wieder das ursprüngliche Kontrollzentrum unter `/index.html` mit Jarvis/Astra. Die Handy-/iPad-Arbeitsräume bleiben unter `/tablet`; ihre bisherigen Werkzeuge bleiben erhalten. Aeris hat einen gelben Energiekern mit geschwungenen Lichtbändern im Astra-Stil.
+
+
+## Kontaktmenü und Sprachnachrichten
+
+„Ruf … an“, „Schreib eine E-Mail an …“ und „Schick eine SMS an …“ öffnen nun eine Kontaktliste. Das funktioniert im klassischen Mac-Dialog und in den mobilen Geräte-Ansichten. Es wird ausschließlich in den **in Jarvis gespeicherten Kontakten** gesucht, nicht ungefragt im iPhone-Adressbuch. Der erkannte Satz wird angezeigt; die Suche beginnt leer, damit ein falsch verstandener Name die richtige Person nicht ausblendet. Erst selbst einen Kontakt wählen und Adresse/Text prüfen. Der anschließende Telefon-/SMS-/Mail-Link öffnet die Geräte-App; es gibt weiterhin keinen automatischen Versand.
+
+Unter Ablage → Kontakte & Entwürfe kann eine Sprachnachricht vorbereitet werden: **Jarvis / Thorsten** erzeugt aus dem eingegebenen Text eine WAV-Datei auf dem verbundenen Mac. **Meine eigene Stimme aufnehmen** nimmt mit Mikrofonfreigabe auf dem aktuellen Gerät auf (maximal zwei Minuten pro Aufnahme). Die Vorschau kann angehört und ausdrücklich als Audiodatei gespeichert bzw. über das Geräte-Teilen-Menü geteilt werden. Bei Verlassen des Bereichs oder Ausblenden der Seite wird eine Aufnahme gestoppt. Audio bleibt bis dahin im Arbeitsspeicher und wird nicht automatisch in der Ablage gespeichert.
+
+Das ist kein KI-Telefonat. Browser-Audio kann hier nicht in ein normales iPhone-/Mac-Telefonat eingespeist werden; die Gegenstelle wird nicht automatisch gehört oder beantwortet. Für ein solches echtes, gegenseitiges Gespräch fehlt weiterhin eine Telefonie-Anbindung. Die Auswahl „eigene Stimme“ ist eine Aufnahme, keine Stimmenkopie.
+
+Aether/Äther werden beim Wechsel als Namen des Aeris-Modus verstanden. Sein gelber Orbitalkern unterscheidet sich vom blauen Astra-Kern. Der MacBook-Modus öffnet das ursprüngliche Kontrollzentrum.

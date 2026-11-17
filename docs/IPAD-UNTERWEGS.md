@@ -78,3 +78,18 @@ Unter Ablage → Kontakte & Entwürfe kann eine Sprachnachricht vorbereitet werd
 Das ist kein KI-Telefonat. Browser-Audio kann hier nicht in ein normales iPhone-/Mac-Telefonat eingespeist werden; die Gegenstelle wird nicht automatisch gehört oder beantwortet. Für ein solches echtes, gegenseitiges Gespräch fehlt weiterhin eine Telefonie-Anbindung. Die Auswahl „eigene Stimme“ ist eine Aufnahme, keine Stimmenkopie.
 
 Aether/Äther werden beim Wechsel als Namen des Aeris-Modus verstanden. Sein gelber Orbitalkern unterscheidet sich vom blauen Astra-Kern. Der MacBook-Modus öffnet das ursprüngliche Kontrollzentrum.
+
+
+## Apple Kontakte vorübergehend verwenden
+
+Im Kontakt-Auswahlfenster **Aus Apple Kontakte wählen – ohne Import** öffnen. Dann:
+
+1. **Apple Kontakte öffnen**. Am verbundenen Mac in der Apple-App genau eine Person auswählen.
+2. Zurück in Jarvis **Apple-Auswahl verwenden**. macOS kann beim ersten Zugriff eine Freigabe verlangen. Falls verweigert: Systemeinstellungen → Datenschutz & Sicherheit → Automation → Zugriff des verwendeten Jarvis-Terminals auf Kontakte erlauben.
+3. Bei mehreren Nummern/Adressen die gewünschte auswählen. Danach wie bisher Telefon-, Mail- oder SMS-App ausdrücklich öffnen.
+
+Es wird keine komplette Apple-Kontaktliste importiert. Die ausgewählte Person wird auf dem Mac durch ein festes lokales Apple-Events-Skript gelesen und über den bestehenden geschützten Jarvis-Zugang übertragen. Der Server verarbeitet sie nur im Arbeitsspeicher; keine Datenbank-, Protokoll- oder Dateispeicherung und kein KI-Aufruf durch diese Funktion. Im Browser liegen die Daten ausschließlich im vorübergehenden Zustand des Kontaktfensters, nicht in IndexedDB, localStorage, Entwürfen oder Sicherungen. Die manuellen Kontaktfelder werden nicht befüllt, und „Entwurf speichern“ ist für die temporäre Auswahl gesperrt. **Temporären Kontakt entfernen**, Neuladen oder Verlassen der Seite entfernt sie aus dieser Ansicht. Bestehende, früher selbst gespeicherte Jarvis-Kontakte bleiben unverändert.
+
+Die Funktion meldet dich nicht bei Apple an und ändert keine Apple-/iCloud-Einstellungen. Auf iPhone/iPad nutzt diese Lösung den verbundenen Mac; die Web-App hat dafür keinen direkten Zugriff auf das iPhone-Adressbuch. Ohne Mac steht diese Apple-Auswahl nicht bereit. Es gibt weiterhin keine selbstständigen KI-Telefonate.
+
+Prüfung: `python -m unittest tests.test_apple_contacts` prüft Plattformgrenzen und das feste Skript. `python tests/browser/apple_contacts.py` prüft die reale lokale API und Browser-Ansicht mit einer simulierten macOS-Auswahl: ausdrückliche Nummernwahl, kein Kontakt in lokalen Ablagen/Sicherungen/Serverdateien und keine Modell-Anfragen. Die echte Apple-Kontakte-App konnte auf dem Linux-Cloudrechner nicht ausgeführt werden. Screenshot mit Beispielperson: `artifacts/apple-kontakte-voruebergehend.png`.

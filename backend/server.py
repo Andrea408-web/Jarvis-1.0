@@ -629,6 +629,10 @@ class Handler(BaseHTTPRequestHandler):
                 if set(body)!={'mode'}:raise ValueError('Nur die Helferansicht angeben.')
                 if path.endswith('/mode'):return self._json(app.companion_window.change(body['mode']))
                 return self._json(app.companion_window.open(('https' if self.server.secure else 'http')+'://localhost:'+str(self.server.server_port)+'/companion?native=1',body['mode']))
+            if method=='POST' and path in {'/api/apple-contacts/open','/api/apple-contacts/selected'}:
+                if body:raise ValueError('Keine Suchbegriffe oder Kontaktdaten angeben.')
+                from . import apple_contacts
+                return self._json(apple_contacts.open_contacts() if path.endswith('/open') else apple_contacts.selected())
             if method=='POST' and path=='/api/device-ai/chat':
                 if set(body)-{'mode','text','history'}:raise ValueError('Unbekannte Geräte-Chatfelder.')
                 mode=body.get('mode','jarvis')

@@ -13,7 +13,7 @@ with tempfile.TemporaryDirectory() as folder:
   with sync_playwright() as pw:
    browser=pw.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox']);page=browser.new_page(viewport={'width':1512,'height':1100});errors=[];page.on('pageerror',lambda e:errors.append(str(e)))
    page.goto(url+'/index.html');page.locator('#quick-bar').wait_for();page.wait_for_function('()=>!!window.JarvisExtras&&!!window.JarvisBridge');page.wait_for_timeout(400)
-   assert page.locator('#quick-bar button').count()==8
+   assert page.locator('#quick-bar .quick-shortcuts button').count()==8
    bounds=page.locator('#quick-bar').bounding_box();assert bounds and bounds['y']<350
    page.locator('#quick-bar [data-quick="focus"]').click();page.get_by_label('Woran arbeitest du gerade?').wait_for(state='visible');page.get_by_role('button',name='Schließen',exact=True).click();page.mouse.move(0,0);page.wait_for_timeout(200);page.screenshot(path=str(root/'artifacts/jarvis-mac-werkzeugleiste.png'))
    for phrase in ['Jarvis, sende eine Sprachnachricht an Lea','Wie sende ich eine Sprachnachricht?','Öffne Sprachnachrichten','Schicke Lea eine Sprachnachricht']:
@@ -25,7 +25,7 @@ with tempfile.TemporaryDirectory() as folder:
     mobile.on('pageerror',lambda e:errors.append(str(e)));mobile.goto(url+'/tablet');mobile.wait_for_function('()=>!!window.DeviceStore&&!!window.DeviceDesk')
     mobile.evaluate("async layout=>{const state=await DeviceStore.get('workspace')||{version:1};await DeviceStore.set('workspace',{...state,layout,voice:false});}",layout);mobile.reload();mobile.wait_for_function('layout=>document.body.dataset.layout===layout',arg=layout);mobile.locator('#quick-bar').wait_for();mobile.wait_for_timeout(300)
     assert mobile.evaluate('()=>document.documentElement.scrollWidth<=innerWidth+1')
-    assert mobile.locator('#quick-bar button').count()==8
+    assert mobile.locator('#quick-bar .quick-shortcuts button').count()==8
     mobile.mouse.move(0,0);mobile.screenshot(path=str(root/('artifacts/jarvis-'+name+'-neu.png')))
     mobile.locator('#quick-bar [data-quick="voice"]').click();mobile.locator('.voice-guided').wait_for();assert mobile.locator('#desk-voice-kind').input_value()=='own'
     assert not mobile.locator('#contact-picker').is_visible();assert not mobile.locator('#send-confirm').is_visible();assert 'noch nichts aufgenommen' in mobile.locator('#desk-voice-status').inner_text()

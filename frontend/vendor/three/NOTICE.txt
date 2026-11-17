@@ -1,0 +1,5 @@
+Three.js 0.160.1, MIT License (see LICENSE).
+Source: https://registry.npmjs.org/three/-/three-0.160.1.tgz
+Downloaded archive SHA-256: d462f9bb4a53d0a75f5ebba49ec1c69847f166cd1bd6cbfdd98ce0b5b7988609
+Files are upstream except local ES-module import paths in example modules.
+No model files, trackers or third-party services are bundled.

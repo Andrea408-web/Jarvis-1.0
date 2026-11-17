@@ -329,7 +329,7 @@ class Handler(BaseHTTPRequestHandler):
         device= urlsplit(self.path).path in {'/tablet','/brands'}
         script_policy="'self' 'wasm-unsafe-eval'" if device else "'self'"
         worker_policy="'self' blob:" if device else "'self'"
-        self.send_header('Content-Security-Policy', f"default-src 'self'; script-src {script_policy}; worker-src {worker_policy}; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://images.tagesschau.de https://www.tagesschau.de https://tagesschau.de https://i.ytimg.com; media-src 'self' blob:; connect-src 'self'; frame-src 'self' https://www.youtube-nocookie.com https://www.tiktok.com https://zugspitze.panomax.com https://www.muenchen.de https://www.berlin.de https://www.earthcam.com https://www.abbeyroad.com https://www.livefromiceland.is https://www.skylinewebcams.com; object-src 'none'; base-uri 'none'; frame-ancestors {ancestors}; form-action 'self'")
+        self.send_header('Content-Security-Policy', f"default-src 'self'; script-src {script_policy}; worker-src {worker_policy}; style-src 'self' 'unsafe-inline'; img-src 'self' blob: data: https://images.tagesschau.de https://www.tagesschau.de https://tagesschau.de https://i.ytimg.com; media-src 'self' blob:; connect-src 'self' blob:; frame-src 'self' https://www.youtube-nocookie.com https://www.tiktok.com https://zugspitze.panomax.com https://www.muenchen.de https://www.berlin.de https://www.earthcam.com https://www.abbeyroad.com https://www.livefromiceland.is https://www.skylinewebcams.com; object-src 'none'; base-uri 'none'; frame-ancestors {ancestors}; form-action 'self'")
         if self.server.secure:
             self.send_header('Strict-Transport-Security', 'max-age=86400')
         self.end_headers()
@@ -510,8 +510,14 @@ class Handler(BaseHTTPRequestHandler):
             if path=='/api/video-editor':
                 if self.server.device_auth or not ipaddress.ip_address(self.client_address[0]).is_loopback:return self._json({'error':'Videoschnitt bitte direkt am Mac verwenden.'},403)
                 return self._json(app.video_editor.snapshot())
+            if path=='/api/objects/info':
+                from .object_models import capabilities
+                return self._json(capabilities())
             static = {'/': 'mobile.html' if self.server.device_auth or re.search(r'iPhone|iPad|iPod|Macintosh.*Mobile',self.headers.get('User-Agent',''),re.I) else 'index.html', '/index.html': 'index.html', '/mobile':'mobile.html','/mobile-app.js':'mobile-app.js','/boot.js':'boot.js','/task-board.js':'task-board.js','/discover.js':'discover.js','/quest':'aeris.html','/quest-assistant.js':'quest-assistant.js','/quest-hands.js':'quest-hands.js','/aeris':'aeris.html','/aeris.js':'aeris.js','/aeris-assistant.js':'aeris-assistant.js','/aeris-xr.js':'aeris-xr.js','/aeris-pose.js':'aeris-pose.js','/vr-guide':'vr-guide.html','/video-editor':'video-editor.html','/video-editor.js':'video-editor.js','/video-renderer.js':'video-renderer.js','/companion':'call.html','/companion-actions.js':'companion-actions.js','/companion.js':'companion.js','/companion.css':'companion.css','/jarvis-orb.js':'jarvis-orb.js','/call':'call.html','/call-bridge.js':'call-bridge.js','/aeris-model.js':'aeris-model.js','/aeris-projects.js':'aeris-projects.js','/aeris-tracking.js':'aeris-tracking.js','/video-call.js':'video-call.js','/video-call.css':'video-call.css','/aeris-gestures.js':'aeris-gestures.js','/aeris-shell.css':'aeris-shell.css','/aeris-shell.js':'aeris-shell.js','/aeris-icon.svg':'aeris-icon.svg','/aeris-sw.js':'aeris-sw.js',
                       '/device-polish.css':'device-polish.css','/quick-help.js':'quick-help.js','/contacts-panel':'contacts-panel.html','/contacts-panel.js':'contacts-panel.js','/tablet':'device.html','/brands':'device.html','/device-app.js':'device-app.js','/contact-request.js':'contact-request.js','/device-desk.js':'device-desk.js','/device-business.js':'device-business.js','/hud-core.js':'hud-core.js','/device-ai.js':'device-ai.js','/device-store.js':'device-store.js','/device-style.css':'device-style.css','/manifest.webmanifest':'manifest.webmanifest','/app-icon.png':'app-icon.png','/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js','/office-3d.js':'office-3d.js', '/lowpoly-stage.js':'lowpoly-stage.js', '/artifacts.js':'artifacts.js', '/jarvis-voice.js':'jarvis-voice.js', '/voice-worker.js':'voice-worker.js', '/conversation.js':'conversation.js', '/mini-hub.js':'mini-hub.js', '/world-news.js':'world-news.js', '/astra.js':'astra.js', '/astra.css':'astra.css', '/astra-panel.html':'astra-panel.html', '/astra-panel.js':'astra-panel.js'}
+            for name in ['three.module.min.js','GLTFLoader.js','OrbitControls.js','BufferGeometryUtils.js','RoomEnvironment.js','LICENSE','NOTICE.txt']:
+                static['/vendor/three/'+name]='vendor/three/'+name
+            static.update({'/object-viewer.js':'object-viewer.js','/object-viewer.css':'object-viewer.css'})
             for name in ['ESpeak.js','mespeak.js','config.json','jarvis-de.json','de.json','COPYING','NOTICE.txt','UPSTREAM-README.md','mespeak-2.0.2-source.tgz','speak-source-9c6f642.tar.gz']:
                 static['/vendor/voice/'+name]='vendor/voice/'+name
             if path in static:
@@ -702,6 +708,12 @@ class Handler(BaseHTTPRequestHandler):
                     from .video_call import answer
                     return self._json(answer(app,body))
                 finally:app.chat_lock.release()
+            if method=='POST' and path=='/api/objects/load':
+                if set(body)!={'url'}:raise ValueError('Bitte genau einen Modell-Link angeben.')
+                from .object_models import load_model
+                model=load_model(body['url'])
+                self._headers(200,'model/gltf-binary',len(model))
+                return self.wfile.write(model)
             if method=='POST' and path=='/api/aeris/pose':
                 if set(body)!={'image'} or not isinstance(body['image'],str) or len(body['image'])>400000:raise ValueError('Bitte ein JPEG-Frame bis 300 KB senden.')
                 try:image=base64.b64decode(body['image'],validate=True)

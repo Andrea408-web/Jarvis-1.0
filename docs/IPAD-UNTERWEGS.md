@@ -163,3 +163,10 @@ Die Kamera nimmt keinen Ton auf. Kleine JPEG-Bilder werden nur im RAM auf dem ei
 Three.js 0.160.1 ist als kleine lokale Grafikbibliothek mit MIT-Lizenz und Quellenangabe beigefügt; keine KI-Gewichte und keine 3D-Modelldateien sind im Update enthalten. Das Update wird dadurch größer. Modell-Downloads erfolgen getrennt und ausdrücklich bei Bedarf.
 
 Prüfung: tests/test_object_models.py prüft erlaubte Quellen, Größen, GLB-Kopf und abgelehnte Weiterleitungen. tests/browser/object_viewer.py nutzt eine kleine selbst erzeugte Testgeometrie oder optional ein öffentliches Referenz-GLB als Argument und prüft die echte WebGL-Darstellung, echte getrennte Geometrie, Filterfehler, kalibrierte Gesten und vollständiges Kamera-Stoppen. Cloud-Kamera und Handpunkte sind Testdaten; physische Apple-Vision-Erkennung ist hier nicht testbar. Beispielbilder: artifacts/objekt-zusammen.png und artifacts/objekt-einzelteile.png.
+
+
+## Spielpause
+
+In der Jarvis-Werkzeugleiste **◈ Spielpause** öffnen: Memory mit sechs Paaren, Reaktionstest mit Zufallssignal und Zahlenrätsel (1 bis 100, sieben Versuche). Alle Spiele laufen ohne Modell, Anmeldung oder externe Datenverbindung, nachdem die App geladen ist. Karten können per Touch oder mit Tab/Enter bedient werden. Bei Reaktion zählen zu frühe Klicks nicht als Bestzeit; im Hintergrund wird eine laufende Runde angehalten. Spielstände und Bestwerte liegen nur im RAM und werden beim Schließen verworfen. Es werden keine Nachrichten verschickt, keine Mikrofone oder Kameras geöffnet und keine Spielverläufe gespeichert.
+
+Auch **„Jarvis, mir ist langweilig“** oder **„Öffne Spielpause“** öffnet die Spiele direkt als lokales Werkzeug im Mac- und Geräte-Chat. Es wird dafür kein Sprachmodell befragt.

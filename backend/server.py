@@ -84,7 +84,7 @@ class Application:
         from .code_room import CodeRoom
         self.code_room = CodeRoom(self)
         from .studio_bridge import StudioBridge
-        self.studio_bridge = StudioBridge()
+        self.studio_bridge = StudioBridge(self.store.data_dir)
 
     def settings(self):
         values = self.store.settings()
@@ -671,6 +671,9 @@ class Handler(BaseHTTPRequestHandler):
                 if path=='/api/code-room/studio/prepare':
                     if body:raise ValueError('Keine Parameter erforderlich.')
                     return self._json(app.studio_bridge.prepare(owner))
+                if path=='/api/code-room/studio/reconnect':
+                    if body:raise ValueError('Keine Parameter erforderlich.')
+                    return self._json(app.studio_bridge.reconnect(owner))
                 if path=='/api/code-room/studio/build':return self._json(app.studio_bridge.queue(owner,body))
                 if path=='/api/code-room/studio/disconnect':
                     if body:raise ValueError('Keine Parameter erforderlich.')

@@ -81,6 +81,8 @@ class Application:
         self.hub = MiniHub(self.store)
         self.desktop = Desktop(self)
         self.web = WebAssistant(self)
+        from .code_room import CodeRoom
+        self.code_room = CodeRoom(self)
 
     def settings(self):
         values = self.store.settings()
@@ -436,6 +438,17 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_response(200);self.send_header('Content-Type','text/html; charset=utf-8');self.send_header('Content-Length',str(len(data)));self.send_header('Cache-Control','no-store');self.send_header('X-Content-Type-Options','nosniff');self.send_header('Content-Security-Policy',"sandbox; default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'")
                 if 'download=1' in urlsplit(self.path).query:self.send_header('Content-Disposition','attachment; filename="Jarvis-Website.html"')
                 self.end_headers();return self.wfile.write(data)
+            if path=='/api/code-room/jobs':return self._json(app.code_room.recent(self.client_address[0]+'|'+self.headers.get('Cookie','')))
+            if path=='/api/code-room/models':return self._json(app.code_room.models())
+            code_job=re.fullmatch(r'/api/code-room/jobs/([a-f0-9]{32})',path)
+            code_preview=re.fullmatch(r'/code-preview/([a-f0-9]{32})',path)
+            if code_job or code_preview:
+                owner=self.client_address[0]+'|'+self.headers.get('Cookie','')
+                if code_job:return self._json(app.code_room.snapshot(code_job[1],owner))
+                data=app.code_room.preview(code_preview[1],owner)
+                self.send_response(200);self.send_header('Content-Type','text/html; charset=utf-8');self.send_header('Content-Length',str(len(data)));self.send_header('Cache-Control','no-store');self.send_header('X-Content-Type-Options','nosniff')
+                self.send_header('Content-Security-Policy',"sandbox allow-scripts; default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; img-src data: blob:; connect-src 'none'; frame-src 'none'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'")
+                self.end_headers();return self.wfile.write(data)
             if path=='/api/device-ai/status':return self._json(app.device_ai.status())
             if path=='/api/brands':return self._json(app.brands.all())
             if path=='/api/device-ai/model' or path.startswith('/device-runtime/'):
@@ -517,7 +530,7 @@ class Handler(BaseHTTPRequestHandler):
                       '/device-polish.css':'device-polish.css','/quick-help.js':'quick-help.js','/contacts-panel':'contacts-panel.html','/contacts-panel.js':'contacts-panel.js','/tablet':'device.html','/brands':'device.html','/device-app.js':'device-app.js','/contact-request.js':'contact-request.js','/device-desk.js':'device-desk.js','/device-business.js':'device-business.js','/hud-core.js':'hud-core.js','/device-ai.js':'device-ai.js','/device-store.js':'device-store.js','/device-style.css':'device-style.css','/manifest.webmanifest':'manifest.webmanifest','/app-icon.png':'app-icon.png','/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js','/office-3d.js':'office-3d.js', '/lowpoly-stage.js':'lowpoly-stage.js', '/artifacts.js':'artifacts.js', '/jarvis-voice.js':'jarvis-voice.js', '/voice-worker.js':'voice-worker.js', '/conversation.js':'conversation.js', '/mini-hub.js':'mini-hub.js', '/world-news.js':'world-news.js', '/astra.js':'astra.js', '/astra.css':'astra.css', '/astra-panel.html':'astra-panel.html', '/astra-panel.js':'astra-panel.js'}
             for name in ['three.module.min.js','GLTFLoader.js','OrbitControls.js','BufferGeometryUtils.js','RoomEnvironment.js','LICENSE','NOTICE.txt']:
                 static['/vendor/three/'+name]='vendor/three/'+name
-            static.update({'/studio-tools.js':'studio-tools.js','/studio-tools.css':'studio-tools.css','/chess-pieces.js':'chess-pieces.js','/play-chess.js':'play-chess.js','/chess-ai.js':'chess-ai.js','/chess-worker.js':'chess-worker.js','/vendor/chess/chess.js':'vendor/chess/chess.js','/vendor/chess/LICENSE':'vendor/chess/LICENSE','/vendor/chess/NOTICE.txt':'vendor/chess/NOTICE.txt','/play.js':'play.js','/play.css':'play.css','/object-viewer.js':'object-viewer.js','/object-viewer.css':'object-viewer.css'})
+            static.update({'/code-room.js':'code-room.js','/code-room.css':'code-room.css','/studio-tools.js':'studio-tools.js','/studio-tools.css':'studio-tools.css','/chess-pieces.js':'chess-pieces.js','/play-chess.js':'play-chess.js','/chess-ai.js':'chess-ai.js','/chess-worker.js':'chess-worker.js','/vendor/chess/chess.js':'vendor/chess/chess.js','/vendor/chess/LICENSE':'vendor/chess/LICENSE','/vendor/chess/NOTICE.txt':'vendor/chess/NOTICE.txt','/play.js':'play.js','/play.css':'play.css','/object-viewer.js':'object-viewer.js','/object-viewer.css':'object-viewer.css'})
             for name in ['ESpeak.js','mespeak.js','config.json','jarvis-de.json','de.json','COPYING','NOTICE.txt','UPSTREAM-README.md','mespeak-2.0.2-source.tgz','speak-source-9c6f642.tar.gz']:
                 static['/vendor/voice/'+name]='vendor/voice/'+name
             if path in static:
@@ -649,6 +662,14 @@ class Handler(BaseHTTPRequestHandler):
                 if body:raise ValueError('Keine Suchbegriffe oder Kontaktdaten angeben.')
                 from . import apple_contacts
                 return self._json(apple_contacts.open_contacts() if path.endswith('/open') else apple_contacts.selected())
+            if method=='POST' and path.startswith('/api/code-room/'):
+                owner=self.client_address[0]+'|'+self.headers.get('Cookie','')
+                if path=='/api/code-room/jobs':return self._json(app.code_room.submit(body,owner),202)
+                match=re.fullmatch(r'/api/code-room/jobs/([a-f0-9]{32})/(save|cancel|download)',path)
+                if not match or body:raise ValueError('Ungültige Code-Aktion.')
+                if match[2]=='download':
+                    data=app.code_room.archive(match[1],owner);self._headers(200,'application/zip',len(data));return self.wfile.write(data)
+                return self._json(app.code_room.action(match[1],owner,match[2]))
             if method=='POST' and path=='/api/device-ai/chat':
                 if set(body)-{'mode','text','history'}:raise ValueError('Unbekannte Geräte-Chatfelder.')
                 mode=body.get('mode','jarvis')

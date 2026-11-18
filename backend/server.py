@@ -83,6 +83,8 @@ class Application:
         self.web = WebAssistant(self)
         from .code_room import CodeRoom
         self.code_room = CodeRoom(self)
+        from .studio_bridge import StudioBridge
+        self.studio_bridge = StudioBridge()
 
     def settings(self):
         values = self.store.settings()
@@ -439,6 +441,7 @@ class Handler(BaseHTTPRequestHandler):
                 if 'download=1' in urlsplit(self.path).query:self.send_header('Content-Disposition','attachment; filename="Jarvis-Website.html"')
                 self.end_headers();return self.wfile.write(data)
             if path=='/api/code-room/jobs':return self._json(app.code_room.recent(self.client_address[0]+'|'+self.headers.get('Cookie','')))
+            if path=='/api/code-room/studio':return self._json(app.studio_bridge.status(self.client_address[0]+'|'+self.headers.get('Cookie','')))
             if path=='/api/code-room/models':return self._json(app.code_room.models())
             code_job=re.fullmatch(r'/api/code-room/jobs/([a-f0-9]{32})',path)
             code_preview=re.fullmatch(r'/code-preview/([a-f0-9]{32})',path)
@@ -530,7 +533,7 @@ class Handler(BaseHTTPRequestHandler):
                       '/device-polish.css':'device-polish.css','/quick-help.js':'quick-help.js','/contacts-panel':'contacts-panel.html','/contacts-panel.js':'contacts-panel.js','/tablet':'device.html','/brands':'device.html','/device-app.js':'device-app.js','/contact-request.js':'contact-request.js','/device-desk.js':'device-desk.js','/device-business.js':'device-business.js','/hud-core.js':'hud-core.js','/device-ai.js':'device-ai.js','/device-store.js':'device-store.js','/device-style.css':'device-style.css','/manifest.webmanifest':'manifest.webmanifest','/app-icon.png':'app-icon.png','/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js','/office-3d.js':'office-3d.js', '/lowpoly-stage.js':'lowpoly-stage.js', '/artifacts.js':'artifacts.js', '/jarvis-voice.js':'jarvis-voice.js', '/voice-worker.js':'voice-worker.js', '/conversation.js':'conversation.js', '/mini-hub.js':'mini-hub.js', '/world-news.js':'world-news.js', '/astra.js':'astra.js', '/astra.css':'astra.css', '/astra-panel.html':'astra-panel.html', '/astra-panel.js':'astra-panel.js'}
             for name in ['three.module.min.js','GLTFLoader.js','OrbitControls.js','BufferGeometryUtils.js','RoomEnvironment.js','LICENSE','NOTICE.txt']:
                 static['/vendor/three/'+name]='vendor/three/'+name
-            static.update({'/code-room.js':'code-room.js','/code-room.css':'code-room.css','/studio-tools.js':'studio-tools.js','/studio-tools.css':'studio-tools.css','/chess-pieces.js':'chess-pieces.js','/play-chess.js':'play-chess.js','/chess-ai.js':'chess-ai.js','/chess-worker.js':'chess-worker.js','/vendor/chess/chess.js':'vendor/chess/chess.js','/vendor/chess/LICENSE':'vendor/chess/LICENSE','/vendor/chess/NOTICE.txt':'vendor/chess/NOTICE.txt','/play.js':'play.js','/play.css':'play.css','/object-viewer.js':'object-viewer.js','/object-viewer.css':'object-viewer.css'})
+            static.update({'/code-companion.js':'code-companion.js','/code-room.js':'code-room.js','/code-room.css':'code-room.css','/studio-tools.js':'studio-tools.js','/studio-tools.css':'studio-tools.css','/chess-pieces.js':'chess-pieces.js','/play-chess.js':'play-chess.js','/chess-ai.js':'chess-ai.js','/chess-worker.js':'chess-worker.js','/vendor/chess/chess.js':'vendor/chess/chess.js','/vendor/chess/LICENSE':'vendor/chess/LICENSE','/vendor/chess/NOTICE.txt':'vendor/chess/NOTICE.txt','/play.js':'play.js','/play.css':'play.css','/object-viewer.js':'object-viewer.js','/object-viewer.css':'object-viewer.css'})
             for name in ['ESpeak.js','mespeak.js','config.json','jarvis-de.json','de.json','COPYING','NOTICE.txt','UPSTREAM-README.md','mespeak-2.0.2-source.tgz','speak-source-9c6f642.tar.gz']:
                 static['/vendor/voice/'+name]='vendor/voice/'+name
             if path in static:
@@ -664,6 +667,14 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(apple_contacts.open_contacts() if path.endswith('/open') else apple_contacts.selected())
             if method=='POST' and path.startswith('/api/code-room/'):
                 owner=self.client_address[0]+'|'+self.headers.get('Cookie','')
+                if path=='/api/code-room/talk':return self._json(app.code_room.talk(owner,body))
+                if path=='/api/code-room/studio/prepare':
+                    if body:raise ValueError('Keine Parameter erforderlich.')
+                    return self._json(app.studio_bridge.prepare(owner))
+                if path=='/api/code-room/studio/build':return self._json(app.studio_bridge.queue(owner,body))
+                if path=='/api/code-room/studio/disconnect':
+                    if body:raise ValueError('Keine Parameter erforderlich.')
+                    return self._json(app.studio_bridge.disconnect(owner))
                 if path=='/api/code-room/jobs':return self._json(app.code_room.submit(body,owner),202)
                 match=re.fullmatch(r'/api/code-room/jobs/([a-f0-9]{32})/(save|cancel|download)',path)
                 if not match or body:raise ValueError('Ungültige Code-Aktion.')
@@ -923,6 +934,7 @@ def main(argv=None):
             app.desktop.stop()
             if app.desktop.thread:app.desktop.thread.join(timeout=2)
             if app.desktop.panel and app.desktop.panel.poll() is None:app.desktop.panel.terminate()
+            app.studio_bridge.stop()
             app.office.stop()
             app.mobile.stop(revoke=False)
             app.quest_window.stop()

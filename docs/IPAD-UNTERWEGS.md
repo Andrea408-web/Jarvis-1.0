@@ -196,3 +196,25 @@ In der grün-gelben Jarvis-Leiste auf **⌘ Code** klicken oder „Öffne den Co
 - **Aufträge und Stoppen:** Die letzten zwanzig Aufträge lassen sich während derselben Serverlaufzeit wieder öffnen. Fenster schließen lässt einen gestarteten Auftrag weiterlaufen. **Stoppen** verwirft das Ergebnis; eine bereits laufende lokale Modellberechnung kann noch auslaufen. Beim Serverneustart gehen ungespeicherte Entwürfe verloren. Gespeicherte Projektdateien und bewusst exportierte ZIPs bleiben erhalten. Aufträge werden weder an Cloud-KI noch in den normalen Chatverlauf geschrieben.
 
 Der Projektzugriff ist ausdrücklich **kein Vollzugriff auf den Mac**: keine Terminalbefehle, keine App-Steuerung, kein Zugriff auf Kontakte oder beliebige vorhandene Dateien. Dafür bestehen die gesonderten Astra-Werkzeuge mit eigenen Freigaben. Dieses Update enthält außerdem den neuen Schachraum, das Projektboard und die Textwerkstatt; das vorherige Update muss nicht zuerst installiert werden.
+
+
+### Mit Jarvis im Code-Arbeitsraum sprechen
+
+Im Code-Arbeitsraum gibt es den Reiter **Gespräch**. Vor dem Auftrag kannst du mit der ausgewählten lokalen KI planen. Bei laufender Erzeugung liefert Jarvis auf Nachfrage den tatsächlichen Stand; für freie Antworten ist die einzelne KI erst nach ihrer laufenden Berechnung wieder verfügbar. Über **Änderung einarbeiten** kannst du bis zu sechs kurze Zusatzwünsche einreichen. Die laufende Modellantwort wird nicht mitten im Token abgebrochen: Anschließend folgen höchstens zwei Überarbeitungsrunden. Der Ablauf zeigt empfangene und noch nicht eingearbeitete Wünsche ausdrücklich an. Spätere Wünsche lassen sich im nächsten Auftrag übernehmen.
+
+**Thorsten antwortet** ist voreingestellt; kein Wechsel zu einer Systemstimme. Einmal Senden oder Gespräch starten antippen, damit der Browser Audio freigibt. Thorsten muss auf dem verbundenen Mac eingerichtet sein. Für freihändiges Sprechen erst **Browser-Spracheingabe erlauben**, dann **Gespräch starten** wählen: erkannte Sätze werden automatisch gesendet, nach der Antwort hört Jarvis wieder zu. Die Browser-Spracherkennung kann ihren eigenen Onlinedienst nutzen. Tippen bleibt möglich. Gespräch beenden, Fenster schließen, Tab-Wechsel oder Hintergrundwechsel stoppen Mikrofon und Stimme; ein laufender Arbeitsauftrag wird dadurch nicht gestoppt. Es wird weder ein Stimmprofil noch eine Aufnahme im Chatverlauf gespeichert.
+
+### Roblox-Studio-Brücke: sichtbarer Starter-Parcours
+
+Der Reiter **Roblox Studio** enthält eine einmal einzurichtende lokale Plugin-Brücke. Sie ergänzt ein echtes Studio-Projekt um Spawn, 3–20 Plattformen, optionale Münzen mit Punktestand und ein Ziel mit Erfolgshinweis. Die Anzahl bereits erstellter Teile wird vom Plugin zurückgemeldet. Das ist ein fester Starter-Spieltyp und kein universeller autonomer Roblox-Entwickler. Es gibt keine Maussteuerung und keinen automatischen Spieltest oder Upload. Beliebige Spiele auf Codex-Niveau kann das kleine Textmodell dadurch nicht erstellen.
+
+1. Auf dem Mac Roblox Studio installieren/öffnen und ein leeres Projekt anlegen. Die normale Roblox-Studio-Anmeldung bleibt erforderlich; Jarvis führt keine neue Anbieteranmeldung ein.
+2. Im Jarvis-Reiter **Studio-Plugin herunterladen** wählen. Die heruntergeladene Datei **JarvisStudio.rbxmx** enthält nur das lokale Plugin und eine widerrufbare Brückenkennung für diese Serverlaufzeit. Nicht öffentlich teilen.
+3. In Roblox Studio den lokalen Plugins-Ordner öffnen: abhängig von der Version unter **Plugins → Plugins Folder** oder den erweiterten Dateioptionen. Die Datei dort ablegen und Studio neu starten.
+4. Wenn Studio danach fragt, lokale HTTP-Anfragen an **127.0.0.1** und das Einfügen des mitgelieferten Gameplay-Skripts erlauben. Das Plugin führt keinen von der KI generierten Lua-Code aus.
+5. Jarvis muss **Studio verbunden** anzeigen. Spielname, Plattformen und Münzen prüfen, dann bewusst **In Studio bauen** wählen. Schaue in Studio zu. Jarvis meldet den Bau erst nach der Plugin-Rückmeldung als fertig.
+6. In Studio selbst **Play** wählen, Parcours und Punkte testen und das Projekt bewusst speichern. Noch nichts ist veröffentlicht.
+
+Die Brücke lauscht ausschließlich auf einer zufälligen lokalen Mac-Adresse mit eigener Kennung, nicht im WLAN. Ein gekoppeltes iPad kann über den Mac-Server einen Bauauftrag starten. Ohne verbundenen Mac läuft Roblox Studio dort nicht. Nach einem Jarvis-Serverneustart das Plugin erneut herunterladen/ersetzen und Studio neu starten. Der neue Reiter lässt sich auch ohne Plugin ansehen; der Bauknopf bleibt bis zur echten Verbindung gesperrt.
+
+**Brücke trennen** (oder im Gespräch „Stoppe Studio“) widerruft die Kennung. Die Jarvis-Schaltfläche im Studio-Plugin pausiert dessen Arbeit ebenfalls. Ein Teilmodell kann stehen bleiben; fremde Objekte werden nicht gelöscht. Bei einem Fehler wird kein erfolgreicher Bau behauptet. Die Studio-Ausführung und die echten macOS-Mikrofon-/Lautsprechereinstellungen müssen auf dem Mac geprüft werden; im Cloud-Test sind nur Brückenprotokoll, Dateiausgabe, UI und Audiosteuerung prüfbar.

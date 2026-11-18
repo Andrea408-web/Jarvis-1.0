@@ -93,3 +93,16 @@ class CodeRoomTests(unittest.TestCase):
   self.app.llamacpp.endpoint_transport=offline;self.app.local_ai.transport=offline
   self.assertEqual(self.room.models()['models'],[])
   with self.assertRaises(ValueError):self.submit()
+ def test_talk_before_work_uses_local_model_without_file_writes(self):
+  self.reply='Sir, wir können eine Website planen.';answer=self.room.talk('owner',{'id':None,'model':'llamacpp','text':'Wie fange ich an?','kind':'talk','history':[]});self.assertIn('Sir',answer['reply']);self.assertFalse(self.room.root.exists());self.assertNotIn('response_format',self.calls[0])
+ def test_busy_status_and_steering_are_real_and_revised(self):
+  ready=threading.Event();release=threading.Event();payloads=[]
+  def transport(path,payload=None):
+   if path=='/health':return {'status':'ok'}
+   payloads.append(payload)
+   if len(payloads)==1:ready.set();release.wait(3)
+   return {'choices':[{'finish_reason':'stop','message':{'content':self.reply}}]}
+  self.app.llamacpp.endpoint_transport=transport;key=self.submit();self.assertTrue(ready.wait(1));body={'id':key,'model':'llamacpp','text':'Wie weit bist du?','kind':'talk','history':[]};self.assertIn('Sir',self.room.talk('owner',body)['reply']);self.assertEqual(len(payloads),1)
+  body.update(text='Bitte heller gestalten',kind='steer');self.assertTrue(self.room.talk('owner',body)['queued']);release.set();j=self.done(key);self.assertEqual(j['status'],'awaiting');self.assertTrue(j['instructions'][0]['applied']);self.assertEqual(len(payloads),2);self.assertIn('Bitte heller gestalten',payloads[1]['messages'][-1]['content'])
+  with self.assertRaises(ValueError):self.room.talk('other',body)
+  with self.assertRaises(ValueError):self.room.talk('owner',body)

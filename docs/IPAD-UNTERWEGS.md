@@ -267,3 +267,13 @@ Ohne einmalige Speicherung kann Safari eine nicht erreichbare Website nicht selb
 **Offline-Oberfläche und Offline-KI sind getrennt:** Freie KI-Antworten ohne Mac benötigen weiterhin das einmal eingerichtete kleine Gerätemodell unter **Gerät**. Die Reparatur lädt kein Modell automatisch herunter. Thorsten, Roblox Studio und andere Mac-Werkzeuge brauchen weiterhin den Mac. Die neue Speicherung betrifft statische Oberflächendateien, keine API-Antworten oder Aufnahmen; vorhandene Modellteile und persönliche IndexedDB-Daten werden beim Oberflächenupdate nicht gelöscht.
 
 Geprüft wurden echte Browser-Kaltstarts nach vollständigem Abschalten des Testservers (auch bei weiterhin als online gemeldetem Netzwerk), Notizen und Ansichtsparameter, fehlende optionale Dateien, ein fehlgeschlagenes Update ohne Verlust der alten Oberfläche, verschiedene Handy-Breiten sowie lokale WASM-Inferenz mit synthetischen Testgewichten. Der Safari-Kompatibilitätsbinärcode wurde in Chromium ausgeführt; ein physisches iPhone/iPad war hier nicht verfügbar.
+
+### Über mich · dein persönliches Profil
+
+In der grünen Schnellzugriffsleiste auf **„Über mich“** tippen, oder „Was weißt du über mich?“ schreiben. In der Mitte steht ein animiertes grünes Gehirn; die Texte daneben sind Schaltflächen. Name, Anrede, Humor, Antwortstil, Interessen und Dinge, die Jarvis vermeiden soll, lassen sich einzeln ansehen und ändern. Die Darstellung ist eine Animation, kein Gehirnscan.
+
+Einmal freiwillig von dir erzählen und **„Meine Angaben speichern“** wählen. Es werden nur deine eigenen Angaben und der bereits eingestellte Name/die Anrede angezeigt, keine heimlich abgeleiteten Eigenschaften. Die vorhandene lokale KI erhält passende Profilangaben als Gesprächskontext; das ist kein Training und macht das kleine Modell nicht leistungsfähiger. Diese zusätzliche Profilweitergabe ist bei Internet-KI-Anbietern deaktiviert.
+
+Am verbundenen Mac bleibt das Profil lokal in der vorhandenen Jarvis-Datenbank. Auf Handy und iPad wird eine Kopie im Gerätespeicher gehalten. Nach „Offline bereit“ kann sie auch ohne Mac geöffnet und bearbeitet werden. Wird der Browserspeicher gelöscht, entfällt diese Gerätekopie. Auf anderen Geräten mit dem gleichen Jarvis-Mac muss man sich nicht erneut vorstellen.
+
+Offline-Änderungen werden nicht ungefragt über das Mac-Profil geschrieben. **„Mit Mac abgleichen“** zeigt beide Fassungen, danach wählst du bewusst die gewünschte Fassung. „Profilangaben löschen“ entfernt das Profil und setzt Name/Anrede zurück; Chats, Notizen und weitere Geräte werden dabei nicht gelöscht. Eine Offline-Löschung muss später ebenfalls mit dem Mac abgeglichen werden. Für alte Chats gibt es separat „Chat löschen“.

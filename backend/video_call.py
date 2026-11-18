@@ -5,7 +5,7 @@ import json
 from . import native_vision
 from .providers import ProviderError
 
-def answer(app, body, identity='jarvis', text_only=False):
+def answer(app, body, identity='jarvis', text_only=False, personal_profile=None):
     import base64
     if set(body)-{'text','image','history','source','native_screen'}:raise ValueError('Ungültige Videoanruf-Felder.')
     if not isinstance(body.get('native_screen',False),bool):raise ValueError('Ungültige Bildschirmfreigabe.')
@@ -34,7 +34,7 @@ def answer(app, body, identity='jarvis', text_only=False):
         except ValueError:raise ValueError('Ungültiges Kamerabild.') from None
         if not 1<=len(image)<=300000 or not image.startswith(b'\xff\xd8\xff'):raise ValueError('Bitte ein gültiges JPEG-Kamerabild senden.')
         findings=native_vision.analyze(image)
-    settings=app.store.settings();provider=settings['ai_provider'];address=settings.get('user_address') or 'Sir'
+    settings=app.store.settings();provider=settings['ai_provider'];address=(personal_profile or {}).get('address') or settings.get('user_address') or 'Sir'
     # Direct transport intentionally bypasses chat clients' SQLite history paths.
     evidence={'available':bool(findings and findings.get('available')),'labels':(findings or {}).get('labels',[])[:6],'text':(findings or {}).get('text','')[:2000]}
     if findings is not None and not evidence['available']:
@@ -53,6 +53,8 @@ def answer(app, body, identity='jarvis', text_only=False):
         instruction=('Du bist '+identity+', ein hilfreicher deutscher Assistent. Anrede: '+address+'. Antworte auf die aktuelle Frage natürlich und knapp. '
                      'Hier hast du keine Ausführungswerkzeuge und keine aktuellen Internetdaten. Behaupte keine erledigten Aufgaben. '
                      'Für Notizen, Planung, Marken und Skizzen gibt es Werkzeuge im Arbeitsraum. Frage bei fehlenden Angaben gezielt nach.')
+    from .personal_profile import context as personal_context
+    instruction+='\n'+personal_context(app.store,override=personal_profile)
     prompt=text.strip()
     if findings is not None:prompt+='\nBildquelle: '+('freigegebener Bildschirm' if body.get('source')=='screen' else 'Kamera')+'\nLokale, unsichere Bildhinweise (keine vollständige Bildanalyse): '+json.dumps(evidence,ensure_ascii=False)
     payload={'model':settings['local_model'],'messages':[{'role':'system','content':instruction},*messages,{'role':'user','content':prompt}],'stream':False,'options':{'num_ctx':4096,'num_predict':256},'keep_alive':'5m'}

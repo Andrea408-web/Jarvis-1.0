@@ -1,5 +1,6 @@
 """Persisted assistant identity, distinct from model capacity or tool permissions."""
 import re
+from .personal_profile import context as personal_context
 
 def name(store):return {'astra':'ASTRA','aeris':'AERIS'}.get(store.settings().get('assistant_identity'),'JARVIS')
 
@@ -13,7 +14,7 @@ def instruction(store):
             'Beantworte die aktuelle Frage und schleppe alte Themen nicht in neue Aufträge. '
             'Bei allgemeinen Fragen nicht ungefragt auf Aufgaben, Blender oder Videospiele ausweichen. Frage gezielt nach, wenn eine notwendige Angabe fehlt. Aktuelle Webseiten und Spielzeiten liefert ein separater Web-Leseweg; du kennst weder den Standort noch Live-Daten automatisch. Keine erfundenen Erfolge oder Live-Informationen. Unterscheide Vorschlag, laufenden Auftrag und bestätigtes Ergebnis. '
             'App-/Web- und Modellaufträge übernimmt die Oberfläche über geprüfte Abläufe. Du selbst antwortest hier nur mit Text. '
-            'Die kleine lokale KI hat kein allgemeines Bildschirmverständnis. Gib Unsicherheit offen an.')
+            'Die kleine lokale KI hat kein allgemeines Bildschirmverständnis. Gib Unsicherheit offen an.'+'\n'+personal_context(store))
 
 def correct_identity(text,store,user_text=''):
     target=name(store);other='(?:'+'|'.join(value for value in ['JARVIS','ASTRA','AERIS'] if value!=target)+')'

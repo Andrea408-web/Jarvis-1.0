@@ -52,6 +52,8 @@ MAX_BODY = 32_768
 class Application:
     def __init__(self, data_dir=None):
         self.store = Store(data_dir)
+        from .personal_profile import PersonalProfile
+        self.personal_profile = PersonalProfile(self.store)
         self.dialogue=Dialogue()
         self.pose_lock=threading.Lock()
         self.voice_install_lock=threading.Lock();self.voice_install_state={'state':'idle','message':''}
@@ -440,6 +442,7 @@ class Handler(BaseHTTPRequestHandler):
                 self.send_response(200);self.send_header('Content-Type','text/html; charset=utf-8');self.send_header('Content-Length',str(len(data)));self.send_header('Cache-Control','no-store');self.send_header('X-Content-Type-Options','nosniff');self.send_header('Content-Security-Policy',"sandbox; default-src 'none'; style-src 'unsafe-inline'; base-uri 'none'; form-action 'none'; frame-ancestors 'self'")
                 if 'download=1' in urlsplit(self.path).query:self.send_header('Content-Disposition','attachment; filename="Jarvis-Website.html"')
                 self.end_headers();return self.wfile.write(data)
+            if path=='/api/personal-profile':return self._json(app.personal_profile.read())
             if path=='/api/code-room/jobs':return self._json(app.code_room.recent(self.client_address[0]+'|'+self.headers.get('Cookie','')))
             if path=='/api/code-room/studio':return self._json(app.studio_bridge.status(self.client_address[0]+'|'+self.headers.get('Cookie','')))
             if path=='/api/code-room/models':return self._json(app.code_room.models())
@@ -533,7 +536,7 @@ class Handler(BaseHTTPRequestHandler):
                       '/device-polish.css':'device-polish.css','/quick-help.js':'quick-help.js','/contacts-panel':'contacts-panel.html','/contacts-panel.js':'contacts-panel.js','/tablet':'device.html','/brands':'device.html','/device-app.js':'device-app.js','/contact-request.js':'contact-request.js','/device-desk.js':'device-desk.js','/device-business.js':'device-business.js','/hud-core.js':'hud-core.js','/device-ai.js':'device-ai.js','/device-store.js':'device-store.js','/device-style.css':'device-style.css','/manifest.webmanifest':'manifest.webmanifest','/app-icon.png':'app-icon.png','/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js','/office-3d.js':'office-3d.js', '/lowpoly-stage.js':'lowpoly-stage.js', '/artifacts.js':'artifacts.js', '/jarvis-voice.js':'jarvis-voice.js', '/voice-worker.js':'voice-worker.js', '/conversation.js':'conversation.js', '/mini-hub.js':'mini-hub.js', '/world-news.js':'world-news.js', '/astra.js':'astra.js', '/astra.css':'astra.css', '/astra-panel.html':'astra-panel.html', '/astra-panel.js':'astra-panel.js'}
             for name in ['three.module.min.js','GLTFLoader.js','OrbitControls.js','BufferGeometryUtils.js','RoomEnvironment.js','LICENSE','NOTICE.txt']:
                 static['/vendor/three/'+name]='vendor/three/'+name
-            static.update({'/offline-ready.js':'offline-ready.js','/offline-ready.css':'offline-ready.css','/invention-lab.js':'invention-lab.js','/invention-lab.css':'invention-lab.css','/layout-switch.js':'layout-switch.js','/layout-switch.css':'layout-switch.css','/code-companion.js':'code-companion.js','/code-room.js':'code-room.js','/code-room.css':'code-room.css','/studio-tools.js':'studio-tools.js','/studio-tools.css':'studio-tools.css','/chess-pieces.js':'chess-pieces.js','/play-chess.js':'play-chess.js','/chess-ai.js':'chess-ai.js','/chess-worker.js':'chess-worker.js','/vendor/chess/chess.js':'vendor/chess/chess.js','/vendor/chess/LICENSE':'vendor/chess/LICENSE','/vendor/chess/NOTICE.txt':'vendor/chess/NOTICE.txt','/play.js':'play.js','/play.css':'play.css','/object-viewer.js':'object-viewer.js','/object-viewer.css':'object-viewer.css'})
+            static.update({'/personal-store.js':'personal-store.js','/personal-memory.js':'personal-memory.js','/personal-memory.css':'personal-memory.css','/offline-ready.js':'offline-ready.js','/offline-ready.css':'offline-ready.css','/invention-lab.js':'invention-lab.js','/invention-lab.css':'invention-lab.css','/layout-switch.js':'layout-switch.js','/layout-switch.css':'layout-switch.css','/code-companion.js':'code-companion.js','/code-room.js':'code-room.js','/code-room.css':'code-room.css','/studio-tools.js':'studio-tools.js','/studio-tools.css':'studio-tools.css','/chess-pieces.js':'chess-pieces.js','/play-chess.js':'play-chess.js','/chess-ai.js':'chess-ai.js','/chess-worker.js':'chess-worker.js','/vendor/chess/chess.js':'vendor/chess/chess.js','/vendor/chess/LICENSE':'vendor/chess/LICENSE','/vendor/chess/NOTICE.txt':'vendor/chess/NOTICE.txt','/play.js':'play.js','/play.css':'play.css','/object-viewer.js':'object-viewer.js','/object-viewer.css':'object-viewer.css'})
             for name in ['ESpeak.js','mespeak.js','config.json','jarvis-de.json','de.json','COPYING','NOTICE.txt','UPSTREAM-README.md','mespeak-2.0.2-source.tgz','speak-source-9c6f642.tar.gz']:
                 static['/vendor/voice/'+name]='vendor/voice/'+name
             if path in static:
@@ -544,7 +547,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self.wfile.write(body)
         elif method == 'DELETE' and path == '/api/history':
             return self._json(app.clear_chat())
-        elif method in {'POST', 'PUT', 'PATCH'}:
+        elif method in {'POST', 'PUT', 'PATCH'} or method=='DELETE' and path=='/api/personal-profile':
             if method=='POST' and path=='/api/video-editor/upload':
                 if self.server.device_auth or not ipaddress.ip_address(self.client_address[0]).is_loopback:return self._json({'error':'Videoimport bitte direkt am Mac verwenden.'},403)
                 # Raw bytes are streamed before the small JSON-body reader.
@@ -665,6 +668,12 @@ class Handler(BaseHTTPRequestHandler):
                 if body:raise ValueError('Keine Suchbegriffe oder Kontaktdaten angeben.')
                 from . import apple_contacts
                 return self._json(apple_contacts.open_contacts() if path.endswith('/open') else apple_contacts.selected())
+            if method in {'PUT','DELETE'} and path=='/api/personal-profile':
+                if method=='PUT':
+                    if set(body)!={'profile','expected'}:raise ValueError('Profil und aktuelle Fassung erforderlich.')
+                    return self._json(app.personal_profile.save(body['profile'],body['expected']))
+                if set(body)!={'expected'}:raise ValueError('Nur die aktuelle Profilfassung angeben.')
+                return self._json(app.personal_profile.forget(body['expected']))
             if method=='POST' and path.startswith('/api/code-room/'):
                 owner=self.client_address[0]+'|'+self.headers.get('Cookie','')
                 if path=='/api/code-room/talk':return self._json(app.code_room.talk(owner,body))
@@ -690,13 +699,15 @@ class Handler(BaseHTTPRequestHandler):
                 try:return self._json(design(app,body))
                 finally:app.chat_lock.release()
             if method=='POST' and path=='/api/device-ai/chat':
-                if set(body)-{'mode','text','history'}:raise ValueError('Unbekannte Geräte-Chatfelder.')
+                if set(body)-{'mode','text','history','profile'}:raise ValueError('Unbekannte Geräte-Chatfelder.')
                 mode=body.get('mode','jarvis')
                 if mode not in {'jarvis','astra','aeris'}:raise ValueError('Unbekannter Assistent.')
                 from .video_call import answer
-                payload={k:v for k,v in body.items() if k!='mode'}
+                from .personal_profile import validate as validate_profile
+                personal=validate_profile(body['profile']) if 'profile' in body else None
+                payload={k:v for k,v in body.items() if k not in {'mode','profile'}}
                 if not app.chat_lock.acquire(blocking=False):raise ProviderError('Eine lokale KI-Anfrage läuft bereits.',409)
-                try:return self._json(answer(app,payload,identity=mode,text_only=True))
+                try:return self._json(answer(app,payload,identity=mode,text_only=True,personal_profile=personal))
                 finally:app.chat_lock.release()
             if method=='POST' and path=='/api/device-ai/prepare':
                 if body:raise ValueError('Keine Parameter für die Geräte-Einrichtung erforderlich.')

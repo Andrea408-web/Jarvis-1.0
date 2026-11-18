@@ -247,3 +247,23 @@ In der Jarvis-Leiste auf **⚗ Erfinden** klicken oder „Öffne das Erfinder-La
 Die Skizze zeigt 2–6 Bausteine und deren Verbindungen. Sie ist ein schematisches Konzept, kein maßhaltiges CAD-Modell, keine technisch geprüfte Konstruktion und keine bereits bewiesene Erfindung. Offene Fragen und vorgeschlagene Tests stehen ausdrücklich dabei. **Skizze als SVG** und **Konzept sichern** exportieren nur den aktuellen Entwurf. Ohne bewussten Export bleibt er im Arbeitsspeicher. Bei einer ungültigen KI-Ausgabe bleibt eine vorhandene Skizze unverändert; sie wird nicht als neue erfolgreiche Überarbeitung ausgegeben. Änderungen während einer Anfrage und Stoppen verwerfen verspätete Antworten.
 
 Das Labor nutzt nur die vorhandene lokale KI am verbundenen Mac und lädt kein Modell nach. Bei belegter KI oder fehlender Verbindung erscheint eine Erklärung; es gibt keine automatische Cloud-Ausweichroute. Die Browserprüfung verwendet Testantworten zur Kontrolle von Bedienung und Datenfluss; die inhaltliche Qualität der Erfindungen hängt vom tatsächlich gewählten Modell ab.
+
+
+## Reparierter Offline-Start und Handy-Modus
+
+Der normale iPhone-/iPad-Einstieg öffnet jetzt denselben lokalen Arbeitsraum wie die Geräteansicht. Oben steht sichtbar **Offline bereit**, sobald die tatsächlich nötige Oberfläche vollständig gespeichert ist. Die Vorbereitung beginnt unabhängig von Mac-API und KI-Modell; ein langsamer oder ausgeschalteter Mac blockiert das Zeichnen der Oberfläche nicht mehr. Auf Geräteansichten, der alten Mobilseite und dem normalen Mac-Einstieg wird die Offline-Oberfläche vorbereitet.
+
+**Nach dem Update einmal mit eingeschaltetem Mac vorbereiten:**
+
+1. Jarvis am Mac aktualisieren und neu starten. Die bisherige HTTPS-Adresse auf dem Handy/iPad öffnen und das Gerät bei Bedarf koppeln.
+2. Warten, bis **Offline bereit** erscheint. Die Anzeige prüft den wirklichen Cache und zeigt bei einem Fehler eine Erklärung statt einer Erfolgsmeldung. Bei unvollständiger Vorbereitung auf **Prüfen** tippen, solange der Mac verbunden ist.
+3. Wenn du die Home-Bildschirm-App nutzt, diese ebenfalls einmal bei laufendem Mac öffnen und dort auf **Offline bereit** warten. Safari und die Home-Bildschirm-App können unterschiedliche Speicher verwenden.
+4. Erst danach den Mac ausschalten. **Ohne Mac · Oberfläche bereit** zeigt den lokalen Betrieb an. Notizen, Ablage, Markenwerkzeuge und andere gespeicherte Browserfunktionen bleiben erreichbar.
+
+Ohne einmalige Speicherung kann Safari eine nicht erreichbare Website nicht selbst herstellen. Vertrauenswürdiges HTTPS ist weiterhin nötig. Browserdaten und vorhandene KI nicht löschen; bei einem Updatefehler bleibt die vorherige funktionierende Oberfläche erhalten. Ein optionales fehlendes 3D-Modul verhindert nicht mehr den Offline-Start der Handy-Oberfläche. Lädt der Server eine Einstiegsseite nicht rechtzeitig, wird nach kurzer Frist die gespeicherte Oberfläche gezeigt. Auch die alten Einstiege `/`, `/mobile`, `/index.html` und Adressen mit Ansichtsparametern bekommen offline den gespeicherten Arbeitsraum. Mac-spezifische Ansichten erhalten einen erklärten Rückweg statt eines leeren Dokuments.
+
+**Handy-Modus:** Die untere Navigation ist nun auch bei breiten Fenstern eine begrenzte horizontale Leiste. Sie wird nicht mehr durch geerbte Desktop-Regeln fast bildschirmhoch. Auf schmalen Handys passt sie ohne seitlichen Überlauf. Die Werkzeugleiste bleibt beim Scrollen nicht über dem Chat hängen. Bei erkannter Bildschirmtastatur wird die untere Navigation vorübergehend ausgeblendet, damit das Eingabefeld frei bleibt. Ohne Mac lassen sich die lokalen Ansichten wechseln, ohne auf eine unerreichbare Mac-Seite geschickt zu werden.
+
+**Offline-Oberfläche und Offline-KI sind getrennt:** Freie KI-Antworten ohne Mac benötigen weiterhin das einmal eingerichtete kleine Gerätemodell unter **Gerät**. Die Reparatur lädt kein Modell automatisch herunter. Thorsten, Roblox Studio und andere Mac-Werkzeuge brauchen weiterhin den Mac. Die neue Speicherung betrifft statische Oberflächendateien, keine API-Antworten oder Aufnahmen; vorhandene Modellteile und persönliche IndexedDB-Daten werden beim Oberflächenupdate nicht gelöscht.
+
+Geprüft wurden echte Browser-Kaltstarts nach vollständigem Abschalten des Testservers (auch bei weiterhin als online gemeldetem Netzwerk), Notizen und Ansichtsparameter, fehlende optionale Dateien, ein fehlgeschlagenes Update ohne Verlust der alten Oberfläche, verschiedene Handy-Breiten sowie lokale WASM-Inferenz mit synthetischen Testgewichten. Der Safari-Kompatibilitätsbinärcode wurde in Chromium ausgeführt; ein physisches iPhone/iPad war hier nicht verfügbar.

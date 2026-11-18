@@ -31,7 +31,7 @@ with tempfile.TemporaryDirectory() as folder:
    page.locator('#brand-plan').click();assert page.locator('#content-plan article').count()==7;page.locator('#content-plan article').first.get_by_text('Als Aufgabe planen').click()
    page.locator('details summary').click();page.locator('#brand-push').click();page.wait_for_function("()=>document.getElementById('device-toast').textContent.includes('auf dem Mac gespeichert')");assert app.brands.all()['profiles'][0]['name']=='LUMEN STUDIO'
    page.locator('.rail [data-view="chat"]').click();page.locator('#device-chat-input').fill('Erstelle eine Notiz');page.locator('#chat-send').click();page.get_by_text('Was soll in der Notiz stehen, Sir?',exact=True).wait_for();page.locator('#device-chat-input').fill('Morgen Milch kaufen');page.locator('#chat-send').click();page.get_by_text('Die Notiz ist auf diesem Gerät gespeichert, Sir.',exact=True).wait_for()
-   page.locator('#layout-toggle').click();page.set_viewport_size({'width':1194,'height':900});page.locator('.rail [data-view="sketch"]').click()
+   page.locator('#device-layout-select').select_option('ipad');page.set_viewport_size({'width':1194,'height':900});page.locator('.rail [data-view="sketch"]').click()
    board=page.locator('#sketch-canvas').bounding_box();page.mouse.move(board['x']+80,board['y']+100);page.mouse.down();page.mouse.move(board['x']+250,board['y']+200,steps=20);page.mouse.move(board['x']+430,board['y']+90,steps=20);page.mouse.up()
    page.wait_for_timeout(400);assert page.evaluate("async()=>(await DeviceStore.get('workspace')).sketch.length")==1
    page.locator('#sketch-clear').click()

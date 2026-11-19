@@ -695,7 +695,7 @@ class Handler(BaseHTTPRequestHandler):
                 return self._json(app.code_room.action(match[1],owner,match[2]))
             if method=='POST' and path=='/api/workshop/design':
                 from .workshop import design
-                return self._json(design(body))
+                return self._json(design(body,app=app))
             if method=='POST' and path=='/api/inventions/design':
                 from .inventions import design
                 if not app.chat_lock.acquire(blocking=False):raise ProviderError('Die lokale KI arbeitet gerade. Bitte den laufenden Auftrag abwarten.',409)

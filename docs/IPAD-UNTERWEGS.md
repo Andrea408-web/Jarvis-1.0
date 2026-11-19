@@ -304,3 +304,22 @@ Das kleine Jarvis-Gesicht schwebt **innerhalb der Browserseite**. Am Griff versc
 Die kompakte Hauptansicht, das 3D-Gehirn und alle vorherigen Änderungen sind im selben Update enthalten. Kein neues KI- oder Stimmenmodell wird geladen.
 
 Während eines laufenden Schritts kann der nächste Wunsch schon gesprochen werden. Der neueste Wunsch wird vorgemerkt und danach angewendet; ein älterer noch wartender Wunsch wird dadurch ersetzt. „Stopp“ verwirft auch den wartenden Wunsch.
+
+### Grauer Modellierbereich, runde Formen und Anleitung direkt in Jarvis
+
+Die Werkstatt zeigt Modelle jetzt neutral grau, mit Raster, Drahtgitter-Schalter und sichtbarer Montagebewegung. **Montage abspielen** setzt die Einzelteile erneut sichtbar zusammen; **Stoppen** unterbricht diese Bewegung. Bei reduzierten Animationen werden die Teile ohne automatische Bewegung gezeigt. Die Rundformen sind echte Zylinder, Ringe, Hohlzylinder oder Schirme, keine nur anders gefärbten Kästen.
+
+Zum Beispiel „eine runde Tischlampe“, „ein Ringlicht“ oder „eine runde Box“ erzeugen unterschiedliche Bauteile. Ein freier, bisher nicht unterstützter Wunsch wird an die vorhandene lokale Text-KI übergeben. Nur gültige Daten für eine begrenzte 3D-Baugruppe werden übernommen; es wird kein erzeugter Programmcode ausgeführt. Bei ungültiger Ausgabe bleibt der bisherige Entwurf erhalten. Die kleine KI kann solche Entwürfe ablehnen oder unbrauchbare Vorschläge liefern; es gibt keinen automatischen Box-Ersatz und keinen Cloud-Ausweichdienst.
+
+**Anleitung direkt ansehen** wechselt im Baustudio zur lesbaren Schrittfolge. Dazu ist kein Download nötig. „Anleitung“, „weiter“ und „zurück“ funktionieren auch im Sprachdialog. Schritte können zum Vorlesen angetippt werden; Thorsten wird weiterhin verwendet.
+
+„Benutz schwarzes Holz“ wird als Holz und schwarze Oberfläche gespeichert und in der Materialliste und Anleitung genannt. Die Vorschau bleibt grau. Farbe und Material sind damit vom Darstellungsstil getrennt; der gespeicherte Entwurf behält diese Angaben auch offline. Runde Schirme, LED-Ringe und Hohlkörper werden als passende Fertigteile bzw. Fachhandelszuschnitte geplant. Freie KI-Modelle bleiben ungeprüfte Vorentwürfe; Verbindungen, Stabilität und Stromversorgung müssen vor der Umsetzung geklärt werden.
+
+
+### Aktueller Einstieg: freier Entwurf statt Bauvorlage
+
+Beim Öffnen wird kein beliebiges Musterobjekt gebaut. Beschreibe erst deinen Wunsch. Jeder neue Auftrag geht im aktuellen Einstieg an deine vorhandene lokale Text-KI; die frühere Auswahl fester Bauformen ist aus der Bedienung entfernt. Die KI liefert ausschließlich geprüfte Geometriedaten, keinen ausführbaren Programmcode. Sie kann eigene zweidimensionale Konturen mit echten Ausschnitten extrudieren oder Körper aus eigenen Drehprofilen erzeugen. Einfache geometrische Grundkörper bleiben als passende Konstruktionsoperationen möglich, werden aber nicht als fertige Bauvorlage ausgewählt.
+
+Fehlen notwendige Angaben, kann Jarvis eine konkrete Rückfrage stellen. Deine nächste Antwort ergänzt dann den ursprünglichen Wunsch. Bei einer ungültigen Ausgabe wird nichts als Ersatz gebaut; ein vorhandener Entwurf bleibt stehen. Die vorhandene kleine lokale KI bleibt der begrenzende Faktor beim Verstehen und bei komplexen Konstruktionen. Diese Funktion ist kein vollständiger Blender-/CAD-Ersatz und lädt kein größeres Modell herunter. Material und Farbe stehen weiter in der direkt lesbaren Anleitung; die Vorschau ist grau.
+
+Ein bereits gesicherter Entwurf wird beim ersten Öffnen nicht automatisch neu montiert. Mit „Gesicherten Entwurf anzeigen“ lädst du ihn ausdrücklich, auch ohne Mac. Ohne Laden oder neuen Wunsch bleibt der Arbeitsbereich leer.

@@ -68,8 +68,8 @@ class GeneratedPackageTests(unittest.TestCase):
         for name,data in files.items():
             self.assertEqual(data,(root/name).read_bytes())
             if name.endswith('.md'):self.assertTrue(data.startswith(b'#'),name+' must contain the documentation, not program source')
-        # Source-only updater budget: includes offline helpers, licensed renderer and anatomical surface; no model weights.
-        self.assertLess(len(script),1500000)
+        # Source-only updater budget: includes offline helpers, licensed renderer, anatomical surface and bounded 3D workshop; no model weights.
+        self.assertLess(len(script),1600000)
         with zipfile.ZipFile(root/'updates/JARVIS-Stimme-Nachruestung.zip') as archive:
             self.assertEqual(archive.read('JARVIS-Stimme-nachruesten.command'),script.encode())
             self.assertFalse(any(name.endswith(('.onnx','.gguf')) for name in archive.namelist()))
@@ -95,4 +95,4 @@ class AstraPackageTests(unittest.TestCase):
                 upgrade.apply(target,files,manifest,lambda root:None)
                 for name,data in files.items():self.assertEqual((target/name).read_bytes(),data)
         with zipfile.ZipFile(root/'updates/JARVIS-Astra-Update.zip') as archive:
-            self.assertEqual(archive.read('JARVIS-Astra-aktualisieren.command'),script.encode());self.assertLess(sum(i.file_size for i in archive.infolist()),1500000)
+            self.assertEqual(archive.read('JARVIS-Astra-aktualisieren.command'),script.encode());self.assertLess(sum(i.file_size for i in archive.infolist()),1600000)

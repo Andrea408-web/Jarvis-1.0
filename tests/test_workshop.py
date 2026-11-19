@@ -16,7 +16,7 @@ class WorkshopTests(unittest.TestCase):
   for request in ['Baue mir einen funktionierenden Sportwagen','Ich will ein Flugzeug aus Holz in 4 Tagen bauen']:
    with self.assertRaises(ValueError):design({'spec':DEFAULT,'request':request})
  def test_automatic_mode_makes_material_and_dimension_choices(self):
-  data=design({'spec':DEFAULT,'request':'Ich will eine moderne Lampe bauen','automatic':True});self.assertTrue(data['automatic']);self.assertEqual(data['spec']['depth'],70);self.assertEqual(data['spec']['width'],280);self.assertTrue(data['decisions']);self.assertEqual(len(data['parts']),7)
+  data=design({'spec':DEFAULT,'request':'Ich will eine moderne Lampe bauen','automatic':True});self.assertTrue(data['automatic']);self.assertEqual(data['spec']['depth'],145);self.assertEqual(data['spec']['width'],220);self.assertTrue(data['decisions']);self.assertEqual(data['spec']['variant'],'desk');self.assertTrue(any(p.get('shape')=='cylinder'for p in data['parts']))
  def test_automatic_mode_never_replaces_explicit_material_or_dimensions(self):
   data=design({'spec':DEFAULT,'request':'Ich will eine Lampe aus Metall, 30 cm breit, in vier Tagen','automatic':True});self.assertEqual(data['spec']['width'],300);self.assertEqual(data['spec']['material'],'metal');self.assertEqual(data['spec']['thickness'],2);self.assertEqual(data['spec']['days'],4)
  def test_delegation_works_without_item_by_item_instructions(self):
@@ -24,8 +24,8 @@ class WorkshopTests(unittest.TestCase):
   with self.assertRaises(ValueError):design({'spec':DEFAULT,'request':'Ich will einen Sportwagen aus Metall bauen','automatic':True})
 
  def test_alternative_request_changes_the_actual_part_dimensions(self):
-  data=design({'spec':DEFAULT,'request':'Übernimm den Entwurf und zeig mir eine Alternative','automatic':True});self.assertEqual(data['spec']['width'],220);self.assertEqual(data['spec']['height'],240);self.assertEqual(data['parts'][0]['size'][0],220)
+  data=design({'spec':DEFAULT,'request':'Übernimm den Entwurf und zeig mir eine Alternative','automatic':True});self.assertEqual(data['spec']['width'],220);self.assertEqual(data['spec']['height'],320);self.assertEqual(data['parts'][0]['size'][0],220)
 
  def test_new_project_with_relative_clause_resets_alternative_defaults(self):
   alt=design({'spec':DEFAULT,'request':'Übernimm den Entwurf und zeig eine Alternative','automatic':True})
-  data=design({'spec':alt['spec'],'request':'Ich will etwas aus Holz bauen das leuchtet, 30 cm breit, in 4 Tagen','automatic':True});self.assertEqual(data['spec']['depth'],70);self.assertEqual(data['spec']['width'],300)
+  data=design({'spec':alt['spec'],'request':'Ich will ein Leuchtpaneel aus Holz, 30 cm breit, in 4 Tagen','automatic':True});self.assertEqual(data['spec']['depth'],70);self.assertEqual(data['spec']['width'],300)

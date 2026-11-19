@@ -71,3 +71,5 @@ TikTok war aus dieser Cloud nicht erreichbar. Eine Analyse sämtlicher Videos vo
 ## Optional: natürliche Stimme und Astra
 
 Das [Stimmen-Nachrüst-Paket](NATUERLICHE-STIMME.md) ergänzt die natürliche Offline-Stimme. Das separate [Astra-Update](ASTRA.md) lädt keine neue Stimme und kein Textmodell. Der frühere Mini-Hub ist entfernt; Weltansicht und Astra ersetzen ihn.
+
+Im 3D-Baustudio kannst du „Das gefällt mir nicht, mach einen neuen Entwurf“ sagen. Jarvis versucht dann einen anderen Aufbau und übernimmt den bisherigen Bauwunsch. „Nur kleiner“ verändert dagegen die Größe. Bleibt die lokale KI trotz Korrektur beim gleichen Modell, erscheint eine Meldung und dein bisheriger Entwurf bleibt sichtbar. Für Lichtmodule sage ausdrücklich „mit LEDs“. LED-Vorschau und LED-Innenansicht zeigen deren Platzierung weiß im grauen Modell; beide sind schaltbar. Die Erklärung rechts und Fragen wie „Warum hast du das so aufgebaut?“ helfen beim Besprechen. Die Anleitung ist weiterhin direkt in Jarvis lesbar.

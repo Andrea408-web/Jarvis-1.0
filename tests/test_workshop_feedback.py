@@ -37,3 +37,13 @@ class FeedbackTests(unittest.TestCase):
   for text in ['Kein neuer Entwurf, nur kleiner','Das gefällt mir nicht, mach es kleiner']:
    new=design({'spec':old['spec'],'request':text,'previous':old},self.app);self.assertLess(new['spec']['width'],old['spec']['width'])
   self.model.assert_not_called()
+
+ def test_incomplete_output_is_retried_and_validated(self):
+  for bad in ['{"title":"unvollständig"}', '```json\n{"parts":[] }\n```', 'kein JSON']:
+   self.model.reset_mock();self.model.side_effect=[bad,json.dumps(RAW)]
+   data=design({'spec':DEFAULT,'free_design':True,'request':'Beistelltisch'},self.app)
+   self.assertEqual(data['title'],RAW['title']);self.assertEqual(self.model.call_count,2);self.assertFalse(self.app.chat_lock.locked())
+ def test_truncation_is_retried_and_fences_are_accepted(self):
+  self.model.side_effect=[ValueError('Das lokale Modell hat keine fertige Ausgabe geliefert.'),'```json\n'+json.dumps(RAW)+'\n```']
+  data=design({'spec':DEFAULT,'free_design':True,'request':'Beistelltisch'},self.app)
+  self.assertEqual(data['title'],RAW['title']);self.assertEqual(self.model.call_count,2)

@@ -86,14 +86,22 @@ def generate(app,body):
  try:
   retry=''
   for attempt in range(2):
-   reply=app.code_room._generate({'model':'llamacpp'if provider=='llamacpp'else'ollama:'+settings['local_model']},[{'role':'system','content':prompt+retry},{'role':'user','content':body['request']}],1536,structured=True)
-   try:raw=json.loads(reply)
-   except (ValueError,TypeError):raise ValueError('Die kleine lokale KI hat keine gültigen 3D-Bauteile geliefert. Der bisherige Entwurf bleibt erhalten; es wurde keine Standardbox eingesetzt.')from None
-   if isinstance(raw,dict)and set(raw)=={'questions'}:
-    q=raw['questions']
-    if not isinstance(q,list)or not 1<=len(q)<=3 or any(not isinstance(t,str)or not 1<=len(t)<=240 for t in q):raise ValueError('Ungültige Rückfrage der lokalen KI.')
-    return {'needs_details':True,'questions':q}
-   proposed=assembly(raw);reason=''
+   try:
+    reply=app.code_room._generate({'model':'llamacpp'if provider=='llamacpp'else'ollama:'+settings['local_model']},[{'role':'system','content':prompt+retry},{'role':'user','content':body['request']}],2048 if attempt==0 else 2560,structured=True)
+    # Some local models wrap otherwise valid JSON in a Markdown code fence.
+    reply=re.sub(r'^```(?:json)?\s*|\s*```$','',reply.strip(),flags=re.I)
+    raw=json.loads(reply)
+    if isinstance(raw,dict)and set(raw)=={'questions'}:
+     q=raw['questions']
+     if not isinstance(q,list)or not 1<=len(q)<=3 or any(not isinstance(t,str)or not 1<=len(t)<=240 for t in q):raise ValueError('Ungültige Rückfrage der lokalen KI.')
+     return {'needs_details':True,'questions':q}
+    proposed=assembly(raw)
+   except (ValueError,TypeError)as error:
+    if attempt==0:
+     retry=' Korrektur: Deine vorige Ausgabe war unvollständig oder ungültig. Liefere ein vollständiges JSON-Objekt mit title, parts, steps und features. Höchstens 6 sorgfältig ausgearbeitete Bauteile, kurze Erklärung. Fehler: '+str(error)[:220]
+     continue
+    raise ValueError('Die kleine lokale KI hat auch nach einem Korrekturversuch keine gültigen 3D-Bauteile geliefert. Der bisherige Entwurf bleibt erhalten. Bitte beschreibe den Bauwunsch kürzer oder mit weniger Details.')from None
+   reason=''
    if redesign and geometry_signature(proposed['parts'])==geometry_signature(checked['parts']):reason='Die Geometrie wiederholt den bisherigen Entwurf. Liefere einen erkennbar anderen Aufbau oder andere Konturen.'
    if led is False and any(p['material']=='light'for p in proposed['parts']):reason+=' Der aktuelle Wunsch verlangt einen Entwurf ohne LED-Bauteile.'
    if led and not any(p['material']=='light'for p in proposed['parts']):reason+=' Es fehlen die ausdrücklich gewünschten LED-Bauteile mit material light.'

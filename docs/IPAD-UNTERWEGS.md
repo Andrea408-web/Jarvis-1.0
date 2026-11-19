@@ -277,3 +277,17 @@ Einmal freiwillig von dir erzählen und **„Meine Angaben speichern“** wähle
 Am verbundenen Mac bleibt das Profil lokal in der vorhandenen Jarvis-Datenbank. Auf Handy und iPad wird eine Kopie im Gerätespeicher gehalten. Nach „Offline bereit“ kann sie auch ohne Mac geöffnet und bearbeitet werden. Wird der Browserspeicher gelöscht, entfällt diese Gerätekopie. Auf anderen Geräten mit dem gleichen Jarvis-Mac muss man sich nicht erneut vorstellen.
 
 Offline-Änderungen werden nicht ungefragt über das Mac-Profil geschrieben. **„Mit Mac abgleichen“** zeigt beide Fassungen, danach wählst du bewusst die gewünschte Fassung. „Profilangaben löschen“ entfernt das Profil und setzt Name/Anrede zurück; Chats, Notizen und weitere Geräte werden dabei nicht gelöscht. Eine Offline-Löschung muss später ebenfalls mit dem Mac abgeglichen werden. Für alte Chats gibt es separat „Chat löschen“.
+
+### Übersicht & 3D-Baustudio
+
+Offline-Verfügbarkeit und Gerätewahl stehen am Mac kompakt in einer Zeile. **Info** blendet die Offline-Erklärung ein; **Weitere Bereiche** öffnet die Links zu Helfer, Videoschnitt, VR und Marken. Die Werkzeugleiste startet klein und lässt sich über **Jarvis-Werkzeuge** aufklappen.
+
+Dort **Baustudio** öffnen, oder Jarvis schreiben: „Ich will ein leuchtendes Objekt aus Holz bauen, 30 cm breit, in 4 Tagen“. Das Studio berechnet einen modularen Vorentwurf und zeigt, wie seine Bauteile im 3D-Modell zusammengesetzt werden. Finger/Maus drehen das Modell; der Regler zieht die Teile auseinander. Ein Teil antippen, um seine Maße zu sehen. Aktuell gibt es Leuchtobjekt, offene Box, Tischablage und Geräteständer mit änderbaren Maßen und den Materialien Holz, Metall oder Kunststoff. Das ist ein Einstieg mit Standardkonstruktionen, keine beliebige automatische CAD-Fertigung.
+
+„Breiter“, „kleiner“, „aus Metall“, konkrete Maße sowie das Zeitfenster können im Studio eingegeben werden. Die Teileliste verwendet dieselben Maße wie das Modell. Bauanleitung, Werkzeuge und eine vorgeschlagene Tagesaufteilung stehen daneben. „Weiter“ und „zurück“ gehen durch die Anleitung. Fragen wie „Was kann es?“ oder „Wo finde ich die Bauteile?“ zeigen die passenden Angaben. Allgemeine Beratung nutzt bei entsprechend formulierten Fragen die vorhandene lokale KI am verbundenen Mac.
+
+Unter **Mit Jarvis sprechen** optional die Browser-Spracherkennung erlauben. Diese kann Audio online verarbeiten. Danach werden Sprachaufträge ohne Senden übernommen; Thorsten antwortet, soweit die Stimme am Mac verfügbar ist. **Reden stoppen** schaltet die Sprachausgabe aus, **Stoppen** unterbricht eine laufende Anfrage/Montageansicht. Beim Schließen endet das Zuhören.
+
+Einkaufslinks sind Suchanfragen, keine Bestands- oder Preiszusagen. Verbindungsmittel, Toleranzen und bei Leuchten der Kabelweg müssen vor dem Bau festgelegt werden; die Anleitung setzt fertige Zuschnitte und fertige 5-V-/Batterie-LED-Module voraus. Die Entwürfe haben keine geprüfte Tragfähigkeit. Ein Zeitfenster ist ein Planungswunsch, keine zugesagte Bauzeit.
+
+**Entwurf auf diesem Gerät sichern** speichert ausdrücklich im Browser; der gesicherte Stand kann nach „Offline bereit“ auch ohne Mac als 3D-Modell samt Anleitung geöffnet werden. Neue Entwürfe und Änderungen brauchen derzeit den verbundenen Mac. **Bauplan als Text herunterladen** sichert Maße, Teile und Anleitung zusätzlich als Datei.

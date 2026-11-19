@@ -2,3 +2,4 @@
 
 #offline-ready[hidden]{display:none!important}
 @media(max-width:700px){#offline-ready>div{flex:1 0 100%}#offline-ready button{padding:7px 12px}}
+#offline-ready{width:max-content;max-width:100%;padding:4px 8px!important;min-height:30px;border-radius:7px;margin:0 0 8px;gap:8px;flex-wrap:nowrap}#offline-ready>div{flex:0 1 auto!important}#offline-ready strong{font-size:10px!important;white-space:normal}#offline-ready p{display:none}#offline-ready button{min-height:25px;padding:3px 7px!important;font-size:10px}#offline-ready.details-open{width:100%;flex-wrap:wrap}#offline-ready.details-open p{display:block}#offline-ready.details-open>div{flex:1 1 180px!important}

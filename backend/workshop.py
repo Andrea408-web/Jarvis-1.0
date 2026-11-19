@@ -13,13 +13,25 @@ def validate(spec):
  if spec['thickness']*3>=min(spec['width'],spec['height'],spec['depth']):raise ValueError('Die Materialstärke ist für diese Maße zu groß.')
  return dict(spec)
 def design(body):
- if not isinstance(body,dict)or set(body)!={'spec','request'}or not isinstance(body['request'],str)or len(body['request'])>1000:raise ValueError('Bitte einen kurzen Bauwunsch eingeben.')
+ if not isinstance(body,dict)or not {'spec','request'}<=set(body)or set(body)-{'spec','request','automatic'}or not isinstance(body['request'],str)or len(body['request'])>1000:raise ValueError('Bitte einen kurzen Bauwunsch eingeben.')
+ if type(body.get('automatic',False))is not bool:raise ValueError('Ungültiger Entwurfsmodus.')
+ automatic=body.get('automatic',False)
  s=validate(body['spec']);text=body['request'].lower().strip();recognized=not text
  numbers={'ein':1,'eine':1,'einen':1,'einem':1,'zwei':2,'drei':3,'vier':4,'fünf':5,'sechs':6,'sieben':7,'acht':8,'neun':9,'zehn':10,'elf':11,'zwölf':12,'dreizehn':13,'vierzehn':14,'fünfzehn':15,'sechzehn':16,'siebzehn':17,'achtzehn':18,'neunzehn':19,'zwanzig':20,'dreißig':30}
  for word,n in numbers.items():text=re.sub(r'\b'+word+r'(?=\s*(?:tag|cm|mm|zentimeter|millimeter))',str(n),text)
- for pattern,key in [(r'leucht|lampe|licht','light'),(r'box|kiste|kasten','box'),(r'ablage|regal','shelf'),(r'ständer|staender|halter','stand')]:
+ delegated=bool(re.search(r'übernimm|uebernimm|entscheide|überrasch|ueberrasch|mach.{0,25}(?:schön|schoen|modern|besser|cool)|verbesser|du planst',text))
+ generic=bool(re.search(r'(?:etwas|was) (?:cooles|schönes|schoenes|leuchtendes)|deine idee',text))
+ if automatic and (delegated or generic):recognized=True
+ alternative=bool(re.search(r'alternative|ander(?:er|en)? vorschlag',text))
+ new_plan=automatic and (not text or alternative or generic or bool(re.search(r'^(?:ich (?:will|möchte)|baue?(?: mir)?|erstell|entwirf)',text)) and (bool(re.search(r'\b(?:ein|eine|einen|etwas|was)\b',text)) or not bool(re.search(r'\b(?:es|das|entwurf|modell)\b',text))))
+ for pattern,key in [(r'leucht|lampe|licht','light'),(r'box|kiste|kasten','box'),(r'ablage|regal','shelf'),(r'ständer|staender|halter|handy|tablet','stand')]:
   if re.search(pattern,text):s['template']=key;recognized=True;break
- if re.search(r'^(?:ich (?:will|möchte)|baue?(?: mir)?|erstell)',text) and not re.search(r'leucht|lampe|licht|box|kiste|kasten|ablage|regal|ständer|staender|halter',text) and not re.search(r'\b(?:es|das|entwurf|modell)\b',text):raise ValueError('Für diese neue Bauidee gibt es noch keine passende Standardkonstruktion. Bitte Leuchtobjekt, Box, Tischablage oder Ständer wählen; es wurde nichts ersetzt.')
+ if new_plan:
+  recommended={'light':(280,180,70),'box':(300,160,200),'shelf':(360,150,220),'stand':(150,160,115)}[s['template']]
+  if alternative:recommended={'light':(220,240,75),'box':(240,150,240),'shelf':(420,125,210),'stand':(180,140,130)}[s['template']]
+  s.update(zip(['width','height','depth'],recommended));s['material']='metal'if re.search(r'robust|industrial',text)else'wood';s['thickness']=2 if s['material']=='metal'else 12
+  if re.search(r'einfach|schnell|anfänger|anfaenger',text):s['days']=2
+ if re.search(r'^(?:ich (?:will|möchte)|baue?(?: mir)?|erstell)',text) and not re.search(r'leucht|lampe|licht|box|kiste|kasten|ablage|regal|ständer|staender|halter|handy|tablet',text) and not (automatic and generic) and not re.search(r'\b(?:es|das|entwurf|modell)\b',text):raise ValueError('Für diese neue Bauidee gibt es noch keine passende Standardkonstruktion. Bitte Leuchtobjekt, Box, Tischablage oder Ständer wählen; es wurde nichts ersetzt.')
  for pattern,key in [(r'holz|sperrholz','wood'),(r'metall|alu|stahl','metal'),(r'kunststoff|acryl|plastik','plastic')]:
   if re.search(pattern,text):
    if s['material']!=key:s['thickness']={'wood':12,'metal':2,'plastic':5}[key]
@@ -36,7 +48,13 @@ def design(body):
   for k in ['width','height','depth']:s[k]=round(s[k]*factor)
   recognized=True
  if text and not recognized:raise ValueError('Diesen Bauwunsch kann die Werkstatt noch nicht sicher in Bauteile übersetzen. Wähle Leuchtobjekt, Box, Tischablage oder Ständer und gib Maße/Material an. Zum Beispiel: „Aus Holz, 30 cm breit, in 4 Tagen“.')
- return blueprint(validate(s))
+ result=blueprint(validate(s))
+ result['automatic']=automatic
+ reason={'wood':'Holz/Sperrholz für eine warme Oberfläche und gut erhältliche Zuschnitte.','metal':'Metallblech für den gewünschten technischen Look; fertige, entgratete Zuschnitte einplanen.','plastic':'Kunststoffplatte für eine leichte, abwischbare Oberfläche.'}[s['material']]
+ result['decisions']=[reason,'Außenmaße '+str(s['width'])+' × '+str(s['height'])+' × '+str(s['depth'])+' mm; direkt am Modell und in der Teileliste übernommen.','Materialstärke '+str(s['thickness'])+' mm. Verbindungsmittel werden vor dem Bauen auf diese Stärke abgestimmt.']
+ if s['template']=='light':result['decisions'].append('Diffusor und fertiges 5-V-LED-Modul werden automatisch ergänzt; du musst sie nicht einzeln anordnen.')
+ if automatic:result['reply']='Sir, ich habe dir diesen '+NAMES[s['template']]+' vorgeschlagen und Material, Maße und Teile zusammengestellt. '+reason+' Du kannst direkt sagen, was ich ändern soll.'
+ return result
 def blueprint(s):
  w,h,d,t=[s[k]for k in ['width','height','depth','thickness']];parts=[]
  def part(name,size,pos,material=None):parts.append({'id':str(len(parts)+1),'name':name,'size':size,'position':pos,'material':material or s['material']})

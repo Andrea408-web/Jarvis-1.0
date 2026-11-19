@@ -291,3 +291,16 @@ Unter **Mit Jarvis sprechen** optional die Browser-Spracherkennung erlauben. Die
 Einkaufslinks sind Suchanfragen, keine Bestands- oder Preiszusagen. Verbindungsmittel, Toleranzen und bei Leuchten der Kabelweg müssen vor dem Bau festgelegt werden; die Anleitung setzt fertige Zuschnitte und fertige 5-V-/Batterie-LED-Module voraus. Die Entwürfe haben keine geprüfte Tragfähigkeit. Ein Zeitfenster ist ein Planungswunsch, keine zugesagte Bauzeit.
 
 **Entwurf auf diesem Gerät sichern** speichert ausdrücklich im Browser; der gesicherte Stand kann nach „Offline bereit“ auch ohne Mac als 3D-Modell samt Anleitung geöffnet werden. Neue Entwürfe und Änderungen brauchen derzeit den verbundenen Mac. **Bauplan als Text herunterladen** sichert Maße, Teile und Anleitung zusätzlich als Datei.
+
+
+### Jarvis plant mit · schwebendes Gesicht
+
+Im Baustudio ist **„Jarvis plant für mich“** beim Start eingeschaltet. Ein Ziel wie „Ich will eine moderne Lampe bauen“ reicht für einen Vorschlag mit Material, Maßen, Diffusor und LED-Modul. Rechts erklärt Jarvis seine Entscheidungen. Ausdrücklich genannte Materialien und Maße im Auftrag haben Vorrang. **„Alternative entwerfen“** erstellt innerhalb der verfügbaren Bauformen einen anderen Maßvorschlag. Nicht unterstützte Gegenstände werden weiter klar abgelehnt.
+
+Die manuellen Maße liegen unter **„Maße und Material selbst vorgeben“**. Eine Änderung dort schaltet den Automatikmodus aus, damit deine Eingaben erhalten bleiben. „Übernimm“ bzw. die Alternative-Schaltfläche schalten ihn wieder ein. Die weichere Kantendarstellung, Lichtmaterialien, Holzoberflächen, Metallreflexionen und Bodenschatten dienen der Vorschau. Verbindungsmittel und Toleranzen sind weiterhin vor der Fertigung festzulegen.
+
+Das kleine Jarvis-Gesicht schwebt **innerhalb der Browserseite**. Am Griff verschieben, über den Bewegungsschalter stillsetzen oder ausblenden. Das Mikrofonsymbol öffnet dieselbe Sprachsteuerung wie die Werkstatt; die Zustimmung zur Browser-Spracherkennung ist weiterhin erforderlich. Der Mund animiert erst während tatsächlich abgespielter Thorsten-Audiodaten, nicht schon beim Laden. Das Stoppsymbol am Gesicht beendet nur die Sprachausgabe; ein Entwurf kann weiterlaufen. Ausblenden, Schließen der Werkstatt oder Verlassen der sichtbaren Seite beendet das Zuhören. Das Gesicht steuert weder den Browser-Tabbalken noch andere Programme.
+
+Die kompakte Hauptansicht, das 3D-Gehirn und alle vorherigen Änderungen sind im selben Update enthalten. Kein neues KI- oder Stimmenmodell wird geladen.
+
+Während eines laufenden Schritts kann der nächste Wunsch schon gesprochen werden. Der neueste Wunsch wird vorgemerkt und danach angewendet; ein älterer noch wartender Wunsch wird dadurch ersetzt. „Stopp“ verwirft auch den wartenden Wunsch.

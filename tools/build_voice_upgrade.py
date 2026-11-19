@@ -18,7 +18,7 @@ with zipfile.ZipFile(buffer,'w',zipfile.ZIP_DEFLATED,compresslevel=9) as archive
         data=(ROOT/name).read_bytes()
         previous=subprocess.run(['git','show',BASE+':'+name],cwd=ROOT,capture_output=True)
         accepted=[]
-        for ref in ['bd17dfd','9bf0a4e','539bd30','4490b8e','9b30d32','ef0726f','2c234cb','43d6239','edbc0a0','a4f53df','6d16c7b','4129eb0','be6f74a','11c02f4','28d00a8','fd37579','c9eb5d3','108dc26','cf70d99','b57c755','fbe15c9','f683031','eb91d58','61babf6','a3b2dd8','24d8f0d','3dd8c69','04dce3c','38a72d6','504a8bb','f9111cb','64ced83','df58d55','c8a532e','18c327a','a17e5a3','6bcc307','507298a','ccef6c5','72e1781','3b9b5eb','9934a38','adbe59a','3030d57','9328319','c49b981','fa5c9f1','cfd2049','487db2a','6571cee','56f4107','7c8713f','7d5d94d','b69216f','b0b6239','0a1957c','d508f52']:
+        for ref in ['bd17dfd','9bf0a4e','539bd30','4490b8e','9b30d32','ef0726f','2c234cb','43d6239','edbc0a0','a4f53df','6d16c7b','4129eb0','be6f74a','11c02f4','28d00a8','fd37579','c9eb5d3','108dc26','cf70d99','b57c755','fbe15c9','f683031','eb91d58','61babf6','a3b2dd8','24d8f0d','3dd8c69','04dce3c','38a72d6','504a8bb','f9111cb','64ced83','df58d55','c8a532e','18c327a','a17e5a3','6bcc307','507298a','ccef6c5','72e1781','3b9b5eb','9934a38','adbe59a','3030d57','9328319','c49b981','fa5c9f1','cfd2049','487db2a','6571cee','56f4107','7c8713f','7d5d94d','b69216f','b0b6239','0a1957c','d508f52','d3a5f6f']:
             old=subprocess.run(['git','show',ref+':'+name],cwd=ROOT,capture_output=True)
             if old.returncode==0:
                 checksum=hashlib.sha256(old.stdout).hexdigest()

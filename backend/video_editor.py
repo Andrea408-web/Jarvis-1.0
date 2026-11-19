@@ -47,10 +47,14 @@ class VideoEditor:
   except Exception:
    path.unlink(missing_ok=True);raise
  def assist(self,app,body,plan_only=False):
-  if set(body)-{'assets','instruction','formats','budget_minutes','short_seconds','style','captions','remove_silence','caption_spread'}:raise ValueError('Unbekannte Schnittfelder.')
+  if set(body)-{'assets','instruction','formats','budget_minutes','short_seconds','style','captions','remove_silence','caption_spread','auto_edit','hook'}:raise ValueError('Unbekannte Schnittfelder.')
   ids=body.get('assets');instruction=body.get('instruction','')
   if not isinstance(ids,list) or not 1<=len(ids)<=8 or any(not isinstance(i,str) or i not in self.assets for i in ids) or len(set(ids))!=len(ids):raise ValueError('Zuerst 1 bis 8 Clips auswählen.')
   if not isinstance(instruction,str) or len(instruction)>1500:raise ValueError('Schnittwunsch bis 1500 Zeichen eingeben.')
+  auto=body.get('auto_edit','');hook=body.get('hook','')
+  if not isinstance(auto,str) or auto not in {'','dynamic','full'} or not isinstance(hook,str) or len(hook)>120:raise ValueError('Ungültiger Automatik-Stil oder zu langer Hook.')
+  if auto and any(type(body.get(k,False))is not bool for k in ['caption_spread','remove_silence']):raise ValueError('Ungültiger Automatik-Schalter.')
+  if auto:return self.automatic(body,ids,auto,hook,plan_only)
   from .video_style import validate
   style,captions=validate(body.get('style'),body.get('captions'))
   if re.search(r'untertitel|captions?',instruction,re.I) and not captions:raise ValueError('Bitte zuerst Untertiteltext oder eine SRT-Datei eintragen. Die kleine Text-KI kann die Tonspur nicht automatisch transkribieren.')
@@ -79,6 +83,34 @@ class VideoEditor:
    cuts=[{'asset':ids[c['clip']-1],'start':c['start'],'end':c['end']} for c in plan['cuts']];silence=plan['remove_silence'];message='Schnittplan der lokalen KI geprüft und zur Ausführung gestartet.'
   job=self.start({'cuts':cuts,'formats':body.get('formats',['youtube','shorts']),'budget_minutes':body.get('budget_minutes',10),'short_seconds':body.get('short_seconds',60),'remove_silence':silence,'style':style,'captions':captions,'caption_spread':body.get('caption_spread',False)},plan_only=plan_only)
   return {'job':job,'message':message}
+ def automatic(self,body,ids,mode,hook,plan_only=False):
+  """A real, bounded editing recipe; no claim of semantic highlight recognition."""
+  from .video_style import validate
+  style,captions=validate(body.get('style'),body.get('captions'))
+  cuts=[]
+  for ident in ids:
+   duration=self.assets[ident]['duration']
+   if mode=='full' or duration<=9:cuts.append({'asset':ident,'start':0,'end':duration});continue
+   # Evenly sample beginning/middle/end; preserve order and never invent scene labels.
+   length=min(4,duration/3)
+   for start in [0,(duration-length)/2,duration-length]:cuts.append({'asset':ident,'start':round(start,3),'end':min(duration,round(start+length,3))})
+  if mode=='dynamic':style={**style,'look':'cinematic','transition':'fade','zoom':True,'vignette':True,'subtitle_style':'pop'}
+  duration=sum(c['end']-c['start']for c in cuts)/style['speed']
+  if body.get('caption_spread',False):
+   from .video_style import spread
+   captions=spread(captions,duration)
+  if hook.strip():
+   end=min(2.8,duration);combined=[]
+   if not captions or captions[0]['start']>0:combined.append({'start':0,'end':min(end,captions[0]['start'])if captions else end,'text':hook.strip()})
+   for cue in captions:
+    if cue['start']>=end:combined.append(cue);continue
+    title=hook.strip()+'\n'+cue['text']
+    if len(title)>240:raise ValueError('Hook und erster Untertitel sind zusammen zu lang. Bitte den Hook kürzen.')
+    combined.append({**cue,'end':min(end,cue['end']),'text':title})
+    if cue['end']>end:combined.append({**cue,'start':end})
+   captions=combined
+  job=self.start({'cuts':cuts,'formats':body.get('formats',['youtube','shorts']),'budget_minutes':body.get('budget_minutes',10),'short_seconds':body.get('short_seconds',60),'remove_silence':bool(body.get('remove_silence',False)) and self.tools()['silence'],'style':style,'captions':captions,'caption_spread':False},plan_only=plan_only)
+  return {'job':job,'message':('Dynamische Kurzfassung: Anfang, Mitte und Ende der Clips, Blenden, Zoom und Kino-Look.' if mode=='dynamic' else 'Vollständiger Schnitt: alle Clips in Reihenfolge.')+(' Hook als Texteinblendung gesetzt.' if hook.strip()else '')+(' Vorhandene Untertitel werden eingebrannt.' if captions else ' Keine Wort-Untertitel: Es liegt kein Transkript vor.')+' Schnittbereiche und Fortschritt sind sichtbar. Keine automatische inhaltliche Szenenerkennung.'}
  def story(self,app,body):
   prompt=body.get('prompt')
   if set(body)!={'prompt'} or not isinstance(prompt,str) or not 1<=len(prompt.strip())<=1500:raise ValueError('Animationswunsch bis 1500 Zeichen angeben.')

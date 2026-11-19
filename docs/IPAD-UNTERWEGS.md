@@ -270,7 +270,7 @@ Geprüft wurden echte Browser-Kaltstarts nach vollständigem Abschalten des Test
 
 ### Über mich · dein persönliches Profil
 
-In der grünen Schnellzugriffsleiste auf **„Über mich“** tippen, oder „Was weißt du über mich?“ schreiben. In der Mitte steht ein animiertes grünes Gehirn; die Texte daneben sind Schaltflächen. Name, Anrede, Humor, Antwortstil, Interessen und Dinge, die Jarvis vermeiden soll, lassen sich einzeln ansehen und ändern. Die Darstellung ist eine Animation, kein Gehirnscan.
+In der grünen Schnellzugriffsleiste auf **„Über mich“** tippen, oder „Was weißt du über mich?“ schreiben. In der Mitte steht eine anatomische 3D-Gehirnoberfläche (fsaverage5-Standardmodell) mit grüner Beleuchtung und sichtbaren Windungen. Mit einem Finger oder der Maus lässt sie sich drehen; die Texte daneben sind Schaltflächen. Name, Anrede, Humor, Antwortstil, Interessen und Dinge, die Jarvis vermeiden soll, lassen sich einzeln ansehen und ändern. Das Standardmodell ist kein Scan von dir. Bei reduzierten Animationen bleibt die automatische Bewegung aus; manuelles Drehen funktioniert weiterhin. Für die räumliche Ansicht wird WebGL benötigt.
 
 Einmal freiwillig von dir erzählen und **„Meine Angaben speichern“** wählen. Es werden nur deine eigenen Angaben und der bereits eingestellte Name/die Anrede angezeigt, keine heimlich abgeleiteten Eigenschaften. Die vorhandene lokale KI erhält passende Profilangaben als Gesprächskontext; das ist kein Training und macht das kleine Modell nicht leistungsfähiger. Diese zusätzliche Profilweitergabe ist bei Internet-KI-Anbietern deaktiviert.
 

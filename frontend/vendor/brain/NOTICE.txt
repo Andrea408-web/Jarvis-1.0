@@ -1,0 +1,11 @@
+Anatomical cortical template: FreeSurfer fsaverage5, distributed by Nilearn.
+Source: https://github.com/nilearn/nilearn/tree/main/nilearn/datasets/data/fsaverage5
+Files: pial_left.gii.gz and pial_right.gii.gz.
+Nilearn redistribution license: LICENSE.txt (BSD 3-Clause).
+Reference: Fischl et al. (1999), High-resolution intersubject averaging and a coordinate system for the cortical surface, Human Brain Mapping 8:272-284.
+Jarvis conversion: only surface coordinates and triangle indices; centered, axis-adjusted and quantized to signed 16-bit positions. No source metadata retained.
+This is a standard template for decorative visualization, not a scan of the user and not medical software.
+
+Source SHA-256:
+pial_left.gii.gz: 1e76fe43ac194c15fd272643f7ae7995621e2a496b3102b2d6175f0f8e6d7fc8
+pial_right.gii.gz: fdfae008bc10acf7cba82737ea5db9a7298948c41884a2d3330a785783a60a91

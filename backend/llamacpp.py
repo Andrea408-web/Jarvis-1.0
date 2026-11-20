@@ -24,9 +24,21 @@ def request_local(path, payload=None):
             raise ValueError()
         return result
     except urllib.error.HTTPError as error:
-        error.close()
+        status=error.code
+        try:
+            body=json.loads(error.read(8192))
+            detail=body.get('error',{})if isinstance(body,dict)else{}
+            detail=detail.get('message','')if isinstance(detail,dict)else str(detail)
+        except (ValueError,UnicodeError,OSError):detail=''
+        finally:error.close()
+        if status==400 and any(word in detail.lower()for word in ['context','n_ctx','too many tokens']):
+            raise ProviderError('Der Bauwunsch und der bisherige Entwurf überschreiten den Kontext der kleinen KI. Starte einen neuen Entwurf mit kürzerer Beschreibung.',422)from None
+        if status==400 and any(word in detail.lower()for word in ['schema','grammar','response_format']):
+            raise ProviderError('Der lokale llama.cpp-Server konnte die strukturierte Entwurfsausgabe nicht starten. Bitte zuerst Jarvis vollständig neu starten. Bleibt der Fehler, benötigt das Startprogramm eine Aktualisierung; das KI-Modell muss nicht neu geladen werden.',422)from None
         raise ProviderError('Die kleine lokale KI ist noch nicht bereit oder konnte die Anfrage nicht verarbeiten. Bitte das llama-server-Terminal prüfen.', 503) from None
-    except (urllib.error.URLError, TimeoutError, OSError):
+    except TimeoutError:
+        raise ProviderError('Die lokale KI hat innerhalb von 120 Sekunden nicht geantwortet. Sie kann noch rechnen. Bitte kurz warten und einen einfacheren Entwurf versuchen.',504)from None
+    except (urllib.error.URLError, OSError):
         raise ProviderError('Die kleine lokale KI läuft noch nicht. Bitte zuerst „1-JARVIS-einrichten.command“ ausführen, danach „2-JARVIS-starten.command“ verwenden. Kein Ollama und kein API-Schlüssel nötig.', 503) from None
     except (ValueError, UnicodeError):
         raise ProviderError('Die kleine lokale KI hat keine gültige Antwort geliefert.', 502) from None

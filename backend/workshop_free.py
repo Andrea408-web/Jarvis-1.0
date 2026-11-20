@@ -3,7 +3,10 @@ import copy,json,math,re
 SHAPES={'box','cylinder','sphere','torus','tube','shade','extrude','lathe'}
 MATERIALS={'wood','metal','plastic','diffuser','light'}
 def assembly(raw,stored=False):
- if not isinstance(raw,dict)or not {'title','parts','steps','features'}<=set(raw)or set(raw)-{'title','parts','steps','features','explanation'}:raise ValueError('Die lokale KI hat keinen vollständigen 3D-Entwurf geliefert. Der bisherige Entwurf bleibt erhalten.')
+ if not isinstance(raw,dict):raise ValueError('Der Entwurf ist kein JSON-Objekt.')
+ missing={'title','parts','steps','features'}-set(raw);extra=set(raw)-{'title','parts','steps','features','explanation'}
+ if missing:raise ValueError('Pflichtfelder fehlen: '+', '.join(sorted(missing))+'.')
+ if extra:raise ValueError('Unbekannte Entwurfsfelder: '+', '.join(sorted(extra))+'.')
  for key,cap in [('title',90)]:
   if not isinstance(raw[key],str)or not 1<=len(raw[key].strip())<=cap:raise ValueError('Ungültiger Entwurfstitel.')
  if not isinstance(raw['parts'],list)or not 1<=len(raw['parts'])<=16:raise ValueError('Der Entwurf benötigt 1 bis 16 prüfbare Bauteile.')
@@ -62,32 +65,44 @@ def previous_assembly(previous):
  if 'explanation'in previous:raw['explanation']=previous['explanation']
  return assembly(raw,stored=True)
 
-def generate(app,body):
+def generate(app,body,progress=None,cancelled=None):
  if not body.get('request','').strip():raise ValueError('Beschreibe zuerst deinen Bauwunsch. Es wird kein Musterobjekt gebaut.')
  if app is None:raise ValueError('Für einen freien 3D-Entwurf muss die vorhandene lokale KI verbunden sein.')
  settings=app.store.settings();provider=settings['ai_provider']
  if provider not in {'llamacpp','ollama'}:raise ValueError('Für einen freien 3D-Entwurf bitte die vorhandene lokale KI am Mac auswählen. Es wurde keine Box als Ersatz erzeugt.')
  from .providers import ProviderError
  from .workshop_feedback import wants_new_design,lighting_request,geometry_signature
+ from .workshop_schema import design_schema
+ from .workshop_jobs import checkpoint
  previous=body.get('previous');context='';checked=None
  if previous is not None and not isinstance(previous,dict):raise ValueError('Ungültiger bisheriger Entwurf.')
  if previous:
-  checked=previous_assembly(previous);context=' Ursprünglicher Bauwunsch: '+str(previous.get('brief',''))[:700]+' Aktuelle Bauteile: '+json.dumps([{'name':p['name'],'shape':p['shape'],'size':p['size'],'position':p['position'],'material':p['material']}for p in checked['parts'][:8]],ensure_ascii=False)
+  checked=previous_assembly(previous);context=' Ursprünglicher Bauwunsch: '+str(previous.get('brief',''))[:500]+' Aktuelle Bauteile: '+json.dumps([{'name':p['name'][:40],'shape':p['shape'],'size':p['size'],'position':p['position'],'material':p['material']}for p in checked['parts'][:6]],ensure_ascii=False,separators=(',',':'))
  redesign=bool(checked and wants_new_design(body['request']))
  led=lighting_request(body['request'])
  if led is None and checked and any(p['material']=='light'for p in checked['parts']):led=True
  rules=(' Dies ist ausdrücklich ein neuer Entwurf: ändere Aufbau, Kontur oder Bauteilanordnung erkennbar. Nur Titel, Farbe oder eine Gesamtskalierung zu ändern reicht nicht. Behalte ausdrücklich gewünschte Funktionen, Material und Maße, sofern der aktuelle Wunsch sie nicht ändert.'if redesign else' Bei einer Änderung behalte ungenannte Merkmale des aktuellen Entwurfs bei. Bei einer neuen Objektbeschreibung hat der aktuelle Wunsch Vorrang.')
  if led:rules+=' LEDs sind gewünscht: modelliere echte LED-Bauteile an ihren vorgesehenen Positionen mit material light. Erwähne LEDs nicht nur im Text.'
  elif led is False:rules+=' Der aktuelle Wunsch enthält keine Beleuchtung; keine LED-Bauteile ergänzen.'
- prompt=('Du bist JARVIS und entwickelst einen kleinen deutschen 3D-Bauprototyp. Antworte nur mit JSON: {"title":"Name","parts":[{"name":"Bauteil","shape":"cylinder","size":[200,15,120],"position":[0,7.5,0],"rotation":[0,0,0],"material":"wood"}],"steps":["Vorschlag"],"features":["Nutzen"],"explanation":"Erkläre kurz und verständlich, wie der Entwurf den Bauwunsch aufgreift und warum die Bauteile so angeordnet sind."}. Das Beispiel erklärt nur die Felder, nicht den gewünschten Entwurf. '
- 'Keine fertige Bauvorlage. Bei notwendigen fehlenden Angaben stattdessen JSON {"questions":["konkrete Rückfrage"]}. Eigene Konturen: shape extrude mit outline:[[x,y],...], optional smooth:true, holes:[Konturen] für echte Ausschnitte; shape lathe mit profile:[[Radius,Y],...] für Drehkörper. Konturkoordinaten -0.5 bis 0.5; Profilradius 0 bis 0.5, Y von -0.5 bis 0.5 von unten nach oben. 1 bis 12 Teile; auch box,cylinder,sphere,torus,tube,shade wenn passend. Außenmaße size in mm, Y Höhe/Z Tiefe, position Mittelpunkt, rotation Euler-XYZ-Grad. torus in XY/Stärke Z, cylinder/tube/shade entlang Y; tube benötigt wall. '
- 'material nur wood,metal,plastic,diffuser,light. Keine Funktionsgarantie, Tragfähigkeit, bestandenen Tests oder Netzspannungsverdrahtung behaupten. Nur ungeprüfte Prototypen. Keine ungefragte Farbwahl, keine Programme oder Befehle. Erkläre wie in einem normalen Gespräch, ohne leere Floskeln. Startwerte: '+json.dumps({k:v for k,v in body['spec'].items()if k not in {'template','variant'}})+(' Manuell eingestellte Maße sind verbindlich.'if body.get('automatic')is False else' Nur ausdrücklich genannte Vorgaben im Auftrag sind zwingend.')+context+rules)
+ prompt=('Du bist JARVIS. Entwirf genau das Objekt des aktuellen Bauwunschs als ungeprüften 3D-Bauprototyp, keine feste Vorlage. '
+ 'Antworte mit einem vollständigen JSON-Objekt: title, parts, steps, features; optional explanation. Fehlen notwendige Angaben, stattdessen nur questions mit konkreten Rückfragen. '
+ '1 bis 6 sinnvolle Bauteile, wenige kurze Schritte. Jedes Bauteil: name, shape, size [Breite,Höhe,Tiefe] in mm, position [X,Y,Z] des Mittelpunkts, material. Y zeigt nach oben. '
+ 'shape: box, cylinder, sphere, torus, tube, shade, extrude, lathe. material: wood,metal,plastic,diffuser,light. '
+ 'Eigene Kontur: extrude mit outline [[x,y],...] und optional holes [Konturen], smooth true für Rundungen. Konturkoordinaten -0.5 bis 0.5. '
+ 'Drehkörper: lathe mit profile [[Radius,Y],...] von unten nach oben, Radius 0 bis 0.5, Y -0.5 bis 0.5. tube braucht wall in mm. '
+ 'Optional rotation [X,Y,Z] in Grad. cylinder/tube/shade entlang Y; torus in XY, Stärke Z kleiner als halber Durchmesser. '
+ 'Kurze verständliche Erklärung: Funktion der konkreten Bauteile, keine behaupteten Tests, Tragfähigkeiten oder sichere Netzspannungsverdrahtung. '
+ 'Maß-/Materialvorgaben: '+json.dumps({k:v for k,v in body['spec'].items()if k not in {'template','variant'}},separators=(',',':'))+
+ (' Diese Maße sind verbindlich.'if body.get('automatic')is False else' Diese Maße sind Startwerte; ausdrücklich genannte Wünsche sind verbindlich.')+context+rules)
+ checkpoint(progress,cancelled,'waiting','Prüfe die lokale KI und deinen Bauwunsch.')
  if not app.chat_lock.acquire(blocking=False):raise ProviderError('Die lokale KI arbeitet gerade. Bitte den aktuellen Auftrag abwarten.',409)
  try:
   retry=''
   for attempt in range(2):
+   checkpoint(progress,cancelled,'generating'if attempt==0 else'repairing','Die lokale KI entwickelt die Bauteile.'if attempt==0 else'Ich korrigiere die Modellantwort und prüfe den Entwurf erneut.')
    try:
-    reply=app.code_room._generate({'model':'llamacpp'if provider=='llamacpp'else'ollama:'+settings['local_model']},[{'role':'system','content':prompt+retry},{'role':'user','content':body['request']}],2048 if attempt==0 else 2560,structured=True)
+    reply=app.code_room._generate({'model':'llamacpp'if provider=='llamacpp'else'ollama:'+settings['local_model']},[{'role':'system','content':prompt+retry},{'role':'user','content':body['request']}],2048,structured=design_schema(6 if attempt==0 else 4))
+    checkpoint(progress,cancelled,'validating','Ich prüfe Bauteile, Konturen und deine Anforderungen.')
     # Some local models wrap otherwise valid JSON in a Markdown code fence.
     reply=re.sub(r'^```(?:json)?\s*|\s*```$','',reply.strip(),flags=re.I)
     raw=json.loads(reply)
@@ -98,9 +113,9 @@ def generate(app,body):
     proposed=assembly(raw)
    except (ValueError,TypeError)as error:
     if attempt==0:
-     retry=' Korrektur: Deine vorige Ausgabe war unvollständig oder ungültig. Liefere ein vollständiges JSON-Objekt mit title, parts, steps und features. Höchstens 6 sorgfältig ausgearbeitete Bauteile, kurze Erklärung. Fehler: '+str(error)[:220]
+     retry=' Korrektur: Deine vorige Ausgabe war unvollständig oder ungültig. Liefere ein vollständiges JSON-Objekt mit title, parts, steps und features. Höchstens 4 sorgfältig ausgearbeitete Bauteile, kurze Erklärung. Fehler: '+str(error)[:220]
      continue
-    raise ValueError('Die kleine lokale KI hat auch nach einem Korrekturversuch keine gültigen 3D-Bauteile geliefert. Der bisherige Entwurf bleibt erhalten. Bitte beschreibe den Bauwunsch kürzer oder mit weniger Details.')from None
+    raise ValueError('Die kleine lokale KI hat keine gültigen 3D-Bauteile geliefert. Der bisherige Entwurf bleibt erhalten. Ursache: '+('Die Modellantwort war kein vollständiges JSON-Objekt.'if isinstance(error,json.JSONDecodeError)else str(error)[:240]))from None
    reason=''
    if redesign and geometry_signature(proposed['parts'])==geometry_signature(checked['parts']):reason='Die Geometrie wiederholt den bisherigen Entwurf. Liefere einen erkennbar anderen Aufbau oder andere Konturen.'
    if led is False and any(p['material']=='light'for p in proposed['parts']):reason+=' Der aktuelle Wunsch verlangt einen Entwurf ohne LED-Bauteile.'
@@ -121,20 +136,20 @@ def generate(app,body):
    return data
  finally:app.chat_lock.release()
 
-def revise(app,body):
+def revise(app,body,progress=None,cancelled=None):
  from .workshop import validate,requested_finish
  from .workshop_feedback import wants_new_design,strip_preserve_phrase,lighting_request
  previous=body.get('previous')
  if not isinstance(previous,dict):raise ValueError('Der freie Entwurf fehlt. Bitte einen neuen Bauwunsch beschreiben.')
  checked=previous_assembly(previous)
  old=validate(previous.get('spec'));new=validate(body['spec']);text=body['request'].lower()
- if wants_new_design(text)or lighting_request(text)is not None:return generate(app,body)
+ if wants_new_design(text)or lighting_request(text)is not None:return generate(app,body,progress,cancelled)
  text=strip_preserve_phrase(text)
  # Structural design changes go to the local planner; only literal transforms/finish edits are direct.
- if re.search(r'^(?:ich (?:will|möchte)|baue?|entwirf|erstell|plane|überarbeit)|\bneu(?:e[rsnm]?)?\b|alternativ|kontur|ausschnitt|öffnung|bohrung|rund|geschwungen',text):return generate(app,body)
+ if re.search(r'^(?:ich (?:will|möchte)|baue?|entwirf|erstell|plane|überarbeit)|\bneu(?:e[rsnm]?)?\b|alternativ|kontur|ausschnitt|öffnung|bohrung|rund|geschwungen',text):return generate(app,body,progress,cancelled)
  recognized=not text.strip()or new!=old
  materials=[key for pattern,key in [(r'holz|sperrholz','wood'),(r'metall|alu|stahl','metal'),(r'kunststoff|acryl|plastik','plastic')]if re.search(pattern,text)]
- if len(materials)>1:return generate(app,body)
+ if len(materials)>1:return generate(app,body,progress,cancelled)
  if not materials and new['material']!=old['material']:materials=[new['material']]
  if materials:new['material']=materials[0];recognized=True
  finish=requested_finish(text,new.get('finish','natur'))
@@ -149,9 +164,9 @@ def revise(app,body):
   recognized=True
  m=re.search(r'(\d+)\s*tag',text)
  if m:new['days']=int(m[1]);recognized=True
- if not recognized:return generate(app,body)
+ if not recognized:return generate(app,body,progress,cancelled)
  new=validate(new);scale=[new[k]/old[k]for k in ['width','height','depth']]
- if max(scale)-min(scale)>1e-7 and any(any(p['rotation'])for p in checked['parts']):return generate(app,body)
+ if max(scale)-min(scale)>1e-7 and any(any(p['rotation'])for p in checked['parts']):return generate(app,body,progress,cancelled)
  for part in checked['parts']:
   part['size']=[part['size'][i]*scale[i]for i in range(3)];part['position']=[part['position'][i]*scale[i]for i in range(3)]
   if part['material']in {'wood','metal','plastic'}and materials:part['material']=materials[0]

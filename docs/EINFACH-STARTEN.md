@@ -73,3 +73,9 @@ TikTok war aus dieser Cloud nicht erreichbar. Eine Analyse sämtlicher Videos vo
 Das [Stimmen-Nachrüst-Paket](NATUERLICHE-STIMME.md) ergänzt die natürliche Offline-Stimme. Das separate [Astra-Update](ASTRA.md) lädt keine neue Stimme und kein Textmodell. Der frühere Mini-Hub ist entfernt; Weltansicht und Astra ersetzen ihn.
 
 Im 3D-Baustudio kannst du „Das gefällt mir nicht, mach einen neuen Entwurf“ sagen. Jarvis versucht dann einen anderen Aufbau und übernimmt den bisherigen Bauwunsch. „Nur kleiner“ verändert dagegen die Größe. Bleibt die lokale KI trotz Korrektur beim gleichen Modell, erscheint eine Meldung und dein bisheriger Entwurf bleibt sichtbar. Für Lichtmodule sage ausdrücklich „mit LEDs“. LED-Vorschau und LED-Innenansicht zeigen deren Platzierung weiß im grauen Modell; beide sind schaltbar. Die Erklärung rechts und Fragen wie „Warum hast du das so aufgebaut?“ helfen beim Besprechen. Die Anleitung ist weiterhin direkt in Jarvis lesbar.
+
+### Wenn das Baustudio meldet, es sei kein Entwurf geliefert worden
+
+Das Update vom 20. November verwendet eine verbindliche Ausgabestruktur für die vorhandene lokale KI. Längere Aufträge haben einen sichtbaren Status; ein Korrekturversuch kann zusätzliche Zeit benötigen. „Stoppen“ verwirft das Ergebnis, auch wenn die lokale Modellberechnung noch ausläuft. Die Vorschau bleibt bei einem Fehler erhalten. Unter „Fehlerdetails – zum Weitergeben“ kannst du die genaue Meldung kopieren. Die Details enthalten keinen Bauwunsch oder Chatverlauf.
+
+Nach dem Aktualisieren muss der laufende Mac-Server neu gestartet werden: im bisherigen Terminal **Strg+C**, dann im bestehenden Jarvis-Ordner **`python3 -m backend --easy-local`**. Danach die Browserseite neu laden. Nur die Seite neu zu laden startet den Python-Server nicht neu. Das Reparaturpaket lädt kein neues Text- oder Sprachmodell.

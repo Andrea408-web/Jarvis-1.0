@@ -97,14 +97,14 @@ class CodeRoom:
         return {'id':key}
     def _generate(self,j,messages,budget,structured=False):
         if j['model']=='llamacpp':
-            result=self.app.llamacpp.endpoint_transport('/v1/chat/completions',{'messages':messages,'stream':False,'max_tokens':budget,'temperature':0.2,**({'response_format':{'type':'json_object'}} if structured else {})})
+            result=self.app.llamacpp.endpoint_transport('/v1/chat/completions',{'messages':messages,'stream':False,'max_tokens':budget,'temperature':0.2,**({'response_format':{'type':'json_schema','json_schema':{'name':'workshop_design','strict':True,'schema':structured}}} if isinstance(structured,dict) else {'response_format':{'type':'json_object'}} if structured else {})})
             try:
                 choice=result['choices'][0]
                 if choice.get('finish_reason')!='stop' or choice['message'].get('tool_calls'):raise ValueError()
                 reply=choice['message']['content']
             except (KeyError,IndexError,TypeError,ValueError):raise ValueError('Die kleine KI hat ihre Ausgabe nicht vollständig abgeschlossen. Bitte den Auftrag verkleinern.') from None
         else:
-            result=self.app.local_ai.transport('/api/chat',{'model':j['model'][7:],'messages':messages,'stream':False,'options':{'num_ctx':4096,'num_predict':budget,'temperature':0.2},'keep_alive':'5m',**({'format':'json'} if structured else {})})
+            result=self.app.local_ai.transport('/api/chat',{'model':j['model'][7:],'messages':messages,'stream':False,'options':{'num_ctx':4096,'num_predict':budget,'temperature':0.2},'keep_alive':'5m',**({'format':structured if isinstance(structured,dict) else 'json'} if structured else {})})
             message=result.get('message',{});reply=message.get('content')
             if result.get('done') is not True or result.get('done_reason')=='length' or message.get('tool_calls'):raise ValueError('Das lokale Modell hat keine fertige Ausgabe geliefert.')
         if not isinstance(reply,str) or not reply.strip() or len(reply)>85000:raise ValueError('Die lokale KI hat keinen gültigen Text geliefert.')

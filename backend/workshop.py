@@ -132,7 +132,7 @@ def decorate(result):
  return result
 
 
-def design(body,app=None):
+def design(body,app=None,progress=None,cancelled=None):
  if not isinstance(body,dict):raise ValueError('Ungültiger Bauwunsch.')
  clean={k:v for k,v in body.items()if k not in {'previous','free_design','regenerate'}}
  if set(body)-{'spec','request','automatic','previous','free_design','regenerate'}:raise ValueError('Unbekannte Werkstattfelder.')
@@ -143,15 +143,15 @@ def design(body,app=None):
  if type(body.get('free_design',False))is not bool:raise ValueError('Ungültiger Entwurfsmodus.')
  if body.get('free_design')and (body['spec'].get('template')!='custom'or not body.get('previous')or body.get('regenerate')):
   from .workshop_free import generate
-  return generate(app,body)
+  return generate(app,body,progress,cancelled)
  if body['spec'].get('template')=='custom':
   from .workshop_free import revise
-  return revise(app,body)
+  return revise(app,body,progress,cancelled)
  try:return _design_recipe(clean)
  except ValueError as error:
   if app is None or not str(error).startswith(('Für diese neue Bauidee','Diesen Bauwunsch')):raise
   from .workshop_free import generate
-  return generate(app,body)
+  return generate(app,body,progress,cancelled)
 
 
 def requested_finish(text,default='natur'):

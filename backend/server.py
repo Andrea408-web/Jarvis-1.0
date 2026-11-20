@@ -85,6 +85,8 @@ class Application:
         self.web = WebAssistant(self)
         from .code_room import CodeRoom
         self.code_room = CodeRoom(self)
+        from .workshop_jobs import WorkshopJobs
+        self.workshop = WorkshopJobs(self)
         from .studio_bridge import StudioBridge
         self.studio_bridge = StudioBridge(self.store.data_dir)
 
@@ -412,7 +414,7 @@ class Handler(BaseHTTPRequestHandler):
             length = int(self.headers.get('Content-Length', '0'))
         except ValueError:
             raise ValueError('Ungültige Nachrichtenlänge.') from None
-        maximum = 6*1024*1024 if urlsplit(self.path).path=='/api/communication/prepare' else 512000 if urlsplit(self.path).path in {'/api/aeris/pose','/api/video-call','/api/video-editor/start','/api/video-editor/assist','/api/video-editor/plan','/api/video-editor/assist-plan','/api/video-editor/story'} else 6 * 1024 * 1024 if urlsplit(self.path).path in {'/api/image','/api/agents','/api/agents/dispatch','/api/aeris/pose'} else MAX_BODY
+        maximum = 6*1024*1024 if urlsplit(self.path).path=='/api/communication/prepare' else 512000 if urlsplit(self.path).path in {'/api/aeris/pose','/api/video-call','/api/video-editor/start','/api/video-editor/assist','/api/video-editor/plan','/api/video-editor/assist-plan','/api/video-editor/story','/api/workshop/design','/api/workshop/jobs'} else 6 * 1024 * 1024 if urlsplit(self.path).path in {'/api/image','/api/agents','/api/agents/dispatch','/api/aeris/pose'} else MAX_BODY
         if length < 1 or length > maximum:
             raise ValueError('Die Anfrage ist leer oder überschreitet das Größenlimit.')
         if self.headers.get_content_type() != 'application/json':
@@ -693,6 +695,11 @@ class Handler(BaseHTTPRequestHandler):
                 if match[2]=='download':
                     data=app.code_room.archive(match[1],owner);self._headers(200,'application/zip',len(data));return self.wfile.write(data)
                 return self._json(app.code_room.action(match[1],owner,match[2]))
+            if method=='POST' and path in {'/api/workshop/jobs','/api/workshop/jobs/status','/api/workshop/jobs/cancel'}:
+                owner=self.client_address[0]+'|'+self.headers.get('Cookie','')
+                if path=='/api/workshop/jobs':return self._json(app.workshop.submit(body,owner),202)
+                if set(body)!={'id'}:raise ValueError('Bitte nur die Werkstatt-Auftragskennung angeben.')
+                return self._json(app.workshop.cancel(body['id'],owner)if path.endswith('/cancel')else app.workshop.status(body['id'],owner))
             if method=='POST' and path=='/api/workshop/design':
                 from .workshop import design
                 return self._json(design(body,app=app))
@@ -958,6 +965,7 @@ def main(argv=None):
             if app.desktop.panel and app.desktop.panel.poll() is None:app.desktop.panel.terminate()
             app.studio_bridge.stop()
             app.office.stop()
+            app.workshop.stop()
             app.mobile.stop(revoke=False)
             app.quest_window.stop()
             app.companion_window.close()

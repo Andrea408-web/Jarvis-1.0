@@ -99,3 +99,21 @@ def camera_error(parts,required):
     if required and not any(re.search(r'kamera|camera|webcam',p['name'],re.I)and p['material']!='light'for p in parts):
         return 'Die für Kamera-/Handgestenbedienung benötigte Kamera fehlt als eigenes benanntes Bauteil. Zeige ihr vorgesehenes Modul im Entwurf; behaupte keine bereits funktionierende Bildanalyse.'
     return ''
+
+
+def normalize_dimensions(raw):
+    """Decode fractional-mm text from the constrained generation contract only.
+
+    Never invent, abs(), clamp or fill dimensions. Saved geometry stays numeric;
+    assembly still rejects zero/negative numbers from nonconforming runtimes.
+    """
+    from .workshop_schema import DIMENSION_PATTERN
+    raw=copy.deepcopy(raw);notes=[]
+    if not isinstance(raw,dict)or not isinstance(raw.get('parts'),list):return raw,notes
+    for p in raw['parts']:
+        if not isinstance(p,dict)or not isinstance(p.get('size'),list):continue
+        for i,value in enumerate(p['size']):
+            if not isinstance(value,str):continue
+            if re.fullmatch(DIMENSION_PATTERN,value) is None:raise ValueError('Ungültige Millimeterangabe. Bruchmaße müssen zwischen 0.1 und 1200 mm liegen, ohne Einheit oder Vorzeichen.')
+            p['size'][i]=float(value)
+    return raw,notes

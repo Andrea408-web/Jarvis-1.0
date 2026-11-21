@@ -21,7 +21,9 @@ def assembly(raw,stored=False):
   for key in ['size','position','rotation']:
    value=p.get(key,[0,0,0])
    if not isinstance(value,list)or len(value)!=3 or any(type(n)not in {int,float}or not math.isfinite(n)or abs(n)>1200 for n in value):raise ValueError('Ungültige Bauteilmaße oder Positionen.')
-   if key=='size'and any(n<=0 for n in value):raise ValueError('Bauteile brauchen positive Abmessungen.')
+   if key=='size'and any(n<=0 for n in value):
+    axis=next(k for k,n in enumerate(value)if n<=0)
+    raise ValueError('Bauteile brauchen positive Abmessungen. Bauteil '+str(i+1)+', '+['Breite','Höhe','Tiefe'][axis]+' (size['+str(axis)+']) ist '+str(value[axis])+' mm. Null ist nur bei Positionen zulässig, nicht als Bauteilmaß.')
    if key=='rotation'and any(abs(n)>180 for n in value):raise ValueError('Ungültiger Drehwinkel.')
   p['rotation']=p.get('rotation',[0,0,0]);p['id']=str(i+1)
   if p['shape']=='extrude':
@@ -78,7 +80,7 @@ def generate(app,body,progress=None,cancelled=None):
  from .providers import ProviderError
  from .workshop_feedback import wants_new_design,lighting_request,geometry_signature
  from .workshop_schema import design_schema
- from .workshop_requirements import normalize_emitters,complex_goal,unpack_lighting,form_request,unpack_form,form_error,camera_request,camera_error
+ from .workshop_requirements import normalize_emitters,complex_goal,unpack_lighting,form_request,unpack_form,form_error,camera_request,camera_error,normalize_dimensions
  from .workshop_jobs import checkpoint
  previous=body.get('previous');context='';checked=None
  if previous is not None and not isinstance(previous,dict):raise ValueError('Ungültiger bisheriger Entwurf.')
@@ -96,6 +98,7 @@ def generate(app,body,progress=None,cancelled=None):
  prompt=('Du bist JARVIS. Entwirf genau das Objekt des aktuellen Bauwunschs als ungeprüften 3D-Bauprototyp, keine feste Vorlage. '
  'Antworte mit einem vollständigen JSON-Objekt: title, parts, steps, features; optional explanation. Fehlen notwendige Angaben, stattdessen nur questions mit konkreten Rückfragen. '
  +('1 bis 10 sinnvolle Konzept-Bauteile, kurze Schritte. 'if complex_design else'1 bis 6 sinnvolle Bauteile, wenige kurze Schritte. ')+'Jedes Bauteil: name, shape, size [Breite,Höhe,Tiefe] in mm, position [X,Y,Z] des Mittelpunkts, material. Y zeigt nach oben. '
+ 'size enthält nur positive Millimetermaße von 0.1 bis 1200: ganze Maße als Zahl, Bruchmaße als Dezimaltext, etwa [120,4,"0.5"]. Kein size-Wert darf 0 oder negativ sein; position darf 0 und negative Werte enthalten. '
  'shape: box, cylinder, sphere, torus, tube, shade, extrude, lathe. material: wood,metal,plastic,diffuser,light. '
  'Eigene Kontur: extrude mit outline [[x,y],...] und optional holes [Konturen], smooth true für Rundungen. Konturkoordinaten -0.5 bis 0.5. '
  'Bei runden, organischen oder geschwungenen Wünschen keine Ansammlung von Kästen: nutze passende lathe-Profile oder extrude-Konturen mit smooth true. Runde Gehäuse und Sockel als Drehprofil, nicht als Box. Eine Kamera bei verlangter Gestensteuerung als eigenes benanntes Bauteil zeigen; Geometrie allein implementiert kein Handtracking. '
@@ -121,6 +124,7 @@ def generate(app,body,progress=None,cancelled=None):
      if not isinstance(q,list)or not 1<=len(q)<=3 or any(not isinstance(t,str)or not 1<=len(t)<=240 for t in q):raise ValueError('Ungültige Rückfrage der lokalen KI.')
      return {'needs_details':True,'questions':q}
     raw,corrections=normalize_emitters(unpack_form(unpack_lighting(raw,led),form),led)
+    raw,dimension_notes=normalize_dimensions(raw);corrections+=dimension_notes
     proposed=assembly(raw)
     if complex_design and not proposed.get('concept'):raise ValueError('Die Baugruppen und offenen technischen Fragen des komplexen Konzepts fehlen.')
    except (ValueError,TypeError)as error:

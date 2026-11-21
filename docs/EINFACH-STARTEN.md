@@ -115,3 +115,8 @@ Thorsten antwortet nach einer Nachricht automatisch, wenn **Mit Thorsten antwort
 Ausdrücklich runde oder geschwungene Bauwünsche werden auch anhand ihrer erzeugten Geometrie geprüft. Ein Kasten mit rund geschliffenen Kanten reicht für einen geschwungenen Hauptkörper nicht. Die lokale KI bekommt höchstens einen Korrekturversuch. Erfüllt auch dieser den Formwunsch nicht, bleibt der bisherige Entwurf erhalten; die Software ersetzt ihn nicht durch ein Musterobjekt. Das verbessert die Prüfung, garantiert aber nicht die Entwurfsqualität der kleinen lokalen KI.
 
 Bei einem physischen Hologramm-Projekt kannst du Budget, Gestenwunsch und vorhandene Geräte im Gespräch angeben. Folgefragen verwenden diese Angaben. Gefundene Webauszüge werden als ungeprüfte Quellen für das weitere Baugespräch übernommen, nicht als getestete Konstruktion. **Chat löschen** verwirft diesen vorübergehenden Gesprächskontext. Ein Modell auf dem Bildschirm erzeugt weiterhin kein echtes Tischgerät.
+
+
+### Fehlermeldung „Bauteile brauchen positive Abmessungen“
+
+Null oder negative Werte sind als Bauteilmaß ungültig; eine Position darf dagegen null oder negativ sein. Die lokale Erzeugung verwendet dafür jetzt einen getrennten, streng begrenzten Maßdatentyp. Ganze Millimeter werden als Zahlen und Bruchmaße intern als geprüfter Dezimaltext übertragen und anschließend unverändert in Millimeterzahlen umgewandelt. Es werden keine Ersatzmaße geraten. Falls eine ältere Laufzeit trotzdem ungültige Werte liefert, nennt die Rückfrage das betroffene Bauteil, die Achse und den Wert. Nach dem Update Jarvis am Mac neu starten und die Browserseite neu laden; die Fehlerdetails zeigen dann `workshop-2026-11-21-dimensions`.

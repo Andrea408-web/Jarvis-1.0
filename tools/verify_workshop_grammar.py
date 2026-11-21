@@ -45,6 +45,10 @@ def main():
    cases=[('contour-hole-lathe',valid,True),('follow-up-question',{'questions':['Welche Maße soll dein Objekt haben?']},True)]
    for name,change in [('missing-parts',lambda r:r.pop('parts')),('missing-steps',lambda r:r.pop('steps')),('too-many-parts',lambda r:r.update(parts=r['parts']*(limit+1))),('unknown-code-field',lambda r:r['parts'][0].update(script='execute')),('unknown-shape',lambda r:r['parts'][0].update(shape='javascript')),('missing-outline',lambda r:next(p for p in ([r['form']]if 'form'in r else[])+r['parts']if p['shape']=='extrude').pop('outline'))]:
     bad=copy.deepcopy(valid);change(bad);cases.append((name,bad,False))
+   slots=[('part',lambda r:r['parts'][0])]+([('form',lambda r:r['form'])]if form else[])+([('light',lambda r:r['lighting'])]if lighting is True else[])
+   for slot,get_part in slots:
+    for label,dimension_value,expected in [('zero',0,False),('negative',-2,False),('oversize',1201,False),('quoted-zero','0',False),('quoted-negative','-0.5',False),('quoted-oversize','1200.001',False),('fraction','0.5',True),('fine-dimension','120.125',True)]:
+     changed=copy.deepcopy(valid);get_part(changed)['size'][0]=dimension_value;cases.append((slot+'-size-'+label,changed,expected))
    if form:
     for name,change in [('missing-form',lambda r:r.pop('form')),('box-form',lambda r:r['form'].update(shape='box')),('emitting-form',lambda r:r['form'].update(material='light'))]:
      bad=copy.deepcopy(valid);change(bad);cases.append((name,bad,False))

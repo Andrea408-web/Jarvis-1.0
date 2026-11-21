@@ -10,11 +10,18 @@ def array(items,minimum,maximum):return {'type':'array','items':items,'minItems'
 def obj(properties,required=None):return {'type':'object','properties':properties,'required':list(properties)if required is None else required,'additionalProperties':False}
 def number(lo,hi):return {'type':'number','minimum':lo,'maximum':hi}
 
+# llama.cpp enforces integer ranges but ignores bounds on type:number.
+# Fractional millimetres use bounded decimal text on the generation wire only;
+# normalize_dimensions converts them exactly before the ordinary CAD checks.
+DIMENSION_PATTERN=r'^(?:0\.[1-9][0-9]{0,2}|[1-9][0-9]{0,2}\.[0-9]{1,3}|1[01][0-9]{2}\.[0-9]{1,3}|1200\.0{1,3})$'
+def dimension():
+    return {'anyOf':[{'type':'integer','minimum':1,'maximum':1200},{'type':'string','pattern':DIMENSION_PATTERN}]}
+
 def design_schema(part_limit=6,lighting=None,complex_design=False,form=None):
     vector=array(number(-1200,1200),3,3)
     point=array(number(-.5,.5),2,2)
     outline=array(point,3,24)
-    common={'name':text(80),'shape':{'enum':['box','cylinder','sphere','torus','tube','shade','extrude','lathe']},'size':array(number(.1,1200),3,3),'position':vector,'material':{'enum':['wood','metal','plastic','diffuser']+([]if lighting is False else['light'])},'rotation':array(number(-180,180),3,3)}
+    common={'name':text(80),'shape':{'enum':['box','cylinder','sphere','torus','tube','shade','extrude','lathe']},'size':array(dimension(),3,3),'position':vector,'material':{'enum':['wood','metal','plastic','diffuser']+([]if lighting is False else['light'])},'rotation':array(number(-180,180),3,3)}
     required=['name','shape','size','position','material']
     variants=[]
     for shapes,extra in [(['box','cylinder','sphere','torus','shade'],{}),(['tube'],{'wall':number(.1,599)}),(['extrude'],{'outline':outline}),(['lathe'],{'profile':array({'type':'array','prefixItems':[number(0,.5),number(-.5,.5)],'minItems':2,'maxItems':2},3,16)})]:

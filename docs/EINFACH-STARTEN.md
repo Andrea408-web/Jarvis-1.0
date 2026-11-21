@@ -79,3 +79,11 @@ Im 3D-Baustudio kannst du „Das gefällt mir nicht, mach einen neuen Entwurf“
 Das Update vom 20. November verwendet eine verbindliche Ausgabestruktur für die vorhandene lokale KI. Längere Aufträge haben einen sichtbaren Status; ein Korrekturversuch kann zusätzliche Zeit benötigen. „Stoppen“ verwirft das Ergebnis, auch wenn die lokale Modellberechnung noch ausläuft. Die Vorschau bleibt bei einem Fehler erhalten. Unter „Fehlerdetails – zum Weitergeben“ kannst du die genaue Meldung kopieren. Die Details enthalten keinen Bauwunsch oder Chatverlauf.
 
 Nach dem Aktualisieren muss der laufende Mac-Server neu gestartet werden: im bisherigen Terminal **Strg+C**, dann im bestehenden Jarvis-Ordner **`python3 -m backend --easy-local`**. Danach die Browserseite neu laden. Nur die Seite neu zu laden startet den Python-Server nicht neu. Das Reparaturpaket lädt kein neues Text- oder Sprachmodell.
+
+### LEDs und komplexere Bauideen
+
+Ein LED-Wunsch bekommt jetzt ein verpflichtendes eigenes Lichtbauteil in der KI-Ausgabe. „Ohne LEDs“ schließt es aus. Wenn ein bereits erzeugtes LED-Modul nur falsch zugeordnet war, zeigt Jarvis die Korrektur an, statt ein anderes Bauteil zu erfinden.
+
+Du kannst auch ein komplexes Funktionskonzept beschreiben, mit gewünschter Aufgabe, verfügbarem Platz und Material. Unter **„Baugruppen & Funktion · Konzept“** stehen die vorgesehenen Baugruppen, ihr Ablauf und die offenen technischen Fragen. Über „Mit Jarvis besprechen“ oder das Mikrofon kannst du weiterreden. Die Vorschau ist ein Entwurf: Sie ersetzt keine Auslegung von Mechanik, Antrieben, Elektrik oder Steuerung und steuert keine echte Maschine.
+
+Beim Antippen eines Bauteils fährt der Blick sanft darauf zu. Der Arbeitsstreifen und die Baugruppen blenden sich zurückhaltend ein. Wenn du am Gerät „Bewegung reduzieren“ aktiviert hast, entfallen diese Animationen.

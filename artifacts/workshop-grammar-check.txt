@@ -1,19 +1,47 @@
-PASS limit=6 contour-hole-lathe: accepted
-PASS limit=6 follow-up-question: accepted
-PASS limit=6 missing-parts: rejected
-PASS limit=6 missing-steps: rejected
-PASS limit=6 empty-parts: rejected
-PASS limit=6 too-many-parts: rejected
-PASS limit=6 unknown-code-field: rejected
-PASS limit=6 unknown-shape: rejected
-PASS limit=6 missing-outline: rejected
-PASS limit=4 contour-hole-lathe: accepted
-PASS limit=4 follow-up-question: accepted
-PASS limit=4 missing-parts: rejected
-PASS limit=4 missing-steps: rejected
-PASS limit=4 empty-parts: rejected
-PASS limit=4 too-many-parts: rejected
-PASS limit=4 unknown-code-field: rejected
-PASS limit=4 unknown-shape: rejected
-PASS limit=4 missing-outline: rejected
+PASS limit=6 LED=None complex=False contour-hole-lathe: accepted
+PASS limit=6 LED=None complex=False follow-up-question: accepted
+PASS limit=6 LED=None complex=False missing-parts: rejected
+PASS limit=6 LED=None complex=False missing-steps: rejected
+PASS limit=6 LED=None complex=False too-many-parts: rejected
+PASS limit=6 LED=None complex=False unknown-code-field: rejected
+PASS limit=6 LED=None complex=False unknown-shape: rejected
+PASS limit=6 LED=None complex=False missing-outline: rejected
+PASS limit=4 LED=None complex=False contour-hole-lathe: accepted
+PASS limit=4 LED=None complex=False follow-up-question: accepted
+PASS limit=4 LED=None complex=False missing-parts: rejected
+PASS limit=4 LED=None complex=False missing-steps: rejected
+PASS limit=4 LED=None complex=False too-many-parts: rejected
+PASS limit=4 LED=None complex=False unknown-code-field: rejected
+PASS limit=4 LED=None complex=False unknown-shape: rejected
+PASS limit=4 LED=None complex=False missing-outline: rejected
+PASS limit=6 LED=True complex=False contour-hole-lathe: accepted
+PASS limit=6 LED=True complex=False follow-up-question: accepted
+PASS limit=6 LED=True complex=False missing-parts: rejected
+PASS limit=6 LED=True complex=False missing-steps: rejected
+PASS limit=6 LED=True complex=False too-many-parts: rejected
+PASS limit=6 LED=True complex=False unknown-code-field: rejected
+PASS limit=6 LED=True complex=False unknown-shape: rejected
+PASS limit=6 LED=True complex=False missing-outline: rejected
+PASS limit=6 LED=True complex=False missing-lighting: rejected
+PASS limit=6 LED=True complex=False non-emitting-lighting: rejected
+PASS limit=6 LED=False complex=False contour-hole-lathe: accepted
+PASS limit=6 LED=False complex=False follow-up-question: accepted
+PASS limit=6 LED=False complex=False missing-parts: rejected
+PASS limit=6 LED=False complex=False missing-steps: rejected
+PASS limit=6 LED=False complex=False too-many-parts: rejected
+PASS limit=6 LED=False complex=False unknown-code-field: rejected
+PASS limit=6 LED=False complex=False unknown-shape: rejected
+PASS limit=6 LED=False complex=False missing-outline: rejected
+PASS limit=6 LED=False complex=False unwanted-light: rejected
+PASS limit=10 LED=True complex=True contour-hole-lathe: accepted
+PASS limit=10 LED=True complex=True follow-up-question: accepted
+PASS limit=10 LED=True complex=True missing-parts: rejected
+PASS limit=10 LED=True complex=True missing-steps: rejected
+PASS limit=10 LED=True complex=True too-many-parts: rejected
+PASS limit=10 LED=True complex=True unknown-code-field: rejected
+PASS limit=10 LED=True complex=True unknown-shape: rejected
+PASS limit=10 LED=True complex=True missing-outline: rejected
+PASS limit=10 LED=True complex=True missing-lighting: rejected
+PASS limit=10 LED=True complex=True non-emitting-lighting: rejected
+PASS limit=10 LED=True complex=True missing-complex-plan: rejected
 Structural grammar only. Geometry validation and actual model quality require separate checks.

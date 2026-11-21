@@ -13,3 +13,15 @@
 #build-studio .build-controls{display:block!important}
 
 #build-studio #build-error-details{border:1px solid #a88c54;padding:10px;border-radius:8px;margin-top:10px}#build-studio #build-error-text{white-space:pre-wrap;overflow-wrap:anywhere;font-size:11px;color:#e1d8c5;user-select:text}
+
+/* Short, restrained motion; never a simulation of physical machine movement. */
+#build-studio[data-work=working] .build-view-head{position:relative;overflow:hidden}
+#build-studio[data-work=working] .build-view-head:after{content:'';position:absolute;bottom:0;left:0;width:24%;height:1px;background:linear-gradient(90deg,transparent,#bfcca6,transparent);animation:build-working-scan 3.6s ease-in-out infinite;opacity:.65}
+#build-studio #build-systems{display:grid;gap:8px}
+#build-studio .build-system{padding:10px;border:1px solid #69785b66;border-radius:9px;background:#1c2b2080;animation:build-card-in .35s ease-out both}
+#build-studio .build-system p{font-size:11px;line-height:1.6;margin:5px 0}
+#build-studio .build-system button{font-size:10px;padding:5px 8px;min-height:30px}
+#build-studio #build-concept h4{font-size:12px;margin:15px 0 5px}
+@keyframes build-working-scan{from{transform:translateX(-110%)}to{transform:translateX(510%)}}
+@keyframes build-card-in{from{opacity:.5;transform:translateY(5px)}to{opacity:1;transform:translateY(0)}}
+@media(prefers-reduced-motion:reduce){#build-studio .build-system,#build-studio[data-work=working] .build-view-head:after{animation:none!important}}

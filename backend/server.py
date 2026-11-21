@@ -700,6 +700,9 @@ class Handler(BaseHTTPRequestHandler):
                 if path=='/api/workshop/jobs':return self._json(app.workshop.submit(body,owner),202)
                 if set(body)!={'id'}:raise ValueError('Bitte nur die Werkstatt-Auftragskennung angeben.')
                 return self._json(app.workshop.cancel(body['id'],owner)if path.endswith('/cancel')else app.workshop.status(body['id'],owner))
+            if method=='POST' and path=='/api/workshop/hologram-project':
+                from .hologram_project import design as hologram_design
+                return self._json(hologram_design(body))
             if method=='POST' and path=='/api/workshop/design':
                 from .workshop import design
                 return self._json(design(body,app=app))

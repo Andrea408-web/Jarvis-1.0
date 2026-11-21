@@ -15,9 +15,10 @@ async function answer(text,history,signal,address){
 export async function command(raw,{address='Sir'}={}){
  if(typeof raw!=='string')return null;const text=clean(raw);if(pending&&Date.now()-pending.time>600000)pending=null;
  if(/^(?:chat löschen|vergiss alles|neues gespräch|chat zurücksetzen)\b/i.test(text)){reset();return null;}
+ if(/hologramm/i.test(text)&&/bauen|selbst|gerät|projektor|herstellen/i.test(text)){reset();await window.JarvisWorkshopProject();return {reply:address+', hier ist ein konkretes Bauprojekt für einen Smartphone-Reflektor mit Material, Maßen und Anleitung. Das erzeugt eine Spiegelungsillusion im Gerät. Für eine andere Hologramm-Technik können wir die Anforderungen besprechen.',proposals:[]};}
  if(pending&&/^(?:ja(?:[, ]+(?:bitte|gerne|mach auf))?|gerne|mach auf|öffne (?:es|das)|(?:das )?baustudio öffnen)$/i.test(text)){const draft=pending;reset();await window.JarvisWorkshopPrepare('Entwickle einen 3D-Konzeptentwurf zu diesem Bauwunsch: '+draft.brief+'\nBesprochene Möglichkeiten: '+draft.answer.slice(0,500));return {reply:address+', das Baustudio ist offen und unser Bauwunsch übernommen. Du kannst den Entwurf dort starten und weiter mit mir sprechen.',proposals:[]};}
  if(pending&&/^(?:nein(?:[, ]+danke)?|später|noch nicht|abbrechen)$/i.test(text)){reset();return {reply:address+', wir bleiben im Gespräch. Das Baustudio bleibt geschlossen.',proposals:[]};}
- const follow=!!pending&&!introduction(text)&&/(?:funktion|könnte|koennte|greif|bewegen|arm|idee|stattdessen|lieber|was noch|weitere|andere|ändern|besser|^was kann (?:er|es|das|der)\b|^und sonst)/i.test(text);
+ const follow=!!pending&&!introduction(text)&&/(?:funktion|greif|bewegen|\barm\b|\broboterarm\b|stattdessen|lieber|was noch|ändern|besser|^was (?:kann|könnte|koennte) (?:er|es|das|der)\b|^und sonst)/i.test(text);
  if(!inquiry(text)&&!follow){if(pending)reset();return null;}
  if(active)return {reply:address+', ich denke gerade über deinen Bauwunsch nach.',proposals:[]};
  const version=epoch,c=new AbortController();active=c;const timer=setTimeout(()=>c.abort(),60000),brief=follow?pending.brief:text,history=follow?[{role:'user',content:pending.brief.slice(0,600)},{role:'assistant',content:pending.answer.slice(0,600)}]:[];

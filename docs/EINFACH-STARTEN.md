@@ -87,3 +87,11 @@ Ein LED-Wunsch bekommt jetzt ein verpflichtendes eigenes Lichtbauteil in der KI-
 Du kannst auch ein komplexes Funktionskonzept beschreiben, mit gewünschter Aufgabe, verfügbarem Platz und Material. Unter **„Baugruppen & Funktion · Konzept“** stehen die vorgesehenen Baugruppen, ihr Ablauf und die offenen technischen Fragen. Über „Mit Jarvis besprechen“ oder das Mikrofon kannst du weiterreden. Die Vorschau ist ein Entwurf: Sie ersetzt keine Auslegung von Mechanik, Antrieben, Elektrik oder Steuerung und steuert keine echte Maschine.
 
 Beim Antippen eines Bauteils fährt der Blick sanft darauf zu. Der Arbeitsstreifen und die Baugruppen blenden sich zurückhaltend ein. Wenn du am Gerät „Bewegung reduzieren“ aktiviert hast, entfallen diese Animationen.
+
+### Bauideen besprechen, Modellansicht und Musik
+
+Du kannst im normalen Jarvis-Chat fragen: „Ich will einen Roboterarm bauen. Was könnte der machen?“ Jarvis bespricht die Idee mit der vorhandenen lokalen KI und bietet dann das Baustudio an. Mit „Ja bitte“ öffnest du den übernommenen Bauwunsch; „Nein“ lässt das Studio geschlossen. Der Entwurf startet dort über „Jarvis, mach das“. Das gilt auch im Handy-/iPad-Chat. Chat löschen verwirft das offene Angebot. Ohne Mac kann die bereits auf dem Gerät eingerichtete Text-KI für dieses Gespräch verwendet werden.
+
+Die Modellieransicht zeigt glattere Beleuchtung und kleine Kantenrundungen. Tippe ein Bauteil an, um orange Auswahlkanten und sein feines Gitter zu sehen. Der Drahtgitter-Schalter gilt weiterhin für das gesamte Modell. LEDs haben einen sichtbaren Lichtschein; die LED-Innenansicht lässt ihn auch bei verdeckten Lichtmodulen erkennen. Dies ist eine schematische Vorschau, keine Lichtsimulation oder geprüfte Fertigungsgeometrie.
+
+„Musik beim Entwerfen“ aktiviert ein leises, eigenes Instrumental-Ambiente. Es läuft in kurzen Abschnitten von höchstens 45 Sekunden und kann beim nächsten Entwurf wieder beginnen. Ausschalten, Stoppen, Schließen oder Verlassen der Seite beendet die Musik. Während Thorsten im Baustudio spricht, wird sie leiser. Kein Musikdienst, Konto oder zusätzlicher Download nötig.

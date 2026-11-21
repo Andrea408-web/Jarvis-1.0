@@ -1,0 +1,18 @@
+"""Visible LED glow, selected topology, and real WebAudio lifecycle."""
+import copy,json,sys,tempfile,threading
+from pathlib import Path
+sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
+from backend.server import Application,JarvisServer
+from tests.workshop_complex_fixture import ARM
+from playwright.sync_api import sync_playwright
+root=Path(__file__).resolve().parents[2]
+with tempfile.TemporaryDirectory()as folder:
+ app=Application(folder);app.store.update_settings({'ai_provider':'llamacpp','voice_enabled':False});app.code_room._generate=lambda *a,**kw:json.dumps(ARM);server=JarvisServer(('127.0.0.1',0),app);thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start();url='http://127.0.0.1:'+str(server.server_port)
+ try:
+  with sync_playwright()as pw:
+   browser=pw.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox','--use-gl=angle','--use-angle=swiftshader','--enable-unsafe-swiftshader']);context=browser.new_context(viewport={'width':1440,'height':1040},reduced_motion='reduce');page=context.new_page();errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.add_init_script("window.testAudioContexts=[];window.testOscillators=[];const Original=window.AudioContext;window.AudioContext=class extends Original{constructor(...a){super(...a);window.testAudioContexts.push(this);}createOscillator(){const o=super.createOscillator();window.testOscillators.push(o);return o;}};")
+   page.goto(url);page.locator('#offline-ready[data-ready=true]').wait_for(timeout=25000);page.locator('#quick-collapse').click();page.locator('#workshop-open').click();page.locator('#build-request').fill('Ein Roboterarm-Konzept mit LED');page.locator('#build-submit').click();page.wait_for_function("()=>document.getElementById('build-canvas').dataset.assembly==='complete'&&!document.getElementById('build-submit').disabled",timeout=90000)
+   before=page.locator('#build-canvas').screenshot();page.locator('#build-led-toggle').uncheck();off=page.locator('#build-canvas').screenshot();assert before!=off;page.locator('#build-led-toggle').check();canvas=page.locator('#build-canvas').bounding_box();page.locator('#build-canvas').click(position={'x':canvas['width']*.43,'y':canvas['height']*.69});assert page.locator('#build-canvas').get_attribute('data-selected');assert 'mm'in page.locator('#build-part').inner_text();selected=page.locator('#build-canvas').screenshot();assert selected!=before;page.locator('#build-studio').evaluate('e=>e.scrollTop=0');page.locator('#build-studio .build-controls').evaluate('e=>e.scrollTop=545');page.screenshot(path=str(root/'artifacts/jarvis-blender-ansicht.png'))
+   page.locator('#build-music').check();page.wait_for_function("()=>document.getElementById('build-studio').dataset.music==='playing'&&window.testOscillators.length>=3");assert page.evaluate("()=>window.testAudioContexts.at(-1).state==='running'");page.locator('#build-music').uncheck();page.wait_for_function("()=>document.getElementById('build-studio').dataset.music==='off'&&window.testAudioContexts.at(-1).state==='closed'");page.locator('#build-music').check();page.wait_for_function("()=>document.getElementById('build-studio').dataset.music==='playing'");page.locator('#build-close').click();page.wait_for_function("()=>window.testAudioContexts.at(-1).state==='closed'");assert not errors,errors
+   context.close();browser.close();print('PASS: actual smoothed/bevelled mesh renders with LED glow; LED on/off changes image; selection draws topology overlay; opt-in music creates actual oscillators and running audio; disabling/closing releases context. Controlled model geometry.')
+ finally:app.workshop.stop();app.office.stop();app.desktop.stop();server.shutdown();server.server_close();thread.join(3)

@@ -180,7 +180,7 @@
     });
   }
   $('settings-dialog').addEventListener('close', () => { for (const provider of ['gemini','elevenlabs','openai']) $(`${provider}-api-key`).value = ''; });
-  $('clear-chat').addEventListener('click',async()=>{try{await api('/api/history',{method:'DELETE'});state.chatGeneration++;state.pendingDialogue=null;pendingSpokenReply='';stopAudio();stopMicrophone();markBusy(false);$('messages').replaceChildren();message('notice','Chatverläufe, gemerkter Name und offene Rückfragen gelöscht.');await refreshStatus();}catch(error){showError(error);}});
+  $('clear-chat').addEventListener('click',async()=>{window.JarvisWorkshopConversation?.reset();try{await api('/api/history',{method:'DELETE'});state.chatGeneration++;state.pendingDialogue=null;pendingSpokenReply='';stopAudio();stopMicrophone();markBusy(false);$('messages').replaceChildren();message('notice','Chatverläufe, gemerkter Name und offene Rückfragen gelöscht.');await refreshStatus();}catch(error){showError(error);}});
   function refreshLocalVoiceOptions() {const select=$('local_voice_uri');select.replaceChildren();const option=document.createElement('option');option.value='';option.textContent='Thorsten · fest ausgewählt';select.append(option);$('local-voice-selection-hint').textContent='Thorsten ist fest ausgewählt. Einrichtung und Hörprobe unter „Stimme“.';}
   function localVoiceFeedback(text, error = false) { $('local-voice-result').textContent = text; $('local-voice-result').classList.toggle('error', error);const quick=document.getElementById('voice-test-status');if(quick&&document.getElementById('voice-dialog')?.open)quick.textContent=text; }
   function mediaPlayer(){

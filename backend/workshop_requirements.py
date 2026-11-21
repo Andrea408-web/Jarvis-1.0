@@ -2,7 +2,7 @@
 import copy,math,re
 
 def complex_goal(request,previous=None):
-    if re.search(r'komplex|mechanik|robot|greifer|gelenk|servo|motor|automati|antrieb|sensor|steuerung|beweglich|mechanisch',request,re.I):return True
+    if re.search(r'komplex|mechanik|robot|greifer|gelenk|servo|motor|automati|antrieb|sensor|steuerung|beweglich|mechanisch|baugruppen|mehrteilig|modular|klappbar|faltbar|kugelbahn|wasserbehälter',request,re.I):return True
     return bool(previous and previous.get('concept')and not re.search(r'^(?:baue?|entwirf|erstell|plane|ich (?:will|möchte))\b',request,re.I))
 
 def unpack_lighting(raw,lighting):

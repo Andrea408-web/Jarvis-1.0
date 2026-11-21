@@ -134,3 +134,11 @@ Im Baustudio öffnet **„Vorlage aus dem Internet“** die Quellensuche. Suche 
 Die vorhandene kleine Text-KI erhält Textangaben, keine Bildpixel. Sie kann damit keine exakte 3D-Kopie beliebiger Fotos rekonstruieren. Ausdrücklich gewünschte Ringanzahlen werden anhand wirklicher Ringgeometrie geprüft, nicht bloß anhand von Bauteilnamen. Ein Fehlschlag ersetzt deinen bisherigen Entwurf nicht durch ein Beispielobjekt.
 
 **„3D-Vorlage ansehen“** öffnet einen passenden direkten HTTPS-GLB-Link in der vorhandenen Objektansicht. Ein Link zu einer normalen Webseite oder einem Foto ist keine 3D-Datei. Die bestehenden Größen-, Quellen- und Geometrieprüfungen gelten weiterhin. Das Originalmodell wird als Referenz angezeigt und nicht als eigene KI-Konstruktion ausgegeben; Herkunft und Nutzungsrechte findest du an der Quelle.
+
+### Eigene komplexe Projekte entwickeln
+
+Das Baustudio ist für eigene Konstruktionen gedacht. Unter **„Projektideen“** findest du beispielsweise faltbare Lampen, Kugelbahnen, Pflanzenstationen, Klappmöbel, Requisiten und modulare Werkzeugstationen. Die Auswahl trägt nur einen Wunsch ein; sie lädt kein festes Beispielmodell.
+
+Unter **„Projekt gemeinsam planen“** kannst du freiwillig Funktion, vorhandenes Material und Werkzeug, Gesamtbudget und Bautage ergänzen. **„Idee mit Jarvis besprechen“** startet ein Gespräch ohne neues Modell. **„Angaben in Bauwunsch übernehmen“** bereitet deinen Entwurfsauftrag vor. Komplexe Projekte werden in Baugruppen, Funktionsablauf und offene technische Fragen gegliedert. Geometrie ist weiterhin ein ungeprüfter Vorentwurf; die Software berechnet keine garantierte Belastbarkeit oder fertige Elektronik.
+
+Hologramm- und Optikfunktionen findest du weiterhin unter **„Spezialprojekte“**. Die allgemeine Referenzsuche funktioniert für andere Objekte genauso.

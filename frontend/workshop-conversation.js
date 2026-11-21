@@ -1,7 +1,7 @@
 /* Build-idea discussion uses the existing local text AI, with a separate open offer. */
-let pending=null,epoch=0,active=null;
+let pending=null,epoch=0,active=null,hologram=null;
 const clean=text=>text.trim().replace(/^(?:jarvis|astra)[, :]+/i,'').replace(/[.!?]+$/,'');
-export function reset(){epoch++;pending=null;active?.abort();active=null;}
+export function reset(){epoch++;pending=null;hologram=null;active?.abort();active=null;}
 function introduction(text){return /^(?:ich (?:will|möchte|plane)|ich habe vor)\b/i.test(text);}
 function inquiry(text){if(/web(?:site|seite)|homepage|software|roblox|minecraft|programmier|\bcode\b|\bapp\b/i.test(text)&&!/roboter|robotik|holz|metall|mechanik/i.test(text))return false;if(/^(?:baue?|entwirf|erstell|öffne|starte|zeige)\b/i.test(text))return false;return /roboter[ -]?arm|robotik|\bbauen\b|bau(?:idee|projekt)|werkstatt|erfindung|hologramm|möbel|moebel|organizer|skulptur|gehäuse|gehaeuse|leuchte|lampe|\bregal\b|\btisch\b|3d[ -]?(?:modell|projekt)/i.test(text)&&(introduction(text)||/(?:^|\s)(?:was|wofür|welche?|wie|ideen|möglichkeiten)|könnte|koennte/i.test(text));}
 function referral(reply,text){return typeof reply==='string'&&!/anbieter|dienst|plattform|alternativ/i.test(text)&&/(?:anbieter|midjourney|leonardo|meshy|tripo|openai|chatgpt|claude|gemini)/i.test(reply)&&/(?:empfehl|nutze|verwende|wende dich|anbieten|biete.{0,35}\ban\b|ausprobieren)/i.test(reply)&&!/kein(?:e[nrms]?)?\s+(?:anderen?\s+)?(?:anbieter|empfehl)|(?:nicht|ohne)\s+(?:zu\s+)?(?:empfehl|anbieter)/i.test(reply);}
@@ -15,7 +15,16 @@ async function answer(text,history,signal,address){
 export async function command(raw,{address='Sir'}={}){
  if(typeof raw!=='string')return null;const text=clean(raw);if(pending&&Date.now()-pending.time>600000)pending=null;
  if(/^(?:chat löschen|vergiss alles|neues gespräch|chat zurücksetzen)\b/i.test(text)){reset();return null;}
- if(/hologramm/i.test(text)&&/bauen|selbst|gerät|projektor|herstellen/i.test(text)){reset();await window.JarvisWorkshopProject();return {reply:address+', hier ist ein konkretes Bauprojekt für einen Smartphone-Reflektor mit Material, Maßen und Anleitung. Das erzeugt eine Spiegelungsillusion im Gerät. Für eine andere Hologramm-Technik können wir die Anforderungen besprechen.',proposals:[]};}
+ const physicalHologram=/hologramm/i.test(text)&&/bauen|selbst|gerät|projektor|herstellen|tisch|budget|euro/i.test(text);
+ if(physicalHologram||(hologram&&/euro|€|budget|handgest|ohne handy|eigenständig|display|rechner|kamera/i.test(text))){
+  if(!hologram){reset();hologram={budget:null,gesture:false};}
+  const amount=text.match(/(\d+(?:[.,]\d{1,2})?)\s*(?:euro|€)/i);
+  if(amount){const n=Number(amount[1].replace(',','.'));if(n>0&&n<=100000)hologram.budget=n;else return {reply:address+', nenne bitte ein positives Budget in Euro.',proposals:[]};}
+  if(/handgest|gesten|handtracking/i.test(text))hologram.gesture=true;
+  const budget=hologram.budget;
+  return {reply:address+', wir planen dein rundes Tischgerät'+(budget?' mit höchstens '+budget+' € Gesamtbudget':'')+'. Es soll ein sichtbares Spiegelungsbild zeigen; das Licht ist nicht körperlich fühlbar. '+(hologram.gesture?'Bedienung: Handgesten. ':'Möchtest du es mit Handgesten bedienen? ')+(budget===null?'Wie viel darf alles zusammen kosten? Du kannst zum Beispiel „höchstens 40 Euro“ sagen. ':budget<100?'Für dieses Budget kann ich ein eigenständiges Gerät einschließlich Display, Rechner, Kamera, Gehäuse und Stromversorgung noch nicht zusagen. ':'Die Machbarkeit und Kosten müssen wir anhand konkreter Bauteile prüfen. ')+'Welche Geräte sind bereits vorhanden: Display, kleiner Rechner und Kamera? Ein Mac als notwendiger Rechner wäre keine eigenständige Lösung. Erst nach der Teileauswahl kann ich eine passende ausführliche Schritt-für-Schritt-Anleitung erstellen. Der Smartphone-Reflektor ist ein anderes Projekt; ich öffne ihn dafür nicht automatisch.',proposals:[]};
+ }
+ if(hologram)hologram=null;
  if(pending&&/^(?:ja(?:[, ]+(?:bitte|gerne|mach auf))?|gerne|mach auf|öffne (?:es|das)|(?:das )?baustudio öffnen)$/i.test(text)){const draft=pending;reset();await window.JarvisWorkshopPrepare('Entwickle einen 3D-Konzeptentwurf zu diesem Bauwunsch: '+draft.brief+'\nBesprochene Möglichkeiten: '+draft.answer.slice(0,500));return {reply:address+', das Baustudio ist offen und unser Bauwunsch übernommen. Du kannst den Entwurf dort starten und weiter mit mir sprechen.',proposals:[]};}
  if(pending&&/^(?:nein(?:[, ]+danke)?|später|noch nicht|abbrechen)$/i.test(text)){reset();return {reply:address+', wir bleiben im Gespräch. Das Baustudio bleibt geschlossen.',proposals:[]};}
  const follow=!!pending&&!introduction(text)&&/(?:funktion|greif|bewegen|\barm\b|\broboterarm\b|stattdessen|lieber|was noch|ändern|besser|^was (?:kann|könnte|koennte) (?:er|es|das|der)\b|^und sonst)/i.test(text);

@@ -12,3 +12,6 @@ scenario(['Du könntest Meshy ausprobieren.']);answer=await service.command('Wel
 scenario(['Sir, ein Organizer könnte Werkzeuge nach Größe sortieren.']);answer=await service.command('Welche Funktionen könnte ein Organizer haben?');assert.equal(posts.length,1);assert.match(answer.reply,/Soll ich dazu das Baustudio öffnen/);
 scenario([]);assert.equal(await service.command('Wie könnte ich eine Website bauen?'),null);
 console.log('PASS: unasked provider pitch gets one bounded correction; name repaired; no referral in handoff; negative vendor statements and explicit comparisons remain intact; software stays outside construction.');
+
+scenario([]);answer=await service.command('Ich will selbst ein Hologramm bauen mit Handgesten');assert.match(answer.reply,/Wie viel/);answer=await service.command('höchstens 40 Euro');assert.match(answer.reply,/40 € Gesamtbudget/);assert.match(answer.reply,/Bedienung: Handgesten/);assert.match(answer.reply,/noch nicht zusagen/);assert.equal(opened.length,0);assert.equal(posts.length,0);service.reset();assert.equal(await service.command('40 Euro'),null);
+console.log('PASS: tabletop hologram asks budget, retains gestures, never silently opens phone reflector, reset clears requirements.');

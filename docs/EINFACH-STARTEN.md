@@ -95,3 +95,11 @@ Du kannst im normalen Jarvis-Chat fragen: „Ich will einen Roboterarm bauen. Wa
 Die Modellieransicht zeigt glattere Beleuchtung und kleine Kantenrundungen. Tippe ein Bauteil an, um orange Auswahlkanten und sein feines Gitter zu sehen. Der Drahtgitter-Schalter gilt weiterhin für das gesamte Modell. LEDs haben einen sichtbaren Lichtschein; die LED-Innenansicht lässt ihn auch bei verdeckten Lichtmodulen erkennen. Dies ist eine schematische Vorschau, keine Lichtsimulation oder geprüfte Fertigungsgeometrie.
 
 „Musik beim Entwerfen“ aktiviert ein leises, eigenes Instrumental-Ambiente. Es läuft in kurzen Abschnitten von höchstens 45 Sekunden und kann beim nächsten Entwurf wieder beginnen. Ausschalten, Stoppen, Schließen oder Verlassen der Seite beendet die Musik. Während Thorsten im Baustudio spricht, wird sie leiser. Kein Musikdienst, Konto oder zusätzlicher Download nötig.
+
+### Anklickbare Hologramme und andere Objekte
+
+Sage oder schreibe **„Öffne die Hologramme“**. Im Baustudio kannst du außerdem bei **Ansicht → Hologramm** zwischen dem grauen Modell und der transparenten grünlichen Darstellung wechseln. Ein angetipptes Bauteil zeigt direkt über der Ansicht eine kleine Infokarte mit Maßen und Form. „Mit Jarvis über dieses Teil sprechen“ übergibt genau das ausgewählte Bauteil an die vorhandene lokale KI. Die Karte lässt sich schließen; das Modell kannst du weiterhin drehen und auseinanderziehen.
+
+Unter **„Startideen · oder deine eigene Idee“** findest du Lichtobjekt, Möbel, Organizer, Skulptur und Gehäuse. Diese Schaltflächen tragen nur einen Bauwunsch ein. Die Geometrie entsteht erst aus deinem Auftrag an die lokale KI; es gibt keine fest eingesetzten Beispielmodelle. Eigene Objekte sind weiterhin möglich. Gesicherte Entwürfe können auch offline in der Hologramm-Ansicht geladen werden. „Hologramm“ bezeichnet die Darstellung auf deinem Bildschirm.
+
+Jarvis kennt jetzt im Gespräch die tatsächlich vorhandenen lokalen 3D-Funktionen besser. Eine klare ungefragte Anbieter-Empfehlung im Baugespräch erhält höchstens einen Korrekturversuch. Bleibt die Antwort unpassend, wird das offen gesagt und das vorhandene Baustudio angeboten. Ein anderes Modell wird dafür nicht geladen. Fragen nach Modellnamen oder anderen Anbietern bleiben möglich.

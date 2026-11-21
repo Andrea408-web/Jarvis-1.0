@@ -125,7 +125,7 @@ def main():
     if sys.version_info<(3,10):raise ValueError('Bitte denselben Python-3.10+-Interpreter wie für dein vorhandenes Jarvis verwenden.')
     files,manifest=payload_files();root=choose_root(files,manifest)
     print('Gefundenes Jarvis:',root,flush=True)
-    print('Das gemeinsame JARVIS-Update enthält die glattere Modellansicht, Baugespräch und Werkstatt-Musik vom 21. November sowie alle bisherigen Änderungen. Deine Text-KI, Gespräche und Schlüssel bleiben erhalten.',flush=True)
+    print('Das gemeinsame JARVIS-Update enthält die anklickbare Hologramme, vielseitige Startideen und klarere JARVIS-Antworten vom 21. November sowie alle bisherigen Änderungen. Deine Text-KI, Gespräche und Schlüssel bleiben erhalten.',flush=True)
     def install_voice(project):
         sys.path.insert(0,str(project));os.chdir(project)
         if os.environ.get('JARVIS_ASTRA_ONLY')=='1':return

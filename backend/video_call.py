@@ -52,6 +52,7 @@ def answer(app, body, identity='jarvis', text_only=False, personal_profile=None)
     if text_only:
         instruction=('Du bist '+identity+', ein hilfreicher deutscher Assistent. Anrede: '+address+'. Antworte auf die aktuelle Frage natürlich und knapp. '
                      'Hier hast du keine Ausführungswerkzeuge und keine aktuellen Internetdaten. Behaupte keine erledigten Aufgaben. '
+                     'Für eigene 3D-Konzepte gibt es hier ein lokales Baustudio mit anklickbarer Hologramm-Ansicht. Besprich Ideen und passende Funktionen; verweise nicht ungefragt auf andere KI-Anbieter. Du bist '+identity+', nicht der Modellanbieter. '
                      'Für Notizen, Planung, Marken und Skizzen gibt es Werkzeuge im Arbeitsraum. Frage bei fehlenden Angaben gezielt nach.')
     from .personal_profile import context as personal_context
     instruction+='\n'+personal_context(app.store,override=personal_profile)
@@ -61,4 +62,6 @@ def answer(app, body, identity='jarvis', text_only=False, personal_profile=None)
     client=app.llamacpp if provider=='llamacpp' else app.local_ai
     result=client.transport('/api/chat',payload);message=result.get('message',{});reply=message.get('content')
     if result.get('done') is not True or not isinstance(reply,str) or not reply.strip() or len(reply)>12000 or message.get('tool_calls'):raise ProviderError('Die lokale KI hat keine fertige Antwort geliefert.',502)
-    return {'reply':reply.strip(),'vision':evidence,'private_call':True}
+    from .persona import correct_identity
+    reply=correct_identity(reply.strip(),app.store,text,identity=identity)
+    return {'reply':reply,'vision':evidence,'private_call':True}

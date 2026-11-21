@@ -56,3 +56,9 @@ function inFrame(){if(!group)return true;const b=new THREE.Box3().setFromObject(
 export const inspect=()=>({inFrame:inFrame(),parts:parts.length,positions:parts.map(p=>p.object.position.toArray()),tracking,armed:cameraState.armed});
 
 window.JarvisObjects={open,inspect,gestureStep,validateGLB};
+
+// Explicit reference import; all fetching and validation use the existing loader.
+export async function openReference(url){
+ if(typeof url!=='string'||url.length>2000||!/^https:\/\//i.test(url))throw Error('Bitte einen direkten HTTPS-Link zu einer GLB-Datei angeben.');
+ await open();$('object-query').value=url;await loadInternet({url,name:'3D-Referenz aus dem Internet',credit:'Rechte und Herkunft siehe Originalquelle',source:url});
+}

@@ -40,3 +40,20 @@ const late=service.command('Suche im Internet nach Hologramm-Bauprojekten');whil
 service.reset();assert.equal(searchSignal.aborted,true);release();assert.deepEqual(await late,{cancelled:true});
 globalThis.fetch=normalFetch;
 console.log('PASS: bounded untrusted research context survives one discussion/handoff; reset erases it and aborts/discards late research.');
+
+// An explanation request opens the actual inline guide, not web search or geometry.
+let guides=[];window.JarvisHologramGuide=async options=>guides.push(options);
+for(const question of ['Erkläre mir, wie ich ein Hologramm bauen kann','Zeig mir eine Anleitung für ein Hologramm','Wie baue ich ein Hologramm?','Öffne den Hologramm-Bauplan']){
+ scenario([]);guides=[];answer=await service.command(question);assert.equal(guides.length,1,question);assert.equal(guides[0].budget,40);assert.match(answer.reply,/Bauanleitung.*direkt in Jarvis geöffnet/);assert.equal(posts.length,0);assert.equal(opened.length,0);
+}
+scenario(['Sir, wir prüfen zuerst Monitor und Kamera.']);guides=[];
+await service.command('Ich möchte ein Hologramm-Gerät bauen mit Handgesten für 60 Euro');await service.command('Ich habe einen Monitor und eine USB-Kamera');
+answer=await service.command('Erkläre die Bauanleitung');assert.equal(guides[0].budget,60);assert.match(guides[0].inventory,/USB-Kamera/);
+scenario([]);guides=[];await service.command('Ich will ein Hologramm bauen für 40 Euro');answer=await service.command('Erkläre mir die Schachregeln');assert.equal(answer,null);assert.equal(guides.length,0);assert.equal(posts.length,0);
+scenario([]);guides=[];await service.command('Ich will ein Hologramm bauen für 40 Euro');answer=await service.command('Wie baue ich es?');assert.equal(guides.length,1);assert.match(answer.reply,/direkt in Jarvis geöffnet/);
+scenario([]);guides=[];await service.command('Ich will ein Hologramm bauen für 40 Euro');answer=await service.command('Erkläre mir eine Anleitung für Pizza');assert.equal(answer,null);assert.equal(guides.length,0);
+scenario([]);guides=[];answer=await service.command('Zeig mir die Hologramm-Bauanleitung für 35 Euro');assert.equal(guides[0].budget,35);
+scenario([]);guides=[];globalThis.fetch=async(path,options={})=>path==='/api/workshop/research'?{ok:true,json:async()=>({reply:'Recherche erfolgreich',sources:[]})}:normalFetch(path,options);
+answer=await service.command('Suche im Internet nach einer Hologramm-Bauanleitung');assert.equal(guides.length,0);assert.match(answer.reply,/Recherche erfolgreich/);globalThis.fetch=normalFetch;
+scenario([]);guides=[];window.JarvisHologramGuide=async()=>{throw Error('Test: Guide ist nicht verfügbar');};answer=await service.command('Wie kann ich ein Hologramm bauen?');assert.match(answer.reply,/konnte nicht geöffnet werden/);assert.doesNotMatch(answer.reply,/ist jetzt direkt/);
+console.log('PASS: explicit explanation/build-guide requests open inline guide, preserve budget and inventory, explicit web search remains research, missing guide is reported honestly.');

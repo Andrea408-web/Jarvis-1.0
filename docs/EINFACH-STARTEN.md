@@ -120,3 +120,17 @@ Bei einem physischen Hologramm-Projekt kannst du Budget, Gestenwunsch und vorhan
 ### Fehlermeldung „Bauteile brauchen positive Abmessungen“
 
 Null oder negative Werte sind als Bauteilmaß ungültig; eine Position darf dagegen null oder negativ sein. Die lokale Erzeugung verwendet dafür jetzt einen getrennten, streng begrenzten Maßdatentyp. Ganze Millimeter werden als Zahlen und Bruchmaße intern als geprüfter Dezimaltext übertragen und anschließend unverändert in Millimeterzahlen umgewandelt. Es werden keine Ersatzmaße geraten. Falls eine ältere Laufzeit trotzdem ungültige Werte liefert, nennt die Rückfrage das betroffene Bauteil, die Achse und den Wert. Nach dem Update Jarvis am Mac neu starten und die Browserseite neu laden; die Fehlerdetails zeigen dann `workshop-2026-11-21-dimensions`.
+
+### Ein Hologramm-Gerät selbst bauen: die Anleitung öffnen
+
+Sage oder schreibe **„Erkläre mir, wie ich ein Hologramm bauen kann“**. Jarvis öffnet die Anleitung direkt, ohne vorher ein Modell erstellen zu müssen. Im Baustudio gibt es dafür **„Hologramm bauen · Anleitung“**. Du kannst dein Gesamtbudget und bereits vorhandene Geräte eintragen, Abschnitte direkt anspringen und einzelne Schritte mit Thorsten vorlesen lassen.
+
+Die Anleitung erklärt den Pepper’s-Ghost-Aufbau, einen Optiktest mit Papierstützen, die Berechnung der Folienmaße, ein rundes Pappgehäuse und die Prüfschritte. Sie ersetzt nicht die noch fehlende Auswahl kompatibler eigenständiger Elektronik. Ein vollständiges Gerät für 40 Euro und funktionierendes Handtracking sind weiterhin nicht bestätigt. Dafür müssen Display, Rechner und Kamera konkret feststehen. Vorhandene Geräteangaben werden mit dieser Anleitung weder gespeichert noch an eine KI geschickt.
+
+### Nach Vorlagen aus dem Internet entwerfen
+
+Im Baustudio öffnet **„Vorlage aus dem Internet“** die Quellensuche. Suche zum Beispiel nach „Arc-Reaktor Gehäuse Aufbau“. Lies die Ergebnisse und wähle **„Als Referenz für Entwurf übernehmen“**. Ergänze konkret, welche sichtbaren Bauteile dein eigener Entwurf haben soll, etwa drei getrennte Ringe, einen leuchtenden Kern und seitliche Halter. Erst dein Bauauftrag startet die lokale Entwurfserzeugung. Der ausgewählte Textauszug gehört zu der angezeigten Quelle; allgemeine Suchzusammenfassungen sind davon getrennt.
+
+Die vorhandene kleine Text-KI erhält Textangaben, keine Bildpixel. Sie kann damit keine exakte 3D-Kopie beliebiger Fotos rekonstruieren. Ausdrücklich gewünschte Ringanzahlen werden anhand wirklicher Ringgeometrie geprüft, nicht bloß anhand von Bauteilnamen. Ein Fehlschlag ersetzt deinen bisherigen Entwurf nicht durch ein Beispielobjekt.
+
+**„3D-Vorlage ansehen“** öffnet einen passenden direkten HTTPS-GLB-Link in der vorhandenen Objektansicht. Ein Link zu einer normalen Webseite oder einem Foto ist keine 3D-Datei. Die bestehenden Größen-, Quellen- und Geometrieprüfungen gelten weiterhin. Das Originalmodell wird als Referenz angezeigt und nicht als eigene KI-Konstruktion ausgegeben; Herkunft und Nutzungsrechte findest du an der Quelle.

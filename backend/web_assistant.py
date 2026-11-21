@@ -287,4 +287,4 @@ class WebAssistant:
                 if kind=='food':reply+=f"\nGesucht für {data['people']} Personen in {data['place']}, Budget: {data['budget']}. Ob gerade geöffnet ist und ihr innerhalb des Budgets satt werdet, ist durch diese Angaben nicht sicher bestätigt."
             else:reply='Sir, die aktuellen Angaben konnte ich nicht zuverlässig aus den öffentlichen Seiten lesen. Ich kann dir die passende Website bzw. Websuche öffnen; Preise und Öffnungszeiten erfinde ich nicht.'
         reply+=f'\nAbruf: {now:%d.%m.%Y %H:%M} (Europe/Berlin).'
-        return {'reply':reply,'view':'discover','category':kind,'title':'Kinoprogramm' if kind=='cinema' else 'Ergebnisse zu deiner Frage','cards':[],'sources':[{'title':s['title'][:180],'url':s['url'],'kind':s.get('kind','website')} for s in sources]}
+        return {'reply':reply,'view':'discover','category':kind,'title':'Kinoprogramm' if kind=='cinema' else 'Ergebnisse zu deiner Frage','cards':[],'sources':[{'title':s['title'][:180],'url':s['url'],'kind':s.get('kind','website'),'snippet':str(s.get('snippet',''))[:450]} for s in sources]}

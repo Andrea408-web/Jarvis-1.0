@@ -24,7 +24,18 @@ async function search(text,address){
 export async function command(raw,{address='Sir'}={}){
  if(typeof raw!=='string')return null;const text=clean(raw);if(pending&&Date.now()-pending.time>600000)pending=null;if(hologram&&Date.now()-hologram.time>600000)hologram=null;if(research&&Date.now()-research.time>600000)research=null;
  if(/^(?:chat löschen|vergiss alles|neues gespräch|chat zurücksetzen)\b/i.test(text)){reset();return null;}
- const researchQuestion=/such|internet|recherch|quelle|bauanleitung/i.test(text)&&(/hologramm|pepper.?s ghost/i.test(text)||hologram);
+ const explicitHologram=/hologramm|pepper.?s ghost/i.test(text),hologramTopic=explicitHologram||!!hologram;
+ const contextualGuide=!!hologram&&/^(?:(?:öffne|zeige?|erkläre?|erklaere?|lies)(?: mir)?(?: bitte)?(?: die| den| eine?| diese?| unsere?)? (?:bauanleitung|bauplan|anleitung)(?: dazu| dafür| dafuer| hierzu| bitte)?|wie (?:baue ich|kann ich)(?: das| es| dieses gerät| das gerät)(?: bauen| herstellen| machen)?|schritt für schritt)$/i.test(text);
+ const explicitResearch=/such|recherch|im internet|im web|quellen?/i.test(text);
+ const guideQuestion=(explicitHologram||contextualGuide)&&!explicitResearch&&!/(?:keine?|ohne)\s+(?:eine?\s+)?(?:anleitung|bauplan)/i.test(text)&&/anleitung|bauplan|erklär|erklaer|wie.{0,80}(?:bau|herstell|mach)|schritt.{0,20}schritt/i.test(text);
+ if(guideQuestion){
+  const amount=text.match(/(\d+(?:[.,]\d{1,2})?)\s*(?:euro|€)/i),budget=amount?Number(amount[1].replace(',','.')):hologram?.budget??40;
+  const options={budget,inventory:(hologram?.notes||[]).join(' ').slice(0,1000)};
+  epoch++;active?.abort();active=null;pending=null;const version=epoch;
+  try{if(typeof window.JarvisHologramGuide!=='function')throw Error('Bitte Jarvis aktualisieren und die Seite neu laden.');await window.JarvisHologramGuide(options);if(version!==epoch)return {cancelled:true};return {reply:address+', die Hologramm-Bauanleitung ist jetzt direkt in Jarvis geöffnet. Sie erklärt das optische Prinzip, benötigte Teile und die einzelnen Bauschritte. Budget und vorhandene Geräte kannst du dort anpassen. Das ist eine Spiegelungsillusion; die Kamera- und Gestensteuerung muss zusätzlich technisch eingerichtet werden.',proposals:[]};}
+  catch(e){if(version!==epoch)return {cancelled:true};return {reply:address+', die Bauanleitung konnte nicht geöffnet werden: '+e.message,proposals:[]};}
+ }
+ const researchQuestion=explicitResearch&&hologramTopic;
  if(researchQuestion)return search(text,address);
  const physicalHologram=/hologramm/i.test(text)&&/bauen|selbst|gerät|projektor|herstellen|tisch|budget|euro/i.test(text);
  const freshHologram=physicalHologram&&!hologram;

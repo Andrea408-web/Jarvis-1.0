@@ -117,3 +117,30 @@ def normalize_dimensions(raw):
             if re.fullmatch(DIMENSION_PATTERN,value) is None:raise ValueError('Ungültige Millimeterangabe. Bruchmaße müssen zwischen 0.1 und 1200 mm liegen, ohne Einheit oder Vorzeichen.')
             p['size'][i]=float(value)
     return raw,notes
+
+
+def reference_request(request):
+    """Keep web excerpts separate from the user's geometry requirements.
+
+    This is text evidence only. No pixels, model download, vision or code execution.
+    An unfinished imported block is not interpreted as a user's instruction.
+    """
+    sources=[]
+    def take(match):
+        if len(sources)<3:sources.append(match.group(1).strip()[:500])
+        return '\n'
+    wish=re.sub(r'\[WEBREFERENZ\](.*?)\[/WEBREFERENZ\]',take,request,flags=re.S)
+    wish=wish.split('[WEBREFERENZ]',1)[0].strip()
+    return wish,sources
+
+
+def reference_detail_error(parts,request,references):
+    """Check an explicit ring count against generated geometry, not its title."""
+    if not references:return ''
+    match=re.search(r'\b(2|3|4|5|6|zwei|drei|vier|fünf|fuenf|sechs)\s+(?:(?:konzentrische[nr]?|sichtbare[nr]?|getrennte[nr]?|verschiedene[nr]?)\s+)?ringe[n]?\b',request,re.I)
+    if not match:return ''
+    counts={'zwei':2,'drei':3,'vier':4,'fünf':5,'fuenf':5,'sechs':6}
+    count=counts.get(match[1].casefold())or int(match[1])
+    actual=sum(p['shape']in {'torus','tube'}or p['shape']=='extrude'and bool(p.get('holes'))for p in parts)
+    if actual<count:return 'Die ausdrücklich gewünschten '+str(count)+' getrennten Ringe fehlen als echte Ringgeometrie (torus, tube oder Kontur mit Loch). Bezeichnungen allein reichen nicht.'
+    return ''

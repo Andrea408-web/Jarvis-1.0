@@ -15,6 +15,9 @@ async function answer(text,history,signal,address){
 export async function command(raw,{address='Sir'}={}){
  if(typeof raw!=='string')return null;const text=clean(raw);if(pending&&Date.now()-pending.time>600000)pending=null;
  if(/^(?:chat löschen|vergiss alles|neues gespräch|chat zurücksetzen)\b/i.test(text)){reset();return null;}
+ if(/hologramm|pepper.?s ghost/i.test(text)&&/such|internet|recherch|quelle|bauanleitung/i.test(text)){
+  try{const session=await fetch('/api/session');if(!session.ok)throw Error('Bitte den Mac verbinden.');const {token}=await session.json();const response=await fetch('/api/workshop/research',{method:'POST',headers:{'Content-Type':'application/json','X-Jarvis-Token':token},body:JSON.stringify({query:text.slice(0,500)}),signal:AbortSignal.timeout(30000)});const data=await response.json();if(!response.ok)throw Error(data.error||'Websuche fehlgeschlagen');return {...data,reply:data.reply+'\n\nWebseiten sind Quellen, keine geprüfte Bauanleitung. Handtracking braucht eine Kamera und passende Software; eine Spiegelungsfolie erkennt keine Hände.',proposals:[]};}catch(e){return {reply:address+', die Recherche klappt gerade nicht: '+e.message,proposals:[]};}
+ }
  const physicalHologram=/hologramm/i.test(text)&&/bauen|selbst|gerät|projektor|herstellen|tisch|budget|euro/i.test(text);
  if(physicalHologram||(hologram&&/euro|€|budget|handgest|ohne handy|eigenständig|display|rechner|kamera/i.test(text))){
   if(!hologram){reset();hologram={budget:null,gesture:false};}

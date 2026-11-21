@@ -97,6 +97,7 @@ def generate(app,body,progress=None,cancelled=None):
  +('1 bis 10 sinnvolle Konzept-Bauteile, kurze Schritte. 'if complex_design else'1 bis 6 sinnvolle Bauteile, wenige kurze Schritte. ')+'Jedes Bauteil: name, shape, size [Breite,Höhe,Tiefe] in mm, position [X,Y,Z] des Mittelpunkts, material. Y zeigt nach oben. '
  'shape: box, cylinder, sphere, torus, tube, shade, extrude, lathe. material: wood,metal,plastic,diffuser,light. '
  'Eigene Kontur: extrude mit outline [[x,y],...] und optional holes [Konturen], smooth true für Rundungen. Konturkoordinaten -0.5 bis 0.5. '
+ 'Bei runden, organischen oder geschwungenen Wünschen keine Ansammlung von Kästen: nutze passende lathe-Profile oder extrude-Konturen mit smooth true. Runde Gehäuse und Sockel als Drehprofil, nicht als Box. Eine Kamera bei verlangter Gestensteuerung als eigenes benanntes Bauteil zeigen; Geometrie allein implementiert kein Handtracking. '
  'Drehkörper: lathe mit profile [[Radius,Y],...] von unten nach oben, Radius 0 bis 0.5, Y -0.5 bis 0.5. tube braucht wall in mm. '
  'Optional rotation [X,Y,Z] in Grad. cylinder/tube/shade entlang Y; torus in XY, Stärke Z kleiner als halber Durchmesser. '
  'Kurze verständliche Erklärung: Funktion der konkreten Bauteile, keine behaupteten Tests, Tragfähigkeiten oder sichere Netzspannungsverdrahtung. '

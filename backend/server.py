@@ -700,6 +700,10 @@ class Handler(BaseHTTPRequestHandler):
                 if path=='/api/workshop/jobs':return self._json(app.workshop.submit(body,owner),202)
                 if set(body)!={'id'}:raise ValueError('Bitte nur die Werkstatt-Auftragskennung angeben.')
                 return self._json(app.workshop.cancel(body['id'],owner)if path.endswith('/cancel')else app.workshop.status(body['id'],owner))
+            if method=='POST' and path=='/api/workshop/research':
+                if set(body)!={'query'} or not isinstance(body['query'],str) or not 1<=len(body['query'].strip())<=500:raise ValueError('Bitte eine Baufrage mit höchstens 500 Zeichen angeben.')
+                if not app.store.settings().get('web_enabled',True):return self._json({'reply':'Die öffentliche Websuche ist ausgeschaltet, Sir.','sources':[]})
+                return self._json(app.web.answer({'kind':'web','query':body['query'].strip()}))
             if method=='POST' and path=='/api/workshop/hologram-project':
                 from .hologram_project import design as hologram_design
                 return self._json(hologram_design(body))

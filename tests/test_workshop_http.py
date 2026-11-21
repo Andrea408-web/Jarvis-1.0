@@ -36,3 +36,13 @@ class WorkshopHTTPTests(unittest.TestCase):
   self.prepare();started=threading.Event();release=threading.Event();self.addCleanup(release.set)
   def generate(*args,**kwargs):started.set();release.wait(2);return json.dumps(RAW)
   self.app.code_room._generate=generate;code,_=self.request('POST','/api/workshop/jobs',self.body());self.assertEqual(code,202);self.assertTrue(started.wait(1));code,cancelled=self.request('POST','/api/workshop/jobs/cancel',{'id':'a'*32});self.assertEqual(code,200);self.assertEqual(cancelled['state'],'cancelled');release.set();self.assertNotIn('result',self.done())
+ def test_research_uses_sources_and_honors_auth_and_web_setting(self):
+  calls=[]
+  def reader(url):
+   calls.append(url)
+   return ('<a class="result__a" href="https://example.com/build">Reflector guide</a><span class="result__snippet">Camera gesture prototype, untested costs</span>' if 'duckduckgo' in url else '<p>Camera gesture prototype</p>',url)
+  self.app.web.reader=reader
+  code,_=self.request('POST','/api/workshop/research',{'query':'Hologramm bauen'},token=False);self.assertEqual(code,401);self.assertFalse(calls)
+  code,data=self.request('POST','/api/workshop/research',{'query':'Hologramm bauen'});self.assertEqual(code,200);self.assertIn('Camera gesture prototype',data['reply']);self.assertEqual(data['sources'][0]['url'],'https://example.com/build');self.assertEqual(len(calls),2)
+  self.app.store.update_settings({'web_enabled':False});calls.clear();code,data=self.request('POST','/api/workshop/research',{'query':'Hologramm bauen'});self.assertEqual(code,200);self.assertFalse(calls);self.assertIn('ausgeschaltet',data['reply'])
+  code,_=self.request('POST','/api/workshop/research',{'query':'x'*501});self.assertEqual(code,400)

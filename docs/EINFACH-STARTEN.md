@@ -103,3 +103,15 @@ Sage oder schreibe **„Öffne die Hologramme“**. Im Baustudio kannst du auße
 Unter **„Startideen · oder deine eigene Idee“** findest du Lichtobjekt, Möbel, Organizer, Skulptur und Gehäuse. Diese Schaltflächen tragen nur einen Bauwunsch ein. Die Geometrie entsteht erst aus deinem Auftrag an die lokale KI; es gibt keine fest eingesetzten Beispielmodelle. Eigene Objekte sind weiterhin möglich. Gesicherte Entwürfe können auch offline in der Hologramm-Ansicht geladen werden. „Hologramm“ bezeichnet die Darstellung auf deinem Bildschirm.
 
 Jarvis kennt jetzt im Gespräch die tatsächlich vorhandenen lokalen 3D-Funktionen besser. Eine klare ungefragte Anbieter-Empfehlung im Baugespräch erhält höchstens einen Korrekturversuch. Bleibt die Antwort unpassend, wird das offen gesagt und das vorhandene Baustudio angeboten. Ein anderes Modell wird dafür nicht geladen. Fragen nach Modellnamen oder anderen Anbietern bleiben möglich.
+
+### Im Baustudio sprechen und Entwürfe besprechen
+
+Oben im Baustudio stehen **Mit Jarvis sprechen** und die Freigabe **Spracheingabe erlauben**. Aktiviere die Freigabe und tippe auf Sprechen; der Browser fragt gegebenenfalls nach dem Mikrofon. Danach werden erkannte Fragen und Änderungen ohne Senden übernommen. Die Browser-Spracherkennung kann Internet benötigen. Der normale Chat muss dafür nicht zusätzlich zuhören.
+
+**Automatisch · Frage oder Bauauftrag** unterscheidet Fragen von Entwurfsaufträgen. Du kannst schon vor dem ersten Modell fragen: „Kann ich das mit einer Kamera steuern?“ Für ein Gespräch, bei dem das Modell erhalten bleiben soll, wähle **Besprechen · Modell behalten**. Für einen ausdrücklichen Bauauftrag gibt es **Entwerfen / ändern**. Während eines laufenden Schritts wird deine neueste Nachricht vorgemerkt; Stopp verwirft sie.
+
+Thorsten antwortet nach einer Nachricht automatisch, wenn **Mit Thorsten antworten** aktiv ist. **Stimme stoppen** beendet nur die aktuelle Ausgabe. Bleibt es still, öffne **Stimme & Mikrofon-Hilfe → Thorsten testen**. Eine fehlende oder blockierte Wiedergabe wird im sichtbaren Sprachstatus gemeldet. Es wird keine Ersatz-Roboterstimme ausgewählt und kein neues Stimmenmodell geladen.
+
+Ausdrücklich runde oder geschwungene Bauwünsche werden auch anhand ihrer erzeugten Geometrie geprüft. Ein Kasten mit rund geschliffenen Kanten reicht für einen geschwungenen Hauptkörper nicht. Die lokale KI bekommt höchstens einen Korrekturversuch. Erfüllt auch dieser den Formwunsch nicht, bleibt der bisherige Entwurf erhalten; die Software ersetzt ihn nicht durch ein Musterobjekt. Das verbessert die Prüfung, garantiert aber nicht die Entwurfsqualität der kleinen lokalen KI.
+
+Bei einem physischen Hologramm-Projekt kannst du Budget, Gestenwunsch und vorhandene Geräte im Gespräch angeben. Folgefragen verwenden diese Angaben. Gefundene Webauszüge werden als ungeprüfte Quellen für das weitere Baugespräch übernommen, nicht als getestete Konstruktion. **Chat löschen** verwirft diesen vorübergehenden Gesprächskontext. Ein Modell auf dem Bildschirm erzeugt weiterhin kein echtes Tischgerät.

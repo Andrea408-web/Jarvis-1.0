@@ -78,18 +78,19 @@ def generate(app,body,progress=None,cancelled=None):
  from .providers import ProviderError
  from .workshop_feedback import wants_new_design,lighting_request,geometry_signature
  from .workshop_schema import design_schema
- from .workshop_requirements import normalize_emitters,complex_goal,unpack_lighting
+ from .workshop_requirements import normalize_emitters,complex_goal,unpack_lighting,form_request,unpack_form,form_error,camera_request,camera_error
  from .workshop_jobs import checkpoint
  previous=body.get('previous');context='';checked=None
  if previous is not None and not isinstance(previous,dict):raise ValueError('Ungültiger bisheriger Entwurf.')
  if previous:
   checked=previous_assembly(previous);context=' Ursprünglicher Bauwunsch: '+str(previous.get('brief',''))[:500]+' Aktuelle Bauteile: '+json.dumps([{'name':p['name'][:40],'shape':p['shape'],'size':p['size'],'position':p['position'],'material':p['material']}for p in checked['parts'][:6]],ensure_ascii=False,separators=(',',':'))
  if checked and checked.get('concept'):context+=' Bisherige Baugruppen: '+', '.join(s['name'][:40]for s in checked['concept']['systems'])
- redesign=bool(checked and wants_new_design(body['request']));complex_design=complex_goal(body['request'],previous)
+ redesign=bool(checked and wants_new_design(body['request']));complex_design=complex_goal(body['request'],previous);form=form_request(body['request'],previous);camera_needed=camera_request(body['request'],previous)
  led=lighting_request(body['request'])
  if led is None and checked and any(p['material']=='light'for p in normalize_emitters(checked,True)[0]['parts']):led=True
  rules=(' Dies ist ausdrücklich ein neuer Entwurf: ändere Aufbau, Kontur oder Bauteilanordnung erkennbar. Nur Titel, Farbe oder eine Gesamtskalierung zu ändern reicht nicht. Behalte ausdrücklich gewünschte Funktionen, Material und Maße, sofern der aktuelle Wunsch sie nicht ändert.'if redesign else' Bei einer Änderung behalte ungenannte Merkmale des aktuellen Entwurfs bei. Bei einer neuen Objektbeschreibung hat der aktuelle Wunsch Vorrang.')
  if complex_design:rules+=' Komplexes Konzept: zerlege den Wunsch in funktionale Baugruppen, zeige deren wichtige Teile. Liefere zusätzlich concept mit systems (je name,function), workflow (Funktionsablauf) und unresolved (offene technische Fragen). Keine geprüfte Mechanik, Kinematik, Steuerung oder Tragfähigkeit behaupten.'
+ if form:rules+=' Der Formwunsch ist verbindlich: liefere das wichtige Formbauteil separat als form (vollständiges Bauteilobjekt); alle übrigen Bauteile in parts. form darf kein Kasten und kein Lichtmodul sein. '+('Verwende eine eigene nichtrechteckige Kontur mit mindestens fünf Punkten oder ein variierendes Drehprofil mit mindestens vier Punkten; keine rechteckige Kontur und kein gleichförmiger Zylinder.'if form=='custom'else'Verwende einen runden Hauptkörper; ein kleiner dekorativer Ring an einem großen Kasten erfüllt den Wunsch nicht.')
  if led:rules+=' Liefere das LED-Modul separat als lighting mit name,shape,size,position,material light; die anderen Teile stehen in parts. LEDs sind gewünscht: modelliere echte LED-Bauteile an ihren vorgesehenen Positionen mit material light. Erwähne LEDs nicht nur im Text.'
  elif led is False:rules+=' Der aktuelle Wunsch enthält keine Beleuchtung; keine LED-Bauteile ergänzen.'
  prompt=('Du bist JARVIS. Entwirf genau das Objekt des aktuellen Bauwunschs als ungeprüften 3D-Bauprototyp, keine feste Vorlage. '
@@ -110,7 +111,7 @@ def generate(app,body,progress=None,cancelled=None):
   for attempt in range(2):
    checkpoint(progress,cancelled,'generating'if attempt==0 else'repairing','Die lokale KI entwickelt die Bauteile.'if attempt==0 else'Ich korrigiere die Modellantwort und prüfe den Entwurf erneut.')
    try:
-    reply=app.code_room._generate({'model':'llamacpp'if provider=='llamacpp'else'ollama:'+settings['local_model']},[{'role':'system','content':prompt+retry},{'role':'user','content':body['request']}],2560 if complex_design and attempt==0 else 2048,structured=design_schema((10 if attempt==0 else 6)if complex_design else(6 if attempt==0 else 4),lighting=led,complex_design=complex_design))
+    reply=app.code_room._generate({'model':'llamacpp'if provider=='llamacpp'else'ollama:'+settings['local_model']},[{'role':'system','content':prompt+retry},{'role':'user','content':body['request']}],2560 if complex_design and attempt==0 else 2048,structured=design_schema((10 if attempt==0 else 6)if complex_design else(6 if attempt==0 else 4),lighting=led,complex_design=complex_design,form=form))
     checkpoint(progress,cancelled,'validating','Ich prüfe Bauteile, Konturen und deine Anforderungen.')
     # Some local models wrap otherwise valid JSON in a Markdown code fence.
     reply=re.sub(r'^```(?:json)?\s*|\s*```$','',reply.strip(),flags=re.I)
@@ -119,7 +120,7 @@ def generate(app,body,progress=None,cancelled=None):
      q=raw['questions']
      if not isinstance(q,list)or not 1<=len(q)<=3 or any(not isinstance(t,str)or not 1<=len(t)<=240 for t in q):raise ValueError('Ungültige Rückfrage der lokalen KI.')
      return {'needs_details':True,'questions':q}
-    raw,corrections=normalize_emitters(unpack_lighting(raw,led),led)
+    raw,corrections=normalize_emitters(unpack_form(unpack_lighting(raw,led),form),led)
     proposed=assembly(raw)
     if complex_design and not proposed.get('concept'):raise ValueError('Die Baugruppen und offenen technischen Fragen des komplexen Konzepts fehlen.')
    except (ValueError,TypeError)as error:
@@ -127,7 +128,7 @@ def generate(app,body,progress=None,cancelled=None):
      retry=' Korrektur: Deine vorige Ausgabe war unvollständig oder ungültig. Liefere ein vollständiges JSON-Objekt mit title, parts, steps und features. Höchstens '+str(6 if complex_design else 4)+' sorgfältig ausgearbeitete Bauteile, kurze Erklärung. Fehler: '+str(error)[:220]
      continue
     raise ValueError('Die kleine lokale KI hat keine gültigen 3D-Bauteile geliefert. Der bisherige Entwurf bleibt erhalten. Ursache: '+('Die Modellantwort war kein vollständiges JSON-Objekt.'if isinstance(error,json.JSONDecodeError)else str(error)[:240]))from None
-   reason=''
+   reason=form_error(proposed['parts'],form,raw['parts'])+camera_error(proposed['parts'],camera_needed)
    if redesign and geometry_signature(proposed['parts'])==geometry_signature(checked['parts']):reason='Die Geometrie wiederholt den bisherigen Entwurf. Liefere einen erkennbar anderen Aufbau oder andere Konturen.'
    if led is False and any(p['material']=='light'for p in proposed['parts']):reason+=' Der aktuelle Wunsch verlangt einen Entwurf ohne LED-Bauteile.'
    if led and not any(p['material']=='light'for p in proposed['parts']):reason+=' Es fehlen die ausdrücklich gewünschten LED-Bauteile mit material light.'

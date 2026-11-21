@@ -23,11 +23,11 @@ class WorkshopJobsTests(unittest.TestCase):
   self.fail('worker did not finish')
  def test_actual_llamacpp_payload_has_bounded_schema_and_completed_result(self):
   first=self.room.submit(self.body(),'owner');self.assertEqual(first['state'],'running');data=self.done();self.assertEqual(data['state'],'done');self.assertEqual(data['result']['title'],RAW['title']);self.assertEqual(len(self.payloads),1)
-  format=self.payloads[0]['response_format'];self.assertEqual(format['type'],'json_schema');self.assertEqual(format['json_schema']['schema'],design_schema());self.assertFalse(self.app.chat_lock.locked());self.assertNotIn('owner',data);self.assertNotIn('cancel',data)
+  format=self.payloads[0]['response_format'];self.assertEqual(format['type'],'json_schema');self.assertEqual(format['json_schema']['schema'],design_schema(form='round'));self.assertFalse(self.app.chat_lock.locked());self.assertNotIn('owner',data);self.assertNotIn('cancel',data)
  def test_ollama_receives_schema_in_format_not_only_json_mode(self):
   self.app.store.update_settings({'ai_provider':'ollama','local_model':'qwen2.5:0.5b'});calls=[]
   self.app.local_ai.transport=lambda path,payload:(calls.append(payload),{'done':True,'message':{'content':json.dumps(RAW)}})[1]
-  self.room.submit(self.body(),'owner');self.assertEqual(self.done()['state'],'done');self.assertEqual(calls[0]['format'],design_schema());self.assertEqual(calls[0]['options']['num_ctx'],4096)
+  self.room.submit(self.body(),'owner');self.assertEqual(self.done()['state'],'done');self.assertEqual(calls[0]['format'],design_schema(form='round'));self.assertEqual(calls[0]['options']['num_ctx'],4096)
  def test_stop_during_generation_discards_result_and_never_retries(self):
   started=threading.Event();release=threading.Event();calls=[]
   def generate(*args,**kwargs):calls.append(args);started.set();release.wait(2);return 'not JSON'

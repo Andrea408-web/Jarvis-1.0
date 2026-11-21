@@ -1,5 +1,5 @@
 """Requirement handling without substituting invented parts or machine capabilities."""
-import copy,re
+import copy,math,re
 
 def complex_goal(request,previous=None):
     if re.search(r'komplex|mechanik|robot|greifer|gelenk|servo|motor|automati|antrieb|sensor|steuerung|beweglich|mechanisch',request,re.I):return True
@@ -37,3 +37,65 @@ def validate_concept(value):
     for key in ['workflow','unresolved']:
         if not isinstance(value[key],list)or not 1<=len(value[key])<=6 or any(not isinstance(t,str)or not 1<=len(t.strip())<=300 for t in value[key]):raise ValueError('Ungültiger Funktionsablauf oder Prüfpunkt.')
     return copy.deepcopy(value)
+
+
+def form_request(request,previous=None):
+    """Only explicit form wishes constrain geometry; rounded edges may stay boxes.
+
+    A short follow-up keeps the original form requirement. A new complete object
+    request, or a positive square/rectangular wish, replaces it.
+    """
+    text=request.casefold()
+    no_boxes=re.search(r'(?:nicht|kein(?:e[snmr]?)?|ohne).{0,28}(?:eckig|viereck|kasten|kästen|quader|box)|(?:nur|immer).{0,18}(?:viereck|kasten|kästen|box)',text)
+    if re.search(r'geschwungen|organisch|freiform|fließend|fliessend|eigene[nrms]? kontur',text) or no_boxes:return 'custom'
+    if re.search(r'\brund(?:e[snmr]?)?\b|kreisförmig|kreisfoermig|kreisrund|oval|kugelförmig|kugelfoermig|zylindrisch',text):return 'round'
+    if re.search(r'eckig|rechteck|viereck|quader|würfel|wuerfel|kasten|\bbox\b',text):return None
+    if previous and not re.search(r'^(?:baue?|entwirf|erstell|plane|ich (?:will|möchte))\b',text):
+        return form_request(str(previous.get('brief','')))
+    return None
+
+def unpack_form(raw,required):
+    raw=copy.deepcopy(raw)
+    if isinstance(raw,dict)and 'form'in raw:
+        if not required or not isinstance(raw['form'],dict)or not isinstance(raw.get('parts'),list):raise ValueError('Ungültiges separat modelliertes Formbauteil.')
+        raw['parts']=[raw.pop('form')]+raw['parts']
+    return raw
+
+def form_error(parts,required,source=None):
+    """Test real geometry, not names: an ornamental sphere cannot fix a box body."""
+    if not required:return ''
+    solid=[p for p in parts if p['material']!='light']
+    if not solid:return 'Der gewünschte Körper fehlt; ein Lichtmodul allein erfüllt den Formwunsch nicht.'
+    volume=lambda p:math.prod(p['size'])
+    main=max(volume(p)for p in solid)
+    def authored(p,index):
+        if p['shape']=='lathe':
+            profile=p['profile']
+            # End caps at radius zero do not make a cylinder a free profile.
+            radii=[v[0]for v in profile if v[0]>.005]
+            return len(profile)>=4 and len(radii)>=2 and max(radii)-min(radii)>.03
+        if p['shape']=='extrude':
+            # A four-corner rectangle with an edge bevel is still a rectangle.
+            outline=p['outline'];original=(source or parts)[index].get('outline',[])
+            area=abs(sum(a[0]*b[1]-b[0]*a[1]for a,b in zip(outline,outline[1:]+outline[:1]))/2)
+            return len(original)>=5 and area<.9 and any(abs(x)<.48 and abs(y)<.48 for x,y in outline)
+        return False
+    curved={'cylinder','sphere','torus','tube','shade','lathe','extrude'}
+    for index,p in enumerate(parts):
+        if p['material']=='light' or volume(p)<main*.25:continue
+        if required=='custom' and authored(p,index):return ''
+        if required=='round' and (p['shape']in curved-{'extrude'} or authored(p,index)):return ''
+    return ('Die ausdrücklich gewünschte eigene geschwungene Form fehlt. Liefere ein deutliches Hauptbauteil mit eigener nichtrechteckiger extrude-Kontur oder einem variierenden lathe-Profil; ein abgerundeter Kasten oder eine kleine Zierkugel reicht nicht.' if required=='custom' else 'Die ausdrücklich gewünschte runde Form fehlt am Hauptkörper. Liefere ein ausreichend großes rundes Hauptbauteil statt nur Kästen oder einer kleinen Zierkugel.')
+
+
+def camera_request(request,previous=None):
+    text=request.casefold()
+    if re.search(r'(?:ohne|keine?)\s+(?:eine?\s+)?(?:kamera|camera|webcam|handtracking|gestensteuerung)',text):return False
+    if re.search(r'kamera|camera|webcam|handtracking|gestensteuerung|handgest',text):return True
+    if previous and not re.search(r'^(?:baue?|entwirf|erstell|plane|ich (?:will|möchte))\b',text):return camera_request(str(previous.get('brief','')))
+    return False
+
+def camera_error(parts,required):
+    if required and not any(re.search(r'kamera|camera|webcam',p['name'],re.I)and p['material']!='light'for p in parts):
+        return 'Die für Kamera-/Handgestenbedienung benötigte Kamera fehlt als eigenes benanntes Bauteil. Zeige ihr vorgesehenes Modul im Entwurf; behaupte keine bereits funktionierende Bildanalyse.'
+    return ''

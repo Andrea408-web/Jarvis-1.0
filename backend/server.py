@@ -396,7 +396,7 @@ class Handler(BaseHTTPRequestHandler):
             if path == '/api/mobile/pair' and self.command == 'POST':
                 return True
             if not self.server.device_auth.valid(self.headers.get('Cookie')):
-                if self.command == 'GET' and path in {'/','/mobile','/quest','/tablet','/brands','/pair.js','/style.css','/manifest.webmanifest','/app-icon.png'}:
+                if self.command == 'GET' and path in {'/','/mobile','/quest','/tablet','/brands','/tv','/pair.js','/style.css','/manifest.webmanifest','/app-icon.png'}:
                     return True
                 self._json({'error':'Bitte dieses Gerät über den aktuellen QR-Code am Mac koppeln.'},401)
                 return False
@@ -435,7 +435,7 @@ class Handler(BaseHTTPRequestHandler):
         app = self.server.app
         method = self.command
         if method == 'GET':
-            if self.server.device_auth and not self.server.device_auth.valid(self.headers.get('Cookie')) and path in {'/','/mobile','/quest','/tablet','/brands'}:
+            if self.server.device_auth and not self.server.device_auth.valid(self.headers.get('Cookie')) and path in {'/','/mobile','/quest','/tablet','/brands','/tv'}:
                 body=(FRONTEND/'pair.html').read_bytes()
                 self._headers(200,'text/html; charset=utf-8',len(body))
                 return self.wfile.write(body)
@@ -472,6 +472,8 @@ class Handler(BaseHTTPRequestHandler):
                         if not chunk:break
                         self.wfile.write(chunk)
                 return
+            if path=='/api/tv/info':
+                return self._json({'mode':'tv','requires_local_ai_server':True,'tv_ui_path':'/tv','usb_autostart':False,'local_media_only':True,'remote_device':bool(self.server.device_auth),'connection_methods':['TV-Browser im gleichen privaten Heimnetz mit bestehender Gerätekopplung','Kompatibel eingerichteter eigener HDMI-Rechner oder Mac mit /tv im Browser'],'limitations':['Ein USB-Stick installiert diese Web-App nicht auf einem normalen Fernseher.','TV-Browser unterscheiden sich bei Mikrofon, Audio, Dateiauswahl und HTTPS-Zertifikaten.','KI-Antworten benötigen einen erreichbaren, kompatibel eingerichteten lokalen Jarvis-Server. Thorsten benötigt zusätzlich einen eingerichteten Stimmenserver.']})
             if path == '/api/session':
                 return self._json({'token': app.token,'remote_device':bool(self.server.device_auth)})
             if re.fullmatch(r'/api/agents/[0-9a-f]{32}/image',path):
@@ -534,7 +536,7 @@ class Handler(BaseHTTPRequestHandler):
             if path=='/api/objects/info':
                 from .object_models import capabilities
                 return self._json(capabilities())
-            static = {'/': 'device.html' if self.server.device_auth or re.search(r'iPhone|iPad|iPod|Macintosh.*Mobile',self.headers.get('User-Agent',''),re.I) else 'index.html', '/index.html': 'index.html', '/mobile':'mobile.html','/mobile-app.js':'mobile-app.js','/boot.js':'boot.js','/task-board.js':'task-board.js','/discover.js':'discover.js','/quest':'aeris.html','/quest-assistant.js':'quest-assistant.js','/quest-hands.js':'quest-hands.js','/aeris':'aeris.html','/aeris.js':'aeris.js','/aeris-assistant.js':'aeris-assistant.js','/aeris-xr.js':'aeris-xr.js','/aeris-pose.js':'aeris-pose.js','/vr-guide':'vr-guide.html','/video-editor':'video-editor.html','/video-editor.js':'video-editor.js','/video-renderer.js':'video-renderer.js','/companion':'call.html','/companion-actions.js':'companion-actions.js','/companion.js':'companion.js','/companion.css':'companion.css','/jarvis-orb.js':'jarvis-orb.js','/call':'call.html','/call-bridge.js':'call-bridge.js','/aeris-model.js':'aeris-model.js','/aeris-projects.js':'aeris-projects.js','/aeris-tracking.js':'aeris-tracking.js','/video-call.js':'video-call.js','/video-call.css':'video-call.css','/aeris-gestures.js':'aeris-gestures.js','/aeris-shell.css':'aeris-shell.css','/aeris-shell.js':'aeris-shell.js','/aeris-icon.svg':'aeris-icon.svg','/aeris-sw.js':'aeris-sw.js',
+            static = {'/tv':'tv.html','/tv.js':'tv.js','/tv.css':'tv.css','/': 'device.html' if self.server.device_auth or re.search(r'iPhone|iPad|iPod|Macintosh.*Mobile',self.headers.get('User-Agent',''),re.I) else 'index.html', '/index.html': 'index.html', '/mobile':'mobile.html','/mobile-app.js':'mobile-app.js','/boot.js':'boot.js','/task-board.js':'task-board.js','/discover.js':'discover.js','/quest':'aeris.html','/quest-assistant.js':'quest-assistant.js','/quest-hands.js':'quest-hands.js','/aeris':'aeris.html','/aeris.js':'aeris.js','/aeris-assistant.js':'aeris-assistant.js','/aeris-xr.js':'aeris-xr.js','/aeris-pose.js':'aeris-pose.js','/vr-guide':'vr-guide.html','/video-editor':'video-editor.html','/video-editor.js':'video-editor.js','/video-renderer.js':'video-renderer.js','/companion':'call.html','/companion-actions.js':'companion-actions.js','/companion.js':'companion.js','/companion.css':'companion.css','/jarvis-orb.js':'jarvis-orb.js','/call':'call.html','/call-bridge.js':'call-bridge.js','/aeris-model.js':'aeris-model.js','/aeris-projects.js':'aeris-projects.js','/aeris-tracking.js':'aeris-tracking.js','/video-call.js':'video-call.js','/video-call.css':'video-call.css','/aeris-gestures.js':'aeris-gestures.js','/aeris-shell.css':'aeris-shell.css','/aeris-shell.js':'aeris-shell.js','/aeris-icon.svg':'aeris-icon.svg','/aeris-sw.js':'aeris-sw.js',
                       '/device-polish.css':'device-polish.css','/quick-help.js':'quick-help.js','/contacts-panel':'contacts-panel.html','/contacts-panel.js':'contacts-panel.js','/tablet':'device.html','/brands':'device.html','/device-app.js':'device-app.js','/contact-request.js':'contact-request.js','/device-desk.js':'device-desk.js','/device-business.js':'device-business.js','/hud-core.js':'hud-core.js','/device-ai.js':'device-ai.js','/device-store.js':'device-store.js','/device-style.css':'device-style.css','/manifest.webmanifest':'manifest.webmanifest','/app-icon.png':'app-icon.png','/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js','/office-3d.js':'office-3d.js', '/lowpoly-stage.js':'lowpoly-stage.js', '/artifacts.js':'artifacts.js', '/jarvis-voice.js':'jarvis-voice.js', '/voice-worker.js':'voice-worker.js', '/conversation.js':'conversation.js', '/mini-hub.js':'mini-hub.js', '/world-news.js':'world-news.js', '/astra.js':'astra.js', '/astra.css':'astra.css', '/astra-panel.html':'astra-panel.html', '/astra-panel.js':'astra-panel.js'}
             for name in ['three.module.min.js','GLTFLoader.js','OrbitControls.js','BufferGeometryUtils.js','RoomEnvironment.js','LICENSE','NOTICE.txt']:
                 static['/vendor/three/'+name]='vendor/three/'+name
@@ -747,7 +749,14 @@ class Handler(BaseHTTPRequestHandler):
                     return self._json({'error':'Handykopplung nur direkt am Mac verwalten.'},403)
                 if body:
                     raise ValueError('Keine Parameter für die Handykopplung erforderlich.')
-                if path.endswith('/start'): return self._json(app.mobile.start())
+                if path.endswith('/start'):
+                    data=app.mobile.start()
+                    for field,target in [('url','tv_url'),('ip_url','tv_ip_url')]:
+                        if isinstance(data.get(field),str):
+                            source=urlsplit(data[field]);data[target]=source._replace(path='/tv').geturl()
+                    if data.get('tv_ip_url') or data.get('tv_url'):data['tv_entry_url']=(data.get('tv_ip_url')or data['tv_url']).split('#',1)[0]
+                    data['tv_code']=app.mobile.auth.code
+                    return self._json(data)
                 if path.endswith('/profile'): return self._json(app.mobile.profile_data())
                 if path.endswith('/reveal'):
                     app.mobile.reveal_profile()
@@ -872,6 +881,7 @@ def main(argv=None):
     parser.add_argument('--key', type=Path, help='Privater TLS-Schlüssel')
     parser.add_argument('--ask-keys', action='store_true', help='API-Schlüssel verdeckt für diese Sitzung eingeben')
     parser.add_argument('--open-browser', action='store_true', help='Nach dem Start die lokale Oberfläche im Browser öffnen')
+    parser.add_argument('--open-tv',action='store_true',help='Nach dem Start die TV-Ansicht im lokalen Browser öffnen')
     parser.add_argument('--diagnose', action='store_true', help='Tatsächliche Hardware und Software anzeigen, ohne Serverstart')
     parser.add_argument('--check-connection', choices=['gemini', 'elevenlabs', 'openai'], help='HTTPS-Verbindung ohne API-Schlüssel und ohne Generierung prüfen')
     parser.add_argument('--repair-certificates', action='store_true', help='Auf ausdrücklichen Auftrag das offizielle python.org-Zertifikatsskript auf macOS ausführen')
@@ -885,7 +895,8 @@ def main(argv=None):
     if args.setup_small_ai or args.easy_local or args.easy_companion:
         from .easy_start import run
         try:
-            if args.easy_companion:run(setup=False,companion=True)
+            if args.open_tv:run(setup=args.setup_small_ai,tv=True)
+            elif args.easy_companion:run(setup=False,companion=True)
             else:run(setup=args.setup_small_ai)
         except KeyboardInterrupt:
             pass
@@ -957,11 +968,11 @@ def main(argv=None):
             print(str(error)+f' Browser-Helfer: http://localhost:{server.server_port}/companion',flush=True)
             import webbrowser
             webbrowser.open(f'http://localhost:{server.server_port}/companion?mode=helper')
-    if args.open_browser:
+    if args.open_browser or args.open_tv:
         import webbrowser
         address = f'[{args.host}]' if ':' in args.host else args.host
         try:
-            webbrowser.open(('https' if args.cert else 'http') + f'://{address}:{server.server_port}')
+            webbrowser.open(('https' if args.cert else 'http') + f'://{address}:{server.server_port}'+('/tv'if args.open_tv else''))
         except OSError:
             print('Bitte die lokale JARVIS-Adresse manuell im Browser öffnen.', flush=True)
     try:

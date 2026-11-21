@@ -1,0 +1,34 @@
+JARVIS TV – STICK UND EIGENES HDMI-GERÄT
+
+START-HIER.html ist eine Offline-Starthilfe für einen geeigneten Browser.
+Sie enthält keine lokale KI und startet nicht automatisch auf einem Fernseher.
+
+LIVE AM FIRE TV STICK:
+1. Auf dem eingerichteten Mac in Jarvis „Fernseher / HDMI verbinden“ öffnen
+   und anschließend „TV-Verbindung vorbereiten“ wählen.
+2. Mac und Fire TV ins gleiche vertrauenswürdige Heimnetz bringen.
+3. Auf dem Fire TV den Browser Amazon Silk über die App-Suche öffnen.
+4. Kurze TV-Adresse vom Mac eingeben, dann den angezeigten sechsstelligen Code.
+5. Mac eingeschaltet lassen. Bei inkompatiblem privatem HTTPS-Zertifikat die
+   direkte HDMI-Verbindung nutzen; den Zertifikatsschutz nicht ausschalten.
+
+EIGENES HDMI-GERÄT:
+Ein Computer mit HDMI-Ausgabe muss Jarvis und die lokale KI selbst ausführen.
+Ein Fire TV Stick zeigt hier nur die Oberfläche; eine KI wird nicht auf ihn kopiert.
+Eine bereits eingerichtete kompatible Mac-Installation kann das übernehmen.
+Ein neuer Mini-PC benötigt zuerst Betriebssystem, Python, passende lokale KI-
+Laufzeit und Modell. Dieses Paket richtet keine beliebige Linux-Hardware ein.
+Keine neue Hardware wurde hergestellt oder auf deinem Fernseher getestet.
+
+MAC DIREKT PER HDMI:
+Im richtigen, bereits eingerichteten Jarvis-Ordner liegt nach dem gemeinsamen
+Update die Datei Jarvis-TV-starten.command. Sie ist für macOS gedacht und gehört
+nicht allein auf den USB-Stick: sie benötigt die bestehende Jarvis-Installation.
+
+USB-MEDIEN:
+Der TV-USB-Medienplayer kann je nach Gerät unterstützte Bilder und Videos anzeigen.
+Er führt diese HTML-Datei meist nicht aus. Eine echte Live-KI entsteht dadurch nicht.
+START-HIER.html kann eigene Dateien lokal in einem Browser anzeigen, ohne Upload.
+
+Es werden keine Kopplungscodes, Links, Stimme oder Medien auf dem Stick gespeichert.
+Kopplungscodes werden immer live am Mac erzeugt und laufen nach kurzer Zeit ab.

@@ -135,7 +135,7 @@ class Store:
             elif key == "user_name":
                 if not isinstance(value,str) or len(value)>60 or (value and not all(char.isalpha() or char in " -’\'" for char in value)):raise ValueError("Bitte nur einen kurzen Namen eingeben.")
             elif key == "assistant_identity":
-                if not isinstance(value,str) or value not in {"jarvis","astra"}:raise ValueError("Bitte Jarvis oder Astra auswählen.")
+                if not isinstance(value,str) or value not in {"jarvis","astra","aeris"}:raise ValueError("Bitte Jarvis, Astra oder Iris auswählen.")
             elif key == "ai_provider":
                 if value not in ("gemini", "openai", "ollama", "llamacpp"):
                     raise ValueError("Bitte Gemini oder OpenAI auswählen.")

@@ -1,0 +1,101 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+  <meta name="theme-color" content="#11110e">
+  <meta name="color-scheme" content="dark">
+  <title>IRIS · Dein Assistent</title>
+  <link rel="icon" href="/iris-icon.svg" type="image/svg+xml">
+  <link rel="stylesheet" href="/iris.css">
+  <script src="/device-store.js" defer></script>
+  <script src="/device-ai.js" defer></script>
+  <script src="/offline-ready.js" defer></script>
+  <link rel="stylesheet" href="/offline-ready.css">
+  <script src="/iris.js" type="module"></script>
+</head>
+<body class="iris-app" data-assistant="aeris">
+  <div class="iris-shell">
+    <header class="iris-header">
+      <a class="iris-brand" href="/iris" aria-label="IRIS Startseite">
+        <img src="/iris-icon.svg" width="38" height="38" alt="">
+        <span>IRIS<small>DEIN ASSISTENT</small></span>
+      </a>
+      <nav class="iris-modes" aria-label="Assistent wechseln">
+        <button id="iris-mode-jarvis" type="button">Jarvis</button>
+        <button id="iris-mode-astra" type="button">Astra</button>
+        <span aria-current="page">IRIS</span>
+      </nav>
+      <p class="iris-status" id="iris-status" role="status">Verbindung wird geprüft …</p>
+    </header>
+
+    <main class="iris-main" id="iris-main">
+      <section class="iris-core-stage" aria-labelledby="iris-title">
+        <p class="iris-caption">DEIN PERSÖNLICHER ASSISTENT</p>
+        <div class="iris-intro">
+          <h1 id="iris-title">Deine Gedanken.<br>Unser nächster Schritt.</h1>
+          <p>Ideen sortieren, Fragen klären, gemeinsam weiterdenken. Ich bin bereit.</p>
+        </div>
+        <div class="iris-core-shell">
+          <button class="iris-core-button" id="iris-core-button" type="button" aria-label="Mit Iris sprechen – Mikrofonfreigabe erforderlich" aria-describedby="iris-core-state">
+            <canvas id="iris-core" width="720" height="720" aria-hidden="true"></canvas>
+            <span class="iris-core-label" aria-hidden="true">IRIS</span>
+          </button>
+        </div>
+        <p class="iris-core-state" id="iris-core-state" role="status">Bereit für deine Frage.</p>
+        <nav class="iris-quick-actions" aria-label="Deine Werkzeuge">
+          <button id="iris-lab" type="button"><span aria-hidden="true">◇</span><span><strong>Techniklabor</strong><small>Projekte gemeinsam angehen</small></span></button>
+          <button id="iris-notes" type="button" aria-haspopup="dialog" aria-controls="iris-notes-dialog"><span aria-hidden="true">▤</span><span><strong>Notizen</strong><small>Gedanken festhalten</small></span></button>
+        </nav>
+        <p class="iris-footnote">KI über deinen Jarvis-Rechner oder eine eingerichtete Geräte-KI. Notizen bleiben in diesem Browser.</p>
+      </section>
+
+      <section class="iris-conversation" aria-labelledby="iris-conversation-title">
+        <header class="iris-conversation-head">
+          <div><p class="iris-caption">DEIN DIALOG</p><h2 id="iris-conversation-title">Womit fangen wir an?</h2></div>
+          <button id="iris-clear" type="button" class="iris-subtle">Chat löschen</button>
+        </header>
+        <div class="iris-messages" id="iris-messages" role="log" aria-label="Gespräch mit Iris" aria-live="polite" aria-relevant="additions text">
+          <p class="iris-message assistant">Sir, ich bin Iris. Welche Idee beschäftigt dich gerade?</p>
+        </div>
+        <form class="iris-composer" id="iris-chat-form">
+          <label for="iris-question">Deine Nachricht</label>
+          <textarea id="iris-question" rows="3" maxlength="1400" placeholder="Zum Beispiel: Hilf mir, meine Idee verständlich zu machen." required></textarea>
+          <div class="iris-composer-actions iris-compose-actions">
+            <button id="iris-send" type="submit" class="iris-primary">Iris fragen <span aria-hidden="true">↗</span></button>
+            <button id="iris-stop" type="button">Stoppen</button>
+          </div>
+        </form>
+        <section class="iris-voice" aria-label="Mit Iris sprechen">
+          <div class="iris-voice-actions">
+            <button id="iris-talk" type="button" aria-pressed="false">Mit Iris sprechen</button>
+            <button id="iris-mute" type="button">Stimme stoppen</button>
+          </div>
+          <label class="iris-check iris-consent"><input id="iris-speech-consent" type="checkbox" aria-describedby="iris-speech-help"> Browser-Spracherkennung erlauben</label>
+          <p id="iris-speech-help" class="iris-voice-help">Der Browser kann Audio online verarbeiten. Im Sprachmodus werden erkannte Fragen direkt an Iris gesendet.</p>
+          <p id="iris-voice-status" class="iris-status" role="status">Mikrofon aus. Zum Sprechen zuerst die Spracherkennung erlauben.</p>
+          <details class="iris-voice-settings">
+            <summary>Stimme &amp; Hilfe</summary>
+            <label class="iris-check"><input id="iris-read" type="checkbox" checked> Mit Thorsten antworten</label>
+            <button id="iris-voice-test" type="button">Thorsten testen</button>
+            <p>Erlaube bei Bedarf das Mikrofon in den Website-Einstellungen. Wenn dein Browser keine Spracherkennung bietet, kannst du hier weiter schreiben.</p>
+          </details>
+        </section>
+      </section>
+    </main>
+    <footer class="iris-footer"><span>IRIS / DEIN RAUM FÜR IDEEN</span><a href="/index.html">Zum Jarvis-Kontrollzentrum</a></footer>
+  </div>
+
+  <dialog id="iris-notes-dialog" class="iris-notes-dialog" aria-labelledby="iris-notes-title">
+    <header><div><p class="iris-caption">DEINE ABLAGE</p><h2 id="iris-notes-title">Gedanken festhalten.</h2></div><button id="iris-notes-close" type="button">Schließen ×</button></header>
+    <p id="iris-note-help">Notizen bleiben in diesem Browser und werden nicht automatisch an Iris gesendet. Bis zu 30 Notizen mit je 2.000 Zeichen.</p>
+    <form id="iris-note-form">
+      <label for="iris-note-text">Deine Notiz</label>
+      <textarea id="iris-note-text" rows="4" maxlength="2000" aria-describedby="iris-note-help" required placeholder="Was möchtest du dir merken?"></textarea>
+      <button id="iris-note-save" type="submit" class="iris-primary">Notiz speichern</button>
+    </form>
+    <p id="iris-note-status" class="iris-status" role="status">Noch nichts gespeichert.</p>
+    <ul id="iris-note-list" class="iris-note-list" aria-label="Gespeicherte Notizen"></ul>
+  </dialog>
+</body>
+</html>

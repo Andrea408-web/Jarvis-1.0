@@ -1,10 +1,10 @@
  'use strict';
 (()=>{
- let destination=['/quest','/tablet','/brands','/tv'].includes(location.pathname)?location.pathname:'/';
+ let destination=['/quest','/tablet','/brands','/tv','/iris','/aeris'].includes(location.pathname)?location.pathname:'/';
  const message=document.getElementById('pair-message'),form=document.getElementById('pair-form'),input=document.getElementById('pair-link');
  async function pair(value){
   let ticket=value.trim();
-  try{if(ticket.includes('#')){const url=new URL(ticket);destination=['/quest','/tablet','/brands','/tv'].includes(url.pathname)?url.pathname:destination;ticket=new URLSearchParams(url.hash.slice(1)).get('pair')||'';}}catch(_){throw Error('Bitte den vollständigen Kopplungslink vom Mac einfügen.');}
+  try{if(ticket.includes('#')){const url=new URL(ticket);destination=['/quest','/tablet','/brands','/tv','/iris','/aeris'].includes(url.pathname)?url.pathname:destination;ticket=new URLSearchParams(url.hash.slice(1)).get('pair')||'';}}catch(_){throw Error('Bitte den vollständigen Kopplungslink vom Mac einfügen.');}
   if(!ticket)throw Error('Bitte einen neuen Kopplungslink vom Mac einfügen.');
   const response=await fetch('/api/mobile/pair',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({ticket})});
   const data=await response.json();if(!response.ok)throw Error(data.error||'Kopplung fehlgeschlagen.');

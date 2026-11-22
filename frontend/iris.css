@@ -1,0 +1,137 @@
+/* Iris: a warm, quiet assistant. Scoped to this page. */
+body.iris-app {
+  --iris-bg: #101210; --iris-panel: #181d19; --iris-ink: #f3efe2;
+  --iris-muted: #b4baad; --iris-gold: #e1c48b; --iris-line: #c9ba8c30;
+  margin: 0; min-height: 100vh; min-height: 100dvh; color-scheme: dark;
+  background: radial-gradient(ellipse at 18% 44%, #86652e17, transparent 43%), radial-gradient(ellipse at 90% 15%, #47705b12, transparent 50%), var(--iris-bg);
+  color: var(--iris-ink); font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+.iris-app * { box-sizing: border-box; }
+.iris-app [hidden] { display: none !important; }
+.iris-app button, .iris-app input, .iris-app textarea { font: inherit; }
+.iris-app :focus-visible { outline: 2px solid #f6d99b; outline-offset: 4px; }
+.iris-app button { min-height: 44px; padding: 10px 15px; border: 1px solid var(--iris-line); border-radius: 10px; color: var(--iris-ink); background: #ffffff03; cursor: pointer; transition: background .16s, border-color .16s; }
+.iris-app button:hover { border-color: #e1c48b80; background: #e1c48b12; }
+.iris-app button:disabled { opacity: .45; cursor: default; }
+.iris-app a { color: var(--iris-gold); text-underline-offset: 4px; }
+.iris-app p, .iris-app h1, .iris-app h2 { margin-top: 0; }
+.iris-app h2 { font-size: 21px; font-weight: 500; letter-spacing: -.025em; }
+.iris-app small { font-size: 11px; color: var(--iris-muted); }
+.iris-app textarea { width: 100%; min-width: 0; border: 1px solid #c9ba8c4d; border-radius: 10px; background: #101510; color: var(--iris-ink); padding: 12px 14px; resize: vertical; }
+.iris-app textarea::placeholder { color: #969f91; }
+.iris-app label { color: var(--iris-muted); font-size: 12px; }
+.iris-app input[type=checkbox] { width: 17px; height: 17px; flex-shrink: 0; margin: 0; accent-color: var(--iris-gold); }
+.iris-app .iris-shell { width: min(1420px, 100%); margin: auto; padding: 0 42px 24px; }
+.iris-app .iris-header { display: flex; align-items: center; justify-content: space-between; gap: 24px; min-height: 94px; border-bottom: 1px solid var(--iris-line); }
+.iris-app .iris-brand { display: flex; gap: 12px; align-items: center; text-decoration: none; letter-spacing: .28em; font-size: 22px; font-weight: 500; }
+.iris-app .iris-brand img { width: 36px; height: 36px; }
+.iris-app .iris-brand small { display: block; margin-top: 2px; letter-spacing: .15em; font-size: 9px; }
+.iris-app .iris-modes { display: flex; align-items: center; gap: 4px; padding: 4px; border: 1px solid var(--iris-line); border-radius: 12px; }
+.iris-app .iris-modes button, .iris-app .iris-modes [aria-current] { min-height: 36px; padding: 7px 16px; border: 0; font-size: 12px; border-radius: 8px; }
+.iris-app .iris-modes [aria-current] { background: #e1c48b17; color: var(--iris-gold); }
+.iris-app .iris-status { display: flex; align-items: center; gap: 8px; color: var(--iris-muted); font-size: 11px; line-height: 1.55; overflow-wrap: anywhere; }
+.iris-app .iris-status::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: #c7c89e; flex-shrink: 0; }
+.iris-app .iris-header > .iris-status { max-width: 245px; margin: 0; }
+.iris-app .iris-main { display: grid; grid-template-columns: minmax(280px, .92fr) minmax(390px, 1.08fr); align-items: center; gap: 54px; min-height: calc(100dvh - 150px); padding: 34px 0; }
+.iris-app .iris-core-stage { min-width: 0; display: flex; flex-direction: column; align-items: center; text-align: center; }
+.iris-app .iris-caption { margin-bottom: 15px; color: var(--iris-gold); font-size: 10px; letter-spacing: .22em; }
+.iris-app .iris-intro { max-width: 400px; }
+.iris-app .iris-intro h1 { font-size: clamp(34px, 3.5vw, 49px); font-weight: 450; line-height: 1.13; letter-spacing: -.05em; margin-bottom: 16px; }
+.iris-app .iris-intro p { max-width: 355px; margin: 0 auto; color: var(--iris-muted); font-size: 14px; }
+.iris-app .iris-core-shell { width: 100%; display: grid; place-items: center; }
+.iris-app .iris-core-button { position: relative; display: block; flex: 0 0 auto; width: min(340px, 100%); height: auto; aspect-ratio: 1; padding: 0; margin: 6px auto 0; border: 0; border-radius: 50%; background: transparent; }
+.iris-app .iris-core-button:hover { background: radial-gradient(circle, #e1c48b09, transparent 68%); }
+.iris-app #iris-core { display: block; width: 100%; height: 100%; border-radius: 50%; }
+.iris-app .iris-core-label { position: absolute; left: 0; right: 0; bottom: 8%; font-size: 9px; letter-spacing: .3em; color: #e1c48b9e; pointer-events: none; }
+.iris-app .iris-core-state { min-height: 23px; margin: -2px 0 24px; font-size: 12px; color: var(--iris-gold); }
+.iris-app .iris-quick-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: 100%; max-width: 445px; }
+.iris-app .iris-quick-actions > button { display: grid; grid-template-columns: 22px 1fr; align-content: center; column-gap: 9px; min-height: 77px; padding: 13px; text-align: left; background: #ffffff03; }
+.iris-app .iris-quick-actions > button > span[aria-hidden] { grid-row: 1 / 3; align-self: center; color: var(--iris-gold); font-size: 23px; }
+.iris-app .iris-quick-actions strong { font-size: 12px; font-weight: 500; }
+.iris-app .iris-quick-actions small { display: block; margin-top: 2px; font-size: 10px; line-height: 1.5; }
+.iris-app .iris-footnote { max-width: 365px; margin: 16px auto 0; font-size: 10px; line-height: 1.7; color: #9ba491; }
+.iris-app .iris-conversation { min-width: 0; display: flex; flex-direction: column; gap: 18px; padding: 25px; border: 1px solid var(--iris-line); border-radius: 22px; background: linear-gradient(145deg, #1e251eea, #151b16f2); box-shadow: 0 22px 75px #0002; }
+.iris-app .iris-conversation-head { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+.iris-app .iris-conversation-head .iris-caption { margin-bottom: 5px; }
+.iris-app .iris-conversation-head h2 { margin: 0; }
+.iris-app .iris-subtle { min-height: 38px; padding: 7px 9px; color: var(--iris-muted); font-size: 11px; border-color: transparent; white-space: nowrap; }
+.iris-app .iris-messages { height: clamp(200px, 29vh, 330px); min-height: 180px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #c9ba8c55 transparent; padding: 2px 5px 4px 0; overflow-wrap: anywhere; }
+.iris-app .iris-message { white-space: pre-wrap; font-size: 14px; line-height: 1.75; margin: 0 20px 13px 0; padding: 12px 14px; border: 1px solid #e1c48b18; border-radius: 12px; background: #e1c48b06; }
+.iris-app .iris-message.user { margin-left: 30px; margin-right: 0; background: #e1c48b13; border-color: #e1c48b28; }
+.iris-app .iris-message.error { border-color: #d7a08155; color: #f0c9b2; }
+.iris-app .iris-composer { display: flex; flex-direction: column; gap: 8px; }
+.iris-app .iris-composer textarea { min-height: 90px; max-height: 220px; font-size: 14px; }
+.iris-app .iris-composer-actions, .iris-app .iris-voice-actions { display: flex; gap: 9px; flex-wrap: wrap; }
+.iris-app .iris-composer-actions { justify-content: flex-end; margin-top: 2px; }
+.iris-app .iris-primary { color: #211f16; background: var(--iris-gold); border-color: var(--iris-gold); font-weight: 600; }
+.iris-app .iris-primary:hover { background: #f0d49d; border-color: #f0d49d; }
+.iris-app .iris-primary span { margin-left: 14px; }
+.iris-app .iris-voice { display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--iris-line); padding-top: 16px; }
+.iris-app .iris-voice button { font-size: 12px; padding: 8px 11px; }
+.iris-app #iris-talk[aria-pressed=true] { border-color: var(--iris-gold); background: #e1c48b20; }
+.iris-app .iris-check { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; line-height: 1.55; }
+.iris-app .iris-check small { font-size: 10px; }
+.iris-app .iris-voice-help { margin: -5px 0 0; color: #a7b09e; font-size: 10px; line-height: 1.6; }
+.iris-app #iris-voice-status { margin: 0; }
+.iris-app .iris-voice-settings { color: var(--iris-muted); font-size: 11px; }
+.iris-app .iris-voice-settings summary { width: fit-content; min-height: 32px; display: list-item; cursor: pointer; padding: 5px 0; }
+.iris-app .iris-voice-settings .iris-check { margin: 10px 0; }
+.iris-app .iris-voice-settings p { margin: 10px 0 0; line-height: 1.7; }
+.iris-app .iris-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--iris-line); padding-top: 17px; color: #939d8b; font-size: 10px; letter-spacing: .06em; }
+.iris-app .iris-footer a { color: var(--iris-muted); }
+.iris-app .iris-notes-dialog { width: min(550px, calc(100vw - 32px)); max-height: 85dvh; padding: 25px; overflow: auto; border: 1px solid #c9ba8c70; border-radius: 20px; color: var(--iris-ink); background: #181f19; box-shadow: 0 25px 90px #0008; }
+.iris-app .iris-notes-dialog::backdrop { background: #060a08c9; backdrop-filter: blur(7px); }
+.iris-app .iris-notes-dialog header { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 18px; }
+.iris-app .iris-notes-dialog header h2 { margin: 0; }
+.iris-app .iris-notes-dialog header .iris-caption { margin-bottom: 4px; }
+.iris-app .iris-notes-dialog header button { font-size: 11px; }
+.iris-app .iris-notes-dialog > p { color: var(--iris-muted); font-size: 12px; }
+.iris-app #iris-note-form { display: flex; flex-direction: column; align-items: flex-start; gap: 9px; }
+.iris-app #iris-note-status { margin-top: 16px; }
+.iris-app .iris-note-list { padding: 0; }
+.iris-app .iris-note-list li { list-style: none; padding: 14px 0; border-top: 1px solid var(--iris-line); }
+.iris-app .iris-note-list li p { white-space: pre-wrap; overflow-wrap: anywhere; font-size: 13px; }
+.iris-app .iris-note-list li button { font-size: 11px; }
+@media (min-width: 1600px) { .iris-app .iris-main { gap: 80px; } .iris-app .iris-core-button { width: 375px; } }
+@media (max-width: 1080px) { .iris-app .iris-shell { padding-right: 26px; padding-left: 26px; } .iris-app .iris-main { gap: 28px; grid-template-columns: minmax(245px, .85fr) minmax(355px, 1.15fr); } .iris-app .iris-core-button { width: 290px; } .iris-app .iris-intro h1 { font-size: 36px; } .iris-app .iris-conversation { padding: 20px; } .iris-app .iris-header > .iris-status { max-width: 190px; } }
+@media (max-width: 790px) {
+  .iris-app .iris-shell { max-width: 680px; padding: 0 22px 22px; }
+  .iris-app .iris-header { min-height: 83px; gap: 14px; }
+  .iris-app .iris-header > .iris-status { display: none; }
+  .iris-app .iris-main { display: flex; flex-direction: column; min-height: 0; padding: 30px 0 24px; gap: 27px; }
+  .iris-app .iris-core-stage, .iris-app .iris-conversation { width: 100%; }
+  .iris-app .iris-intro h1 { font-size: 34px; }
+  .iris-app .iris-intro p { font-size: 13px; }
+  .iris-app .iris-core-button { width: 240px; margin-top: 0; }
+  .iris-app .iris-core-state { margin-bottom: 17px; }
+  .iris-app .iris-quick-actions { max-width: 450px; }
+  .iris-app .iris-messages { height: 245px; max-height: 45dvh; }
+}
+@media (max-width: 460px) {
+  .iris-app .iris-shell { padding: 0 15px 20px; }
+  .iris-app .iris-header { min-height: 78px; gap: 8px; }
+  .iris-app .iris-brand { gap: 8px; font-size: 18px; letter-spacing: .2em; }
+  .iris-app .iris-brand img { width: 29px; height: 29px; }
+  .iris-app .iris-brand small { font-size: 7px; }
+  .iris-app .iris-modes { gap: 0; padding: 3px; }
+  .iris-app .iris-modes button, .iris-app .iris-modes [aria-current] { min-height: 36px; padding: 8px 10px; font-size: 11px; }
+  .iris-app .iris-main { padding-top: 24px; gap: 23px; }
+  .iris-app .iris-caption { font-size: 9px; margin-bottom: 11px; }
+  .iris-app .iris-intro h1 { font-size: 31px; margin-bottom: 12px; }
+  .iris-app .iris-intro p { max-width: 300px; font-size: 12px; }
+  .iris-app .iris-core-button { width: 210px; }
+  .iris-app .iris-quick-actions { gap: 8px; }
+  .iris-app .iris-quick-actions > button { column-gap: 5px; padding: 11px 9px; }
+  .iris-app .iris-quick-actions small { font-size: 9px; }
+  .iris-app .iris-footnote { max-width: 310px; font-size: 9px; margin-top: 13px; }
+  .iris-app .iris-conversation { padding: 17px 14px; gap: 16px; border-radius: 17px; }
+  .iris-app .iris-conversation-head h2 { font-size: 19px; }
+  .iris-app .iris-subtle { font-size: 10px; padding: 7px 3px; }
+  .iris-app .iris-messages { height: 220px; }
+  .iris-app .iris-message { margin-right: 8px; font-size: 13px; }
+  .iris-app .iris-message.user { margin-left: 20px; }
+  .iris-app .iris-check { font-size: 11px; }
+  .iris-app .iris-check small { flex-basis: 100%; padding-left: 24px; }
+  .iris-app .iris-notes-dialog { padding: 19px; }
+}
+@media (prefers-reduced-motion: reduce) { .iris-app *, .iris-app *::before, .iris-app *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

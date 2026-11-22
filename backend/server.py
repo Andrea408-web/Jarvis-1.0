@@ -163,7 +163,7 @@ class Application:
             raise ValueError('Bitte eine Nachricht mit 1 bis 12.000 Zeichen eingeben.')
         text=re.sub(r'^(?:aeris|abriss|astra|asta|astda|astrid|asuka|jarvis)[,: ]+(?=(?:ich|mein|wie|wer|was|wo|wann|warum|wieso|kannst|könntest|würdest|öffne|starte|mach|erstelle|baue|modelliere|bitte|hallo|hi|danke|erklär|sag|zeig|nenne|schreibe|schreib|notiere|speichere|tippe|bewege|wieviel|rechne|berechne|eins|zwei|drei|vier|fünf|sechs|sieben|acht|neun|zehn|[0-9]+|chat|vergiss|lösche|alles|abbrechen|stopp?)\b)','',text.strip(),flags=re.I)
         if re.search(r'(?:wechsel|wechsle|werde|aktiviere|öffne).{0,30}(?:aeris|abriss)',text,re.I):
-            self.dialogue.clear();return {'reply':'Aeris ist bereit, Sir.','proposals':[],'pending':None,'view':'aeris'}
+            self.dialogue.clear();return {'reply':'Iris ist bereit, Sir.','proposals':[],'pending':None,'view':'aeris'}
         if re.fullmatch(r'(?:chat löschen|lösche (?:den )?chat|alles vergessen|vergiss (?:bitte )?alles|alles da vergessen)[.! ]*',text,re.I):
             self.clear_chat();return {'reply':'Gesprächsverläufe, gemerkter Name und offene Rückfragen sind gelöscht.','proposals':[],'pending':None,'cleared':True}
         if re.fullmatch(r'(?:abbrechen|stopp?|vergiss das|neue aufgabe)[.! ]*',text,re.I) and self.dialogue.get():
@@ -396,7 +396,7 @@ class Handler(BaseHTTPRequestHandler):
             if path == '/api/mobile/pair' and self.command == 'POST':
                 return True
             if not self.server.device_auth.valid(self.headers.get('Cookie')):
-                if self.command == 'GET' and path in {'/','/mobile','/quest','/tablet','/brands','/tv','/pair.js','/style.css','/manifest.webmanifest','/app-icon.png'}:
+                if self.command == 'GET' and path in {'/','/mobile','/quest','/tablet','/brands','/tv','/iris','/aeris','/pair.js','/style.css','/manifest.webmanifest','/app-icon.png'}:
                     return True
                 self._json({'error':'Bitte dieses Gerät über den aktuellen QR-Code am Mac koppeln.'},401)
                 return False
@@ -435,7 +435,7 @@ class Handler(BaseHTTPRequestHandler):
         app = self.server.app
         method = self.command
         if method == 'GET':
-            if self.server.device_auth and not self.server.device_auth.valid(self.headers.get('Cookie')) and path in {'/','/mobile','/quest','/tablet','/brands','/tv'}:
+            if self.server.device_auth and not self.server.device_auth.valid(self.headers.get('Cookie')) and path in {'/','/mobile','/quest','/tablet','/brands','/tv','/iris','/aeris'}:
                 body=(FRONTEND/'pair.html').read_bytes()
                 self._headers(200,'text/html; charset=utf-8',len(body))
                 return self.wfile.write(body)
@@ -536,10 +536,12 @@ class Handler(BaseHTTPRequestHandler):
             if path=='/api/objects/info':
                 from .object_models import capabilities
                 return self._json(capabilities())
-            static = {'/tv':'tv.html','/tv.js':'tv.js','/tv.css':'tv.css','/': 'device.html' if self.server.device_auth or re.search(r'iPhone|iPad|iPod|Macintosh.*Mobile',self.headers.get('User-Agent',''),re.I) else 'index.html', '/index.html': 'index.html', '/mobile':'mobile.html','/mobile-app.js':'mobile-app.js','/boot.js':'boot.js','/task-board.js':'task-board.js','/discover.js':'discover.js','/quest':'aeris.html','/quest-assistant.js':'quest-assistant.js','/quest-hands.js':'quest-hands.js','/aeris':'aeris.html','/aeris.js':'aeris.js','/aeris-assistant.js':'aeris-assistant.js','/aeris-xr.js':'aeris-xr.js','/aeris-pose.js':'aeris-pose.js','/vr-guide':'vr-guide.html','/video-editor':'video-editor.html','/video-editor.js':'video-editor.js','/video-renderer.js':'video-renderer.js','/companion':'call.html','/companion-actions.js':'companion-actions.js','/companion.js':'companion.js','/companion.css':'companion.css','/jarvis-orb.js':'jarvis-orb.js','/call':'call.html','/call-bridge.js':'call-bridge.js','/aeris-model.js':'aeris-model.js','/aeris-projects.js':'aeris-projects.js','/aeris-tracking.js':'aeris-tracking.js','/video-call.js':'video-call.js','/video-call.css':'video-call.css','/aeris-gestures.js':'aeris-gestures.js','/aeris-shell.css':'aeris-shell.css','/aeris-shell.js':'aeris-shell.js','/aeris-icon.svg':'aeris-icon.svg','/aeris-sw.js':'aeris-sw.js',
+            static = {'/tv':'tv.html','/tv.js':'tv.js','/tv.css':'tv.css','/': 'device.html' if self.server.device_auth or re.search(r'iPhone|iPad|iPod|Macintosh.*Mobile',self.headers.get('User-Agent',''),re.I) else 'index.html', '/index.html': 'index.html', '/mobile':'mobile.html','/mobile-app.js':'mobile-app.js','/boot.js':'boot.js','/task-board.js':'task-board.js','/discover.js':'discover.js','/quest':'aeris.html','/quest-assistant.js':'quest-assistant.js','/quest-hands.js':'quest-hands.js','/aeris':'iris.html','/iris':'iris.html','/aeris.js':'aeris.js','/aeris-assistant.js':'aeris-assistant.js','/aeris-xr.js':'aeris-xr.js','/aeris-pose.js':'aeris-pose.js','/vr-guide':'vr-guide.html','/video-editor':'video-editor.html','/video-editor.js':'video-editor.js','/video-renderer.js':'video-renderer.js','/companion':'call.html','/companion-actions.js':'companion-actions.js','/companion.js':'companion.js','/companion.css':'companion.css','/jarvis-orb.js':'jarvis-orb.js','/call':'call.html','/call-bridge.js':'call-bridge.js','/aeris-model.js':'aeris-model.js','/aeris-projects.js':'aeris-projects.js','/aeris-tracking.js':'aeris-tracking.js','/video-call.js':'video-call.js','/video-call.css':'video-call.css','/aeris-gestures.js':'aeris-gestures.js','/aeris-shell.css':'aeris-shell.css','/aeris-shell.js':'aeris-shell.js','/aeris-icon.svg':'aeris-icon.svg','/aeris-sw.js':'aeris-sw.js',
                       '/device-polish.css':'device-polish.css','/quick-help.js':'quick-help.js','/contacts-panel':'contacts-panel.html','/contacts-panel.js':'contacts-panel.js','/tablet':'device.html','/brands':'device.html','/device-app.js':'device-app.js','/contact-request.js':'contact-request.js','/device-desk.js':'device-desk.js','/device-business.js':'device-business.js','/hud-core.js':'hud-core.js','/device-ai.js':'device-ai.js','/device-store.js':'device-store.js','/device-style.css':'device-style.css','/manifest.webmanifest':'manifest.webmanifest','/app-icon.png':'app-icon.png','/style.css': 'style.css', '/app.js': 'app.js', '/pair.js':'pair.js', '/qr.js':'qr.js', '/extras.js':'extras.js', '/extras.css':'extras.css', '/world.geojson':'world.geojson', '/globe.js':'globe.js', '/office.js':'office.js','/office-3d.js':'office-3d.js', '/lowpoly-stage.js':'lowpoly-stage.js', '/artifacts.js':'artifacts.js', '/jarvis-voice.js':'jarvis-voice.js', '/voice-worker.js':'voice-worker.js', '/conversation.js':'conversation.js', '/mini-hub.js':'mini-hub.js', '/world-news.js':'world-news.js', '/astra.js':'astra.js', '/astra.css':'astra.css', '/astra-panel.html':'astra-panel.html', '/astra-panel.js':'astra-panel.js'}
             for name in ['three.module.min.js','GLTFLoader.js','OrbitControls.js','BufferGeometryUtils.js','RoomEnvironment.js','LICENSE','NOTICE.txt']:
                 static['/vendor/three/'+name]='vendor/three/'+name
+            static.update({'/iris.js':'iris.js','/iris.css':'iris.css','/iris-core.js':'iris-core.js','/iris-icon.svg':'iris-icon.svg'})
+            static.update({'/technik-lab.js':'technik-lab.js','/technik-lab-layout.js':'technik-lab-layout.js','/technik-lab.css':'technik-lab.css','/technik-lab-icons.svg':'technik-lab-icons.svg'})
             static.update({'/workshop-conversation.js':'workshop-conversation.js','/workshop.js':'workshop.js','/workshop.css':'workshop.css','/personal-brain.js':'personal-brain.js','/vendor/brain/fsaverage5.bin':'vendor/brain/fsaverage5.bin','/vendor/brain/LICENSE.txt':'vendor/brain/LICENSE.txt','/vendor/brain/NOTICE.txt':'vendor/brain/NOTICE.txt','/personal-store.js':'personal-store.js','/personal-memory.js':'personal-memory.js','/personal-memory.css':'personal-memory.css','/offline-ready.js':'offline-ready.js','/offline-ready.css':'offline-ready.css','/invention-lab.js':'invention-lab.js','/invention-lab.css':'invention-lab.css','/layout-switch.js':'layout-switch.js','/layout-switch.css':'layout-switch.css','/code-companion.js':'code-companion.js','/code-room.js':'code-room.js','/code-room.css':'code-room.css','/studio-tools.js':'studio-tools.js','/studio-tools.css':'studio-tools.css','/chess-pieces.js':'chess-pieces.js','/play-chess.js':'play-chess.js','/chess-ai.js':'chess-ai.js','/chess-worker.js':'chess-worker.js','/vendor/chess/chess.js':'vendor/chess/chess.js','/vendor/chess/LICENSE':'vendor/chess/LICENSE','/vendor/chess/NOTICE.txt':'vendor/chess/NOTICE.txt','/play.js':'play.js','/play.css':'play.css','/object-viewer.js':'object-viewer.js','/object-viewer.css':'object-viewer.css'})
             for name in ['ESpeak.js','mespeak.js','config.json','jarvis-de.json','de.json','COPYING','NOTICE.txt','UPSTREAM-README.md','mespeak-2.0.2-source.tgz','speak-source-9c6f642.tar.gz']:
                 static['/vendor/voice/'+name]='vendor/voice/'+name
@@ -706,6 +708,9 @@ class Handler(BaseHTTPRequestHandler):
                 if set(body)!={'query'} or not isinstance(body['query'],str) or not 1<=len(body['query'].strip())<=500:raise ValueError('Bitte eine Baufrage mit höchstens 500 Zeichen angeben.')
                 if not app.store.settings().get('web_enabled',True):return self._json({'reply':'Die öffentliche Websuche ist ausgeschaltet, Sir.','sources':[]})
                 return self._json(app.web.answer({'kind':'web','query':body['query'].strip()}))
+            if method=='POST' and path=='/api/technik-lab/project':
+                from .technik_lab import project
+                return self._json(project(body))
             if method=='POST' and path=='/api/workshop/hologram-guide':
                 from .hologram_project import guide as hologram_guide
                 return self._json(hologram_guide(body))

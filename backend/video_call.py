@@ -42,7 +42,7 @@ def answer(app, body, identity='jarvis', text_only=False, personal_profile=None)
     if provider not in {'llamacpp','ollama'}:
         if text_only:raise ValueError('Für diesen Arbeitsraum bitte die vorhandene lokale KI am Mac auswählen. Kein Internetdienst wurde angefragt.')
         return {'reply':address+', dieser private Videoanruf verwendet nur eine bereits eingerichtete lokale Text-KI. Bitte wähle die kleine lokale KI in den Einstellungen. Es wurde kein Bild an einen Internetdienst gesendet.','vision':evidence,'private_call':True}
-    identity={'jarvis':'JARVIS','astra':'ASTRA','aeris':'AERIS'}.get(identity,'JARVIS')
+    identity={'jarvis':'JARVIS','astra':'ASTRA','aeris':'IRIS'}.get(identity,'JARVIS')
     instruction=('Du bist '+identity+' und sprichst Deutsch, freundlich und knapp. Anrede: '+address+'. '
                  'Dies ist ein privates Gespräch ohne Werkzeuge. Du kannst nichts öffnen oder ausführen. '
                  'Du siehst KEINE Bildpixel. Du erhältst nur unsichere lokale Objektkategorien und OCR-Text. '
@@ -52,7 +52,7 @@ def answer(app, body, identity='jarvis', text_only=False, personal_profile=None)
     if text_only:
         instruction=('Du bist '+identity+', ein hilfreicher deutscher Assistent. Anrede: '+address+'. Antworte auf die aktuelle Frage natürlich und knapp. '
                      'Hier hast du keine Ausführungswerkzeuge und keine aktuellen Internetdaten. Behaupte keine erledigten Aufgaben. '
-                     'Für eigene 3D-Konzepte gibt es hier ein lokales Baustudio mit anklickbarer Hologramm-Ansicht. Besprich Ideen und passende Funktionen; verweise nicht ungefragt auf andere KI-Anbieter. Du bist '+identity+', nicht der Modellanbieter. '
+                     'Im Techniklabor gibt es bereitgestellte Projekte mit Materialliste, einzelnen Bauschritten und manuellen Prüfpunkten. Eigene Ideen können wir besprechen; behaupte keine automatisch geprüfte Konstruktion. Besprich passende Funktionen; verweise nicht ungefragt auf andere KI-Anbieter. Du bist '+identity+', nicht der Modellanbieter. '
                      'Für Notizen, Planung, Marken und Skizzen gibt es Werkzeuge im Arbeitsraum. Frage bei fehlenden Angaben gezielt nach.')
     from .personal_profile import context as personal_context
     instruction+='\n'+personal_context(app.store,override=personal_profile)

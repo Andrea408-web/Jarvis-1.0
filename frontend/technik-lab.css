@@ -1,0 +1,155 @@
+/* The practical workshop: one real step at a time, in the Jarvis HUD family. */
+#technik-lab {
+  --tl-bg:#09140f; --tl-panel:#102219; --tl-raised:#172e20;
+  --tl-border:#3c5740; --tl-accent:#d5e9a3; --tl-green:#95c79b;
+  --tl-text:#edf3e4; --tl-muted:#b0c4af;
+  box-sizing:border-box; width:min(1180px,96vw); max-width:96vw;
+  max-height:94vh; max-height:94dvh; margin:auto; padding:0;
+  overflow:auto; color:var(--tl-text); border:1px solid #6e8d55;
+  border-radius:22px; background:radial-gradient(ellipse at 12% 0%,#31533130,transparent 52%),var(--tl-bg);
+  box-shadow:0 28px 100px #0009; font:14px/1.6 system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+}
+#technik-lab::backdrop { background:#020906df; backdrop-filter:blur(8px); }
+#technik-lab *,#technik-lab *::before,#technik-lab *::after { box-sizing:border-box; }
+#technik-lab [hidden] { display:none!important; }
+#technik-lab .tl-shell { padding:26px; }
+#technik-lab .tl-header,#technik-lab .tl-head { display:flex; align-items:center; justify-content:space-between; gap:24px; padding-bottom:20px; margin-bottom:22px; border-bottom:1px solid var(--tl-border); }
+#technik-lab .tl-header>div,#technik-lab .tl-head>div { min-width:0; }
+#technik-lab .tl-kicker { display:block; margin:0 0 7px; color:var(--tl-accent); font:10px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace; letter-spacing:.22em; text-transform:uppercase; }
+#technik-lab h2,#technik-lab .tl-title { margin:0; font-size:clamp(24px,3.1vw,36px); font-weight:500; letter-spacing:-.035em; line-height:1.18; }
+#technik-lab h3 { margin:0 0 10px; font-size:18px; font-weight:550; line-height:1.35; letter-spacing:-.02em; }
+#technik-lab h4 { margin:0 0 7px; font-size:14px; }
+#technik-lab p { margin:8px 0; }
+#technik-lab .tl-subtitle,#technik-lab .tl-muted { color:var(--tl-muted); font-size:12px; }
+#technik-lab .tl-subtitle { margin-top:9px; max-width:670px; }
+#technik-lab button,#technik-lab .tl-button { min-height:42px; max-width:100%; padding:10px 15px; border:1px solid #607c47; border-radius:10px; background:#21381f; color:var(--tl-text); font:inherit; font-size:12px; font-weight:550; text-decoration:none; cursor:pointer; transition:background .16s,border-color .16s,transform .16s; }
+#technik-lab button:hover:not(:disabled),#technik-lab .tl-button:hover { background:#304b2b; border-color:#a3be76; }
+#technik-lab button:active:not(:disabled) { transform:translateY(1px); }
+#technik-lab button:disabled { opacity:.45; cursor:default; }
+#technik-lab .tl-primary,#technik-lab button[data-primary],#technik-lab button[type=submit] { background:var(--tl-accent); color:#152412; border-color:var(--tl-accent); }
+#technik-lab .tl-primary:hover:not(:disabled),#technik-lab button[type=submit]:hover:not(:disabled) { background:#e2f0bd; }
+#technik-lab .tl-secondary { background:transparent; }
+#technik-lab :focus-visible { outline:3px solid #e6f3a9; outline-offset:3px; }
+#technik-lab .tl-layout { display:grid; grid-template-columns:minmax(0,1fr) 260px; align-items:start; gap:22px; }
+#technik-lab .tl-main { min-width:0; display:grid; align-content:start; gap:18px; }
+#technik-lab .tl-sidebar { min-width:0; display:grid; align-content:start; gap:15px; }
+#technik-lab .tl-card { padding:19px; border:1px solid var(--tl-border); border-radius:15px; background:#102219b8; }
+#technik-lab .tl-project-grid { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:12px; }
+#technik-lab .tl-project-card { display:flex; flex-direction:column; align-items:flex-start; justify-content:flex-start; text-align:left; min-width:0; padding:19px; gap:7px; background:linear-gradient(145deg,#20382370,#0e1e16); border-color:#3e5e40; border-radius:15px; }
+#technik-lab .tl-project-card h3,#technik-lab .tl-project-card strong { font-size:16px; color:var(--tl-text); margin:0; line-height:1.35; }
+#technik-lab .tl-project-card p,#technik-lab .tl-project-card small { color:var(--tl-muted); margin:0; font-size:12px; line-height:1.6; font-weight:400; }
+#technik-lab .tl-project-card[aria-pressed=true],#technik-lab .tl-project-card[data-active=true] { background:#25452b; border-color:var(--tl-accent); box-shadow:inset 0 0 0 1px #d5e9a333; }
+#technik-lab .tl-project-card svg { width:34px; height:34px; color:var(--tl-accent); flex:none; }
+#technik-lab .tl-step { position:relative; padding:26px 28px; border:1px solid #5f8052; border-left:3px solid var(--tl-accent); border-radius:16px; background:radial-gradient(ellipse at 100% 0%,#54783a24,transparent 65%),#12271a; }
+#technik-lab .tl-step-count { display:block; color:var(--tl-accent); font:10px/1.5 ui-monospace,SFMono-Regular,Consolas,monospace; letter-spacing:.15em; text-transform:uppercase; margin-bottom:12px; }
+#technik-lab .tl-step-title { font-size:clamp(21px,2.5vw,28px); margin:0 0 14px; line-height:1.25; letter-spacing:-.025em; }
+#technik-lab .tl-step-copy { color:#e0ead7; font-size:15px; line-height:1.85; max-width:65ch; }
+#technik-lab .tl-step-copy p { margin:10px 0; }
+#technik-lab .tl-step-tip { padding:11px 14px; margin-top:17px; border-radius:9px; background:#080f0b50; color:#c2d7b5; font-size:12px; border:1px solid #67835155; }
+#technik-lab .tl-step-nav,#technik-lab .tl-step-actions,#technik-lab .tl-actions,#technik-lab .tl-toolbar { display:flex; flex-wrap:wrap; align-items:center; gap:9px; }
+#technik-lab .tl-step-nav,#technik-lab .tl-step-actions { margin-top:20px; padding-top:17px; border-top:1px solid #63825655; }
+#technik-lab .tl-step-nav button:last-child { margin-left:auto; }
+#technik-lab .tl-progress { list-style:none; padding:0; margin:0; display:grid; gap:6px; }
+#technik-lab .tl-progress-item { display:flex; align-items:center; gap:10px; color:var(--tl-muted); font-size:12px; min-width:0; border-radius:8px; }
+#technik-lab .tl-progress-item button { display:flex; align-items:center; gap:10px; width:100%; text-align:left; background:transparent; border-color:transparent; padding:8px 10px; font-weight:400; }
+#technik-lab .tl-progress-item[aria-current=step],#technik-lab .tl-progress-item[aria-current=step] button,#technik-lab .tl-progress-item button[aria-current=step] { background:#284229; border-color:#79965b; color:var(--tl-text); }
+#technik-lab .tl-progress-item[data-done=true] { color:var(--tl-green); }
+#technik-lab progress { width:100%; height:5px; border:0; border-radius:4px; overflow:hidden; background:#294132; accent-color:var(--tl-accent); }
+#technik-lab progress::-webkit-progress-bar { background:#294132; }
+#technik-lab progress::-webkit-progress-value { background:var(--tl-accent); }
+#technik-lab label { display:grid; gap:6px; color:#c3d4ba; font-size:12px; margin:10px 0; }
+#technik-lab input,#technik-lab textarea,#technik-lab select { width:100%; max-width:100%; min-width:0; padding:11px 12px; border:1px solid #536d47; border-radius:9px; background:#08140d; color:var(--tl-text); font:14px/1.5 system-ui,sans-serif; }
+#technik-lab textarea { min-height:72px; resize:vertical; }
+#technik-lab input[type=checkbox] { width:17px; height:17px; padding:0; margin:0; accent-color:var(--tl-accent); }
+#technik-lab label:has(input[type=checkbox]) { display:flex; flex-direction:row; align-items:center; gap:9px; }
+#technik-lab details { border:1px solid #3b5741; border-radius:12px; background:#10201880; padding:12px 15px; }
+#technik-lab summary { cursor:pointer; color:#dce7ca; font-size:12px; font-weight:550; }
+#technik-lab details[open]>summary { margin-bottom:12px; }
+#technik-lab ul,#technik-lab ol { padding-left:21px; }
+#technik-lab li { margin:7px 0; color:#c7d7bf; }
+#technik-lab .tl-materials { font-size:12px; }
+#technik-lab .tl-voice { display:flex; align-items:center; flex-wrap:wrap; gap:9px; padding:12px 15px; border:1px solid #62834e; background:#192f1e; border-radius:12px; }
+#technik-lab .tl-voice [role=status],#technik-lab .tl-voice .tl-status { flex-basis:100%; margin:0; }
+#technik-lab .tl-voice label { margin:0; font-size:10px; }
+#technik-lab .tl-chat { display:grid; gap:9px; padding:17px; background:#0e1f16; border:1px solid var(--tl-border); border-radius:14px; }
+#technik-lab .tl-chat h3 { font-size:16px; margin:0; }
+#technik-lab .tl-chat-log { max-height:160px; overflow:auto; padding-right:8px; overflow-wrap:anywhere; }
+#technik-lab .tl-chat-log:empty { display:none; }
+#technik-lab .tl-chat-log p { padding:9px 12px; border-left:2px solid #638555; background:#1c33224d; font-size:12px; white-space:pre-wrap; }
+#technik-lab .tl-chat-log .user { color:#e2edcd; border-color:#a8bf7c; }
+#technik-lab .tl-status { color:#cadbb8; min-height:20px; font-size:11px; overflow-wrap:anywhere; }
+#technik-lab .tl-error { color:#f0d8a5; border-color:#a59054; }
+#technik-lab .tl-orb { flex:none; position:relative; width:72px; height:72px; padding:9px; border:1px solid #92ae6c99; border-radius:50%; background:radial-gradient(circle,#e8f7b8 0%,#accb6e 9%,#3f663740 27%,#07120b 60%); box-shadow:0 0 34px #b8db6b1f,inset 0 0 20px #c1de8533; }
+#technik-lab .tl-orb canvas,#technik-lab .tl-orb svg { display:block; width:100%; height:100%; border:0; }
+#technik-lab .tl-section-label { color:#b8cca4; font:10px/1.4 ui-monospace,monospace; letter-spacing:.15em; text-transform:uppercase; }
+#technik-lab a { color:#dfecb5; text-underline-offset:3px; overflow-wrap:anywhere; }
+@media (max-width:900px) {
+  #technik-lab .tl-shell { padding:21px; }
+  #technik-lab .tl-layout { grid-template-columns:minmax(0,1fr) 225px; gap:16px; }
+  #technik-lab .tl-step { padding:23px; }
+}
+@media (max-width:720px) {
+  #technik-lab { width:96vw; max-height:96vh; max-height:96dvh; border-radius:16px; }
+  #technik-lab .tl-shell { padding:17px; }
+  #technik-lab .tl-header,#technik-lab .tl-head { gap:13px; align-items:flex-start; margin-bottom:17px; padding-bottom:16px; }
+  #technik-lab .tl-layout { grid-template-columns:minmax(0,1fr); }
+  #technik-lab .tl-sidebar { grid-template-columns:repeat(2,minmax(0,1fr)); }
+  #technik-lab .tl-sidebar>* { min-width:0; }
+  #technik-lab .tl-step-copy { font-size:14px; }
+  #technik-lab .tl-orb { width:54px; height:54px; padding:6px; }
+  #technik-lab .tl-card { padding:15px; }
+}
+@media (max-width:460px) {
+  #technik-lab .tl-shell { padding:13px; }
+  #technik-lab .tl-project-grid,#technik-lab .tl-sidebar { grid-template-columns:minmax(0,1fr); }
+  #technik-lab .tl-project-card { padding:15px; }
+  #technik-lab .tl-step { padding:20px 17px; }
+  #technik-lab input,#technik-lab textarea,#technik-lab select { font-size:16px; }
+  #technik-lab .tl-header>button,#technik-lab .tl-head>button { padding:8px 10px; min-height:38px; font-size:11px; }
+  #technik-lab .tl-step-nav button,#technik-lab .tl-step-actions button { flex:1 1 120px; }
+  #technik-lab .tl-step-nav button:last-child { margin-left:0; }
+}
+@media (prefers-reduced-motion:reduce) {
+  #technik-lab *,#technik-lab *::before,#technik-lab *::after { animation:none!important; transition:none!important; scroll-behavior:auto!important; }
+}
+
+/* Layout-module details: keep the chooser and the live step visually distinct. */
+#technik-lab .tl-chooser { margin:22px 0; }
+#technik-lab .tl-section-heading,#technik-lab .tl-project-heading { display:flex; justify-content:space-between; align-items:flex-end; gap:20px; margin:20px 0 15px; }
+#technik-lab .tl-section-heading h2,#technik-lab .tl-project-heading h2 { font-size:22px; }
+#technik-lab .tl-section-heading>.tl-muted { max-width:260px; margin:0; text-align:right; }
+#technik-lab .tl-project-grid { grid-template-columns:repeat(3,minmax(0,1fr)); }
+#technik-lab .tl-project-card>span { font-size:12px; line-height:1.6; font-weight:400; color:var(--tl-muted); }
+#technik-lab .tl-project-card .tl-project-tag { color:#c3d89d; font:9px/1.5 ui-monospace,monospace; letter-spacing:.08em; text-transform:uppercase; }
+#technik-lab .tl-project-card .tl-project-open { color:var(--tl-accent); font-size:11px; margin-top:auto; padding-top:9px; }
+#technik-lab .tl-project-icon { display:block; margin-bottom:6px; }
+#technik-lab .tl-step-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; }
+#technik-lab .tl-step-icon svg { width:28px; height:28px; color:#c5d898; }
+#technik-lab button>svg { width:18px; height:18px; vertical-align:middle; margin-right:5px; }
+#technik-lab .tl-step-check { margin:14px 0 0; padding:12px 14px 12px 31px; border-radius:9px; background:#08140e60; color:#c5d8b8; font-size:12px; }
+#technik-lab .tl-step-check:empty { display:none; }
+#technik-lab .tl-step-note,#technik-lab .tl-limits { font-size:11px; line-height:1.7; }
+#technik-lab .tl-conversation { margin-top:22px; }
+#technik-lab .tl-conversation .tl-section-heading { margin-top:0; }
+#technik-lab #tl-chat:empty { display:none; }
+#technik-lab #tl-chat { max-height:185px; overflow:auto; overflow-wrap:anywhere; }
+#technik-lab #tl-chat>p { margin:0; font-size:12px; white-space:pre-wrap; padding:8px 10px; border-left:2px solid #708f56; }
+#technik-lab #tl-chat>p.user { color:#e8efcf; border-color:var(--tl-accent); }
+#technik-lab .tl-voice { position:sticky; top:0; z-index:4; background:#14291df7; backdrop-filter:blur(10px); }
+#technik-lab .tl-voice .tl-toolbar { flex:1 1 100%; }
+#technik-lab .tl-voice .tl-consent { font-size:10px; }
+#technik-lab .tl-own-idea { padding:8px 2px; }
+@media(max-width:850px){#technik-lab .tl-project-grid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+@media(max-width:720px){#technik-lab .tl-section-heading,#technik-lab .tl-project-heading{align-items:flex-start;flex-wrap:wrap;gap:8px}#technik-lab .tl-section-heading>.tl-muted{text-align:left;max-width:none}#technik-lab .tl-voice{position:static}}
+@media(max-width:460px){#technik-lab .tl-project-grid{grid-template-columns:minmax(0,1fr)}#technik-lab .tl-project-card{gap:5px}#technik-lab .tl-step-actions{gap:7px}#technik-lab .tl-section-heading h2,#technik-lab .tl-project-heading h2{font-size:21px}}
+/* The phone chooser is a short list; project detail appears after selection. */
+@media(max-width:460px){
+ #technik-lab .tl-close{white-space:nowrap;font-size:10px!important;padding:7px 8px!important}
+ #technik-lab .tl-project-card{display:grid;grid-template-columns:30px minmax(0,1fr);gap:3px 10px;padding:12px;align-items:center}
+ #technik-lab .tl-project-card .tl-project-icon{grid-row:1/3;margin:0}
+ #technik-lab .tl-project-card .tl-project-icon svg{width:27px;height:27px}
+ #technik-lab .tl-project-card .tl-project-tag,#technik-lab .tl-project-card strong{grid-column:2}
+ #technik-lab .tl-project-card strong{font-size:14px}
+ #technik-lab .tl-project-card>span:not([class]),#technik-lab .tl-project-card .tl-project-open{display:none}
+}
+#technik-lab .tl-read-label,#technik-lab .tl-consent{display:flex;flex-direction:row;align-items:center;gap:9px}

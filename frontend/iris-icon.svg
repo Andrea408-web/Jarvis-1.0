@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Iris Energiekern">
+ <defs>
+  <radialGradient id="shell" cx="35%" cy="25%"><stop stop-color="#424637"/><stop offset="1" stop-color="#0b1712"/></radialGradient>
+  <radialGradient id="seed" cx="38%" cy="32%"><stop stop-color="#fffef0"/><stop offset="1" stop-color="#dfcb8e"/></radialGradient>
+  <linearGradient id="metal" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#eddfaf"/><stop offset=".48" stop-color="#a18a52"/><stop offset="1" stop-color="#374736"/></linearGradient>
+  <path id="blade" d="M-18-165C55-190 135-114 118-42C112-12 88 17 65 28C58-8 32-36-2-50C31-69 26-129-18-165Z"/>
+ </defs>
+ <circle cx="64" cy="64" r="60" fill="#0a140f"/>
+ <circle cx="64" cy="64" r="59" fill="none" stroke="#c7b17c" stroke-width="1.5" stroke-dasharray="66 57" transform="rotate(-30 64 64)"/>
+ <circle cx="64" cy="64" r="50" fill="url(#shell)" stroke="#e8d7a4" stroke-opacity=".65"/>
+ <circle cx="64" cy="64" r="46" fill="none" stroke="#e8d7a4" stroke-opacity=".17"/>
+ <g transform="translate(64 64) scale(.25)" fill="url(#metal)" stroke="#f7e5ab" stroke-opacity=".26" stroke-width="1.5">
+  <use href="#blade"/><use href="#blade" transform="rotate(60)"/><use href="#blade" transform="rotate(120)"/><use href="#blade" transform="rotate(180)"/><use href="#blade" transform="rotate(240)"/><use href="#blade" transform="rotate(300)"/>
+ </g>
+ <circle cx="64" cy="64" r="17" fill="#f8e8b9" fill-opacity=".13"/>
+ <circle cx="64" cy="64" r="12" fill="none" stroke="#f8e8b9" stroke-opacity=".5"/>
+ <circle cx="64" cy="64" r="9" fill="url(#seed)"/>
+</svg>

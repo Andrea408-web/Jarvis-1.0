@@ -1,4 +1,4 @@
-import sys,tempfile,threading
+import sys,tempfile,threading,io,wave,math,struct
 from pathlib import Path
 sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
 from backend.server import Application,JarvisServer
@@ -6,6 +6,10 @@ from playwright.sync_api import sync_playwright
 with tempfile.TemporaryDirectory() as folder:
     app=Application(folder);app.store.update_settings({'ai_provider':'llamacpp','voice_enabled':False})
     app.llamacpp.endpoint_transport=lambda *args,**kwargs:{'choices':[{'finish_reason':'stop','message':{'content':'Sir, hier ist dein Entwurf.'}}]}
+    data=io.BytesIO()
+    with wave.open(data,'wb')as w:
+        w.setnchannels(1);w.setsampwidth(2);w.setframerate(16000);w.writeframes(b''.join(struct.pack('<h',int(math.sin(i*2*math.pi*440/16000)*8000))for i in range(48000)))
+    app.natural_voice.synthesize=lambda text,preset:data.getvalue()
     server=JarvisServer(('127.0.0.1',0),app);thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start()
     try:
         with sync_playwright() as pw:
@@ -19,7 +23,7 @@ with tempfile.TemporaryDirectory() as folder:
             page.evaluate("()=>{const recognition=window.recognitions.at(-1);const result=[{transcript:'Zeig meine Agenten bei der Arbeit'}];result.isFinal=true;recognition.onresult({results:[result]});recognition.onend();}")
             page.locator('#office-dialog').wait_for();page.wait_for_function('()=>window.recognitions.length>=2',timeout=20000)
             page.evaluate("()=>{const recognition=window.recognitions.at(-1);const result=[{transcript:'Beauftrage einen Agenten, der einen Lernplan erstellt'}];result.isFinal=true;recognition.onresult({results:[result]});recognition.onend();}")
-            page.locator('.agent-station.planner[data-state=completed]').wait_for(timeout=10000);page.wait_for_function('()=>window.recognitions.length>=3',timeout=20000)
+            page.locator('.agent-job[data-role=planner][data-completed=true]').wait_for(timeout=10000);page.wait_for_function('()=>window.recognitions.length>=3',timeout=20000)
             page.locator('#office-dialog').get_by_role('button',name='Gespräch beenden',exact=True).click();assert page.evaluate('()=>window.JarvisConversation.active()') is False
             page.locator('#office-dialog').get_by_role('button',name='Schließen',exact=True).click()
             page.locator('#clap-enabled').check();page.get_by_text('Mikrofon an: zweimal kurz klatschen startet oder beendet das Gespräch. Auswertung erfolgt lokal. Beim Sprechen schaltet Doppelklatschen auf leise; Aufträge laufen weiter.',exact=True).wait_for()
@@ -37,6 +41,6 @@ with tempfile.TemporaryDirectory() as folder:
             page.locator('#stop-speech').click();assert page.evaluate('()=>window.JarvisConversation.active()') is False;assert not page.locator('#clap-enabled').is_checked()
             assert page.evaluate('()=>window.testStreams.every(stream=>stream.getTracks().every(track=>track.readyState==="ended"))')
             assert page.evaluate('()=>window.systemVoiceCalls')==0;assert not errors,errors;assert not external,external
-            print('PASS: core starts consented continuous conversation; actual bundled voice plays; recognition resumes in agent view; spoken task creates real result; local double-clap starts, mutes during speech and wakes conversation; Stop closes all mic streams; no system voices or external requests.')
+            print('PASS: core starts consented continuous conversation; fixture Thorsten PCM plays; recognition resumes in agent view; spoken task creates real result; local double-clap starts, mutes during speech and wakes conversation; Stop closes all mic streams; no system voices or external requests. Model/ASR/audio fixtures; no hardware claim.')
             browser.close()
     finally:app.office.stop();server.shutdown();server.server_close();thread.join(timeout=3)

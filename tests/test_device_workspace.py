@@ -67,4 +67,4 @@ class DeviceApiTests(unittest.TestCase):
    status,raw,_=self.request('POST','/api/device-ai/chat',{'text':'Hi','history':[],'mode':'astra'});self.assertEqual(status,400);self.assertIn('lokale',raw.decode().lower())
   self.app.store.update_settings({'ai_provider':'llamacpp'})
   with patch.object(self.app.llamacpp,'transport',return_value={'done':True,'message':{'content':'Hallo Sir.'}}) as chat:
-   status,raw,_=self.request('POST','/api/device-ai/chat',{'text':'Hallo','history':[],'mode':'aeris'});self.assertEqual(status,200);self.assertIn('IRIS',str(chat.call_args));self.assertIsNone(self.app.desktop.plan)
+   status,raw,_=self.request('POST','/api/device-ai/chat',{'text':'Hallo','history':[],'mode':'aeris'});self.assertEqual(status,200);self.assertIn('AERIS',str(chat.call_args));self.assertIsNone(self.app.desktop.plan)

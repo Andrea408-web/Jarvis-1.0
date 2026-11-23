@@ -27,3 +27,125 @@ body[data-device-app] #device-messages:empty{min-height:0;margin:0}
 
 /* Contact cards work with a mouse, keyboard and touch. */
 .contact-row{display:flex;align-items:stretch;gap:8px;margin-top:9px;border:1px solid var(--edge);border-radius:11px;background:#afbf5e05}.contact-row .desk-list-item{cursor:grab;flex:1;min-width:0;border:0;margin:0;background:transparent;overflow-wrap:anywhere}.contact-row .contact-remove{align-self:center;margin:5px 8px 5px 0;min-width:42px;min-height:42px;border-radius:8px;background:#bdc46b0b;border:1px solid #a9b45640;cursor:pointer}.contact-row.dragging{opacity:.5;border-style:dashed}.contact-trash{display:flex;width:100%;flex-direction:column;align-items:center;gap:6px;margin-top:18px;padding:18px!important;border:1px dashed #b9c66a88!important;border-radius:13px!important;background:#b5c46108!important;color:#d7dc9b!important;cursor:pointer}.contact-trash>span{font-size:28px}.contact-trash strong{font-size:13px;font-weight:500}.contact-trash small{font-size:10px;line-height:1.5;max-width:240px}.contact-trash.drag-over{background:#aabe5230!important;border:2px solid #dbe28a!important;box-shadow:0 0 24px #bdd06326}#contact-delete-confirm{width:min(480px,calc(100vw - 28px));box-sizing:border-box;padding:25px;border:1px solid #aeb76b77;border-radius:17px;background:#121a0e;color:#e7e6c7;max-height:85dvh;overflow:auto}#contact-delete-confirm::backdrop{background:#040703b8;backdrop-filter:blur(6px)}#contact-delete-confirm h2{font-size:25px;margin:10px 0 18px}#contact-delete-confirm p{font-size:13px;line-height:1.65;overflow-wrap:anywhere}#contact-delete-yes{background:#d6d17b;color:#131808;border:0;padding:11px 16px;border-radius:9px}#contact-delete-no{padding:11px 16px;border-radius:9px}#contact-delete-error{color:#f1c38d}
+
+/* A calm device workspace: five destinations and one obvious conversation. */
+body[data-device-app]{--device-surface:color-mix(in srgb,var(--panel) 92%,#fff 2%);background:radial-gradient(ellipse at 28% 0,#a7b9650c,transparent 50%),var(--bg)}
+body[data-device-app] .workspace{grid-template-columns:76px minmax(0,1fr);max-width:1420px}
+body[data-device-app] .workspace>aside{display:none}
+body[data-device-app] main{padding:24px clamp(18px,3vw,42px) 38px}
+body[data-device-app]>header{padding:14px clamp(18px,3vw,40px);gap:20px;min-height:78px;height:auto;box-shadow:none}
+body[data-device-app] .wordmark{font-size:17px;letter-spacing:.16em}
+body[data-device-app] .wordmark small{font-size:7px;color:var(--muted)}
+body[data-device-app] .page-heading{margin:0 0 16px;padding:0;gap:12px}
+body[data-device-app] .page-heading h1{font-size:clamp(20px,2.4vw,28px);font-weight:450;letter-spacing:-.035em;margin:5px 0 0}
+body[data-device-app] .page-heading .eyebrow{font-size:8px;letter-spacing:.14em}
+body[data-device-app] #local-status{font-size:10px;max-width:220px;line-height:1.45}
+body[data-device-app] .hero{margin:0 0 16px;border-radius:18px;display:grid;grid-template-columns:minmax(0,1fr) 150px;padding:22px 24px;min-height:0;gap:16px;background:radial-gradient(ellipse at 90% 20%,#c1d18c10,transparent 62%),var(--panel);box-shadow:none}
+body[data-device-app] .hero canvas{position:static;width:150px;height:150px;margin:0;align-self:center;justify-self:center}
+body[data-device-app] .hero h2{font-size:clamp(25px,3vw,34px);font-weight:400;margin:9px 0 10px;line-height:1.15;letter-spacing:-.04em}
+body[data-device-app] .hero p{font-size:12px;line-height:1.65;max-width:420px;margin:0;color:var(--muted)}
+body[data-device-app] .hero .eyebrow{font-size:8px;letter-spacing:.15em}
+body[data-device-app] .hero .chips{margin-top:14px;gap:6px;display:flex}
+body[data-device-app] .hero .chips button{font-size:11px;padding:7px 10px;min-height:32px;border-radius:8px}
+body[data-device-app] .chat-top{margin:0 0 12px;gap:8px;flex-wrap:nowrap;align-items:center}
+body[data-device-app] .chat-top select{flex:1;min-width:0;max-width:none;font-size:11px;padding:10px;min-height:38px;border-radius:9px}
+body[data-device-app] .chat-top button{font-size:11px;min-height:38px;padding:8px 11px;border-radius:9px;white-space:nowrap}
+body[data-device-app] #device-messages{margin:0 0 14px;max-height:38dvh;min-height:70px;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--edge) transparent}
+body[data-device-app] #device-messages:empty{min-height:38px;margin-bottom:8px}
+body[data-device-app] .message{font-size:14px;padding:15px 17px;line-height:1.7;border-radius:13px;margin:0 0 10px;white-space:pre-wrap;overflow-wrap:anywhere}
+body[data-device-app] .message.user{margin-left:min(10%,55px)}
+body[data-device-app] .message.assistant{margin-right:min(5%,25px)}
+body[data-device-app] #device-chat-form{margin:0;padding:16px;border-radius:15px;background:var(--panel);border:1px solid var(--edge);box-shadow:0 12px 30px #0002}
+body[data-device-app] #device-chat-form>label{font-size:11px;font-weight:500;margin:0 0 8px}
+body[data-device-app] #device-chat-input{margin:0;min-height:76px;max-height:220px;resize:vertical;font-size:16px;line-height:1.55;border-radius:10px;padding:12px 13px}
+body[data-device-app] .form-bottom{margin-top:10px;gap:10px;align-items:center}
+body[data-device-app] .form-bottom label{font-size:11px;line-height:1.45;margin:0;max-width:none}
+body[data-device-app] .form-bottom button{min-width:100px;min-height:44px;font-size:13px;padding:10px 17px}
+body[data-device-app] #view-chat>.muted{font-size:10px;line-height:1.6;margin:10px 3px 0;max-width:700px}
+body[data-device-app] #device-speech-bar{display:flex;align-items:center;flex-wrap:wrap;gap:8px 12px;padding:12px 0 0;margin:0 0 12px;border:0;border-radius:0;background:none}
+body[data-device-app] #device-speech-bar button{min-height:42px;border-radius:9px;padding:10px 13px;font-size:12px}
+body[data-device-app] #device-mic{background:var(--accent);border-color:transparent;color:#11160c;font-weight:600}
+body[data-device-app] #device-mic[aria-pressed=true]{box-shadow:0 0 0 3px #c5d88a25}
+body[data-device-app] #device-speech-bar label{display:flex;align-items:flex-start;gap:7px;flex-basis:100%;font-size:10px;margin:0;line-height:1.5;color:var(--muted)}
+body[data-device-app] #device-speech-bar input[type=checkbox]{margin-top:2px;flex:none}
+body[data-device-app] #device-voice-status{flex-basis:100%;font-size:11px;line-height:1.5;min-height:16px;margin:0;color:var(--muted)}
+body[data-device-app] .rail{width:76px;padding:20px 8px;gap:10px;top:78px;height:calc(100dvh - 78px);border-color:var(--edge);overflow:visible;background:var(--bg)}
+body[data-device-app] .rail>button,body[data-device-app] .rail>details>summary{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;width:100%;min-height:58px;margin:0;padding:8px 3px;border:1px solid transparent;border-radius:11px;background:transparent;font-size:21px;line-height:1.15;color:var(--muted);cursor:pointer;list-style:none}
+body[data-device-app] .rail>button>span,body[data-device-app] .rail>details>summary>span{display:block;margin:0;font:10px/1.2 -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;letter-spacing:0}
+body[data-device-app] .rail>button.active,body[data-device-app] .rail-more[open]>summary{color:var(--accent);border-color:var(--edge);background:#c3d5870b;box-shadow:none}
+body[data-device-app] .rail-more{position:relative;min-width:0}
+body[data-device-app] .rail-more>summary::-webkit-details-marker{display:none}
+body[data-device-app] .rail-more-panel{position:absolute;left:calc(100% + 16px);bottom:0;width:235px;z-index:45;display:grid;gap:6px;padding:14px;border:1px solid var(--edge);border-radius:14px;background:var(--panel);box-shadow:0 18px 55px #0008}
+body[data-device-app] .rail-more-panel>strong{font-size:11px;font-weight:500;color:var(--muted);padding:2px 7px 7px}
+body[data-device-app] .rail .rail-more-panel button,body[data-device-app] .rail .rail-more-panel a{display:block;text-align:left;width:100%;min-height:42px!important;font-size:13px;line-height:1.3;padding:11px;border:0;border-radius:8px;background:#ffffff03;color:var(--text)}
+body[data-device-app] button:focus-visible,body[data-device-app] a:focus-visible,body[data-device-app] summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+body[data-device-app] .panel{border-radius:15px;box-shadow:none}
+body[data-device-app] .panel:before{display:none}
+@media(min-width:701px){
+ body[data-layout=ipad] #view-chat:not([hidden]){display:grid;grid-template-columns:minmax(220px,.85fr) minmax(280px,1.15fr);gap:12px 22px;align-items:start}
+ body[data-layout=ipad] #view-chat>.hero{grid-column:1;grid-row:1/8;display:flex;flex-direction:column-reverse;align-items:center;justify-content:flex-end;gap:18px;margin:0;padding:26px;min-height:430px;text-align:center}
+ body[data-layout=ipad] .hero canvas{width:220px;height:220px;max-width:100%}
+ body[data-layout=ipad] .hero h2{font-size:30px}
+ body[data-layout=ipad] .hero .chips{justify-content:center}
+ body[data-layout=ipad] #view-chat>:not(.hero){grid-column:2;margin-top:0}
+ body[data-layout=ipad] #view-chat>.chat-top{flex-wrap:wrap;gap:7px}
+ body[data-layout=ipad] .chat-top select{flex-basis:100%;max-width:100%}
+ body[data-layout=ipad] #device-messages{max-height:28dvh}
+}
+@media(max-width:700px){
+ body[data-device-app]>header{grid-template-columns:minmax(0,1fr) auto;min-height:102px;padding:11px 14px;gap:9px}
+ body[data-device-app] .wordmark{font-size:15px;grid-column:1;grid-row:1}
+ body[data-device-app] .mode-tabs{grid-column:1;grid-row:2;width:auto;min-width:0;padding:3px}
+ body[data-device-app] .mode-tabs button{min-width:0;padding:6px 10px;min-height:30px;font-size:11px}
+ body[data-device-app] #connection-badge{grid-column:2;grid-row:2;max-width:110px;line-height:1.35;font-size:8px}
+ body[data-device-app] #device-layout-switch{grid-column:2;grid-row:1}
+ body[data-device-app] .workspace{display:block;min-width:0}
+ body[data-device-app] main,body[data-layout=ipad] main{padding:15px 14px calc(90px + env(safe-area-inset-bottom))}
+ body[data-device-app] .page-heading{margin-bottom:12px;gap:7px;align-items:center}
+ body[data-device-app] .page-heading h1{font-size:20px;line-height:1.18;max-width:215px}
+ body[data-device-app] .page-heading .eyebrow{font-size:7px}
+ body[data-device-app] #local-status{font-size:8px;max-width:92px}
+ body[data-device-app] .hero,body[data-layout=ipad] .hero{display:grid;grid-template-columns:minmax(0,1fr) 98px;text-align:left;gap:10px;padding:16px;margin:0 0 12px;min-height:128px}
+ body[data-device-app] .hero canvas,body[data-layout=ipad] .hero canvas{width:98px;height:98px;max-width:100%;position:static;align-self:center;margin:0}
+ body[data-device-app] .hero h2,body[data-layout=ipad] .hero h2{font-size:24px;line-height:1.12;margin:7px 0 8px}
+ body[data-device-app] .hero p{font-size:11px;line-height:1.5;margin:0;max-width:none}
+ body[data-device-app] .hero .chips{display:none}
+ body[data-device-app] .hero .eyebrow{display:block;font-size:7px;letter-spacing:.1em}
+ body[data-device-app] .chat-top{margin:0 0 10px;gap:6px;flex-wrap:nowrap}
+ body[data-device-app] .chat-top select{min-width:0;flex:1;width:0;padding:9px;font-size:10px;min-height:36px}
+ body[data-device-app] .chat-top button{padding:8px 9px;min-height:36px;font-size:10px}
+ body[data-device-app] #device-messages{min-height:36px;max-height:31dvh;margin-bottom:10px}
+ body[data-device-app] #device-messages:empty{min-height:12px;margin-bottom:5px}
+ body[data-device-app] .message{font-size:14px;padding:13px;line-height:1.65}
+ body[data-device-app] #device-chat-form{padding:13px;border-radius:14px}
+ body[data-device-app] #device-chat-input{font-size:16px;min-height:72px;max-height:150px;padding:11px}
+ body[data-device-app] .form-bottom{gap:8px;flex-wrap:wrap;margin-top:10px}
+ body[data-device-app] .form-bottom label{font-size:10px;max-width:none;flex:1;min-width:120px}
+ body[data-device-app] .form-bottom button{min-width:86px;min-height:42px;padding:9px 13px;font-size:12px}
+ body[data-device-app] #device-speech-bar{gap:7px 9px;padding-top:0;margin-bottom:11px}
+ body[data-device-app] #device-speech-bar button{min-height:42px;font-size:12px;padding:9px 12px}
+ body[data-device-app] #device-voice-status{font-size:10px}
+ body[data-device-app] .rail{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));position:fixed;left:0;right:0;bottom:0;top:auto;width:auto;height:calc(68px + env(safe-area-inset-bottom));padding:5px 7px calc(5px + env(safe-area-inset-bottom));gap:3px;background:var(--bg);border-top:1px solid var(--edge);border-right:0;box-shadow:0 -8px 30px #0004;z-index:30}
+ body[data-device-app] .rail>button,body[data-device-app] .rail>details>summary{min-height:55px!important;font-size:20px;padding:5px 1px;gap:3px}
+ body[data-device-app] .rail>button>span,body[data-device-app] .rail>details>summary>span{font-size:9px}
+ body[data-device-app] .rail-more-panel{left:auto;right:0;bottom:calc(100% + 15px);width:min(270px,calc(100vw - 28px));max-height:65dvh;overflow:auto;padding:12px}
+ body[data-device-app] .rail .rail-more-panel button,body[data-device-app] .rail .rail-more-panel a{font-size:14px;min-height:44px!important;padding:12px}
+ body[data-device-app] #device-toast{bottom:calc(82px + env(safe-area-inset-bottom))}
+ body[data-device-app].device-keyboard-open .rail{display:none!important}
+}
+/* Selecting Handy keeps a phone workspace even in a wide browser window. */
+body[data-layout=phone] .workspace{display:block;max-width:600px;margin:0 auto}
+body[data-layout=phone] .workspace>aside{display:none}
+body[data-layout=phone] main{padding:16px 14px calc(90px + env(safe-area-inset-bottom))}
+body[data-layout=phone] #view-chat:not([hidden]){display:block}
+body[data-layout=phone] .hero{display:grid;grid-template-columns:minmax(0,1fr) 100px;min-height:128px;padding:16px;gap:10px;text-align:left}
+body[data-layout=phone] .hero canvas{position:static;width:100px;height:100px;margin:0}
+body[data-layout=phone] .hero h2{font-size:24px;margin:7px 0 8px}
+body[data-layout=phone] .hero p{font-size:11px;line-height:1.5}
+body[data-layout=phone] .hero .chips{display:none}
+body[data-layout=phone] .rail{position:fixed;left:50%;right:auto;transform:translateX(-50%);bottom:0;top:auto;width:100%;max-width:600px;height:calc(68px + env(safe-area-inset-bottom));display:grid;grid-template-columns:repeat(5,minmax(0,1fr));padding:5px 7px calc(5px + env(safe-area-inset-bottom));gap:3px;border:0;border-top:1px solid var(--edge);z-index:30;background:var(--bg);box-shadow:0 -8px 30px #0004}
+body[data-layout=phone] .rail>button,body[data-layout=phone] .rail>details>summary{min-height:55px!important;font-size:20px;padding:5px 1px;gap:3px}
+body[data-layout=phone] .rail-more-panel{left:auto;right:0;bottom:calc(100% + 15px);width:min(270px,calc(100vw - 28px));max-height:65dvh;overflow:auto;padding:12px}
+body[data-layout=phone].device-keyboard-open .rail{display:none!important}
+@media(max-width:360px){body[data-device-app] .hero,body[data-layout=phone] .hero{grid-template-columns:minmax(0,1fr) 78px;padding:13px}body[data-device-app] .hero canvas,body[data-layout=phone] .hero canvas{width:78px;height:78px}body[data-device-app] .chat-top button{font-size:9px;padding:8px}body[data-device-app] .mode-tabs button{padding:6px 8px}}
+body[data-device-app] .device-call-open{border-color:var(--edge);color:var(--accent);background:#c5d88a0c;font-weight:600}

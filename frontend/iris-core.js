@@ -1,9 +1,9 @@
-/* Original IRIS aperture portrait. Rendering only; state comes from the assistant. */
+/* Original AERIS aperture portrait. Rendering only; state comes from the assistant. */
 const TAU=Math.PI*2;
 // Idle and reduced-motion portraits are still images. Keep repeated callers cheap.
 const portraits=new WeakMap();
 function ring(c,r,start,end,color,width=1){c.beginPath();c.arc(0,0,r,start,end);c.strokeStyle=color;c.lineWidth=width;c.stroke();}
-export function drawIris(canvas,time=0,{working=false,speaking=false,listening=false,reducedMotion}={}){
+export function drawAeris(canvas,time=0,{working=false,speaking=false,listening=false,reducedMotion}={}){
  const c=canvas?.getContext?.('2d');if(!c)return;
  const box=canvas.getBoundingClientRect(),side=box.width>0&&box.height>0?Math.min(box.width,box.height):0;
  if(!side)return;
@@ -41,3 +41,6 @@ export function drawIris(canvas,time=0,{working=false,speaking=false,listening=f
  c.restore();
  portraits.set(canvas,state);
 }
+
+// Legacy import compatibility for already cached callers.
+export {drawAeris as drawIris};

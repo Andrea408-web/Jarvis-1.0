@@ -42,7 +42,7 @@ def answer(app, body, identity='jarvis', text_only=False, personal_profile=None)
     if provider not in {'llamacpp','ollama'}:
         if text_only:raise ValueError('Für diesen Arbeitsraum bitte die vorhandene lokale KI am Mac auswählen. Kein Internetdienst wurde angefragt.')
         return {'reply':address+', dieser private Videoanruf verwendet nur eine bereits eingerichtete lokale Text-KI. Bitte wähle die kleine lokale KI in den Einstellungen. Es wurde kein Bild an einen Internetdienst gesendet.','vision':evidence,'private_call':True}
-    identity={'jarvis':'JARVIS','astra':'ASTRA','aeris':'IRIS'}.get(identity,'JARVIS')
+    identity={'jarvis':'JARVIS','astra':'ASTRA','aeris':'AERIS'}.get(identity,'JARVIS')
     instruction=('Du bist '+identity+' und sprichst Deutsch, freundlich und knapp. Anrede: '+address+'. '
                  'Dies ist ein privates Gespräch ohne Werkzeuge. Du kannst nichts öffnen oder ausführen. '
                  'Du siehst KEINE Bildpixel. Du erhältst nur unsichere lokale Objektkategorien und OCR-Text. '

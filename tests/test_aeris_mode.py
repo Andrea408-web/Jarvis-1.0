@@ -7,7 +7,7 @@ class AerisModeTests(unittest.TestCase):
    store=Store(folder);entered=threading.Event();release=threading.Event();seen=[]
    def worker():
     with store.identity_context('aeris'):entered.set();release.wait(2);seen.append(name(store));seen.append(correct_identity('Ich bin JARVIS.',store))
-   thread=threading.Thread(target=worker);thread.start();self.assertTrue(entered.wait(1));self.assertEqual(name(store),'JARVIS');release.set();thread.join(2);self.assertEqual(seen,['IRIS','Ich bin IRIS.'])
+   thread=threading.Thread(target=worker);thread.start();self.assertTrue(entered.wait(1));self.assertEqual(name(store),'JARVIS');release.set();thread.join(2);self.assertEqual(seen,['AERIS','Ich bin AERIS.'])
    with self.assertRaises(ValueError):
     with store.identity_context('aeris'):raise ValueError('test')
    self.assertEqual(name(store),'JARVIS')

@@ -1,4 +1,4 @@
-"""IRIS integration through the actual HTTP server and Chromium.
+"""AERIS integration through the actual HTTP server and Chromium.
 
 Controlled local-model, recognition and WAV fixtures verify orchestration only;
 they do not establish model quality, Thorsten's installed voice or audio hardware.
@@ -32,7 +32,7 @@ with tempfile.TemporaryDirectory() as folder:
 
     def no_design(*args, **kwargs):
         designs.append(args)
-        raise AssertionError('Default IRIS must not generate 3D')
+        raise AssertionError('Default AERIS must not generate 3D')
 
     app.llamacpp.transport = chat
     app.code_room._generate = no_design
@@ -60,7 +60,7 @@ with tempfile.TemporaryDirectory() as folder:
               AudioContext.prototype.createBufferSource=function(){const source=original.call(this),start=source.start.bind(source);source.start=(...args)=>{window.irisPlaybacks++;return start(...args);};return source;};""")
             page.goto(origin + '/iris')
             page.locator('#iris-title').wait_for()
-            assert page.title().startswith('IRIS')
+            assert page.title().startswith('AERIS')
             assert not page.locator('model-viewer, [id="scene"], [id="aeris-scene"]').count()
             assert not designs and not chats and not voices
             assert page.evaluate('irisRecognitions') == 0
@@ -68,9 +68,10 @@ with tempfile.TemporaryDirectory() as folder:
             assert page.evaluate('irisRecognitions') == 0
             page.locator('#iris-question').fill('Wer bist du?')
             page.locator('#iris-send').click()
-            page.locator('#iris-messages').get_by_text('Iris: Ich bin IRIS. Wir sortieren deine Idee.', exact=True).wait_for()
+
+            page.locator('#iris-messages').get_by_text('Aeris: Ich bin AERIS. Wir sortieren deine Idee.', exact=True).wait_for()
             page.wait_for_function('()=>irisPlaybacks === 1')
-            assert 'Du bist IRIS' in chats[0]['messages'][0]['content']
+            assert 'Du bist AERIS' in chats[0]['messages'][0]['content']
             assert app.store.settings()['assistant_identity'] == 'astra'
             assert app.store.history() == []
             assert page.evaluate("async()=>await DeviceStore.get('iris-notes-v1')") is None
@@ -141,7 +142,7 @@ with tempfile.TemporaryDirectory() as folder:
             assert app.store.history() == []
             assert not errors, errors
             browser.close()
-            print('PASS: IRIS/aeris routes, local persona, RAM chat, fixed Thorsten audio, opt-in ASR automatic turns, clear discards late replies and history, explicit device notes, Techniklabor, mode switching, mobile fit; model/ASR/WAV fixtures, no hardware claims.')
+            print('PASS: AERIS/aeris routes, local persona, RAM chat, fixed Thorsten audio, opt-in ASR automatic turns, clear discards late replies and history, explicit device notes, Techniklabor, mode switching, mobile fit; model/ASR/WAV fixtures, no hardware claims.')
     finally:
         release.set()
         app.office.stop()

@@ -2,7 +2,7 @@
 import re
 from .personal_profile import context as personal_context
 
-def name(store):return {'astra':'ASTRA','aeris':'IRIS'}.get(store.settings().get('assistant_identity'),'JARVIS')
+def name(store):return {'astra':'ASTRA','aeris':'AERIS'}.get(store.settings().get('assistant_identity'),'JARVIS')
 
 def instruction(store):
     user_name=store.settings().get('user_name','');address=store.settings().get('user_address','Master')
@@ -19,7 +19,7 @@ def instruction(store):
 
 def correct_identity(text,store,user_text='',identity=None):
     if re.search(r'schreib|verfass|formulier|übersetz|zitier',user_text,re.I):return text
-    target=({'AERIS':'IRIS'}.get(identity.upper(),identity.upper())if isinstance(identity,str)and identity.upper()in {'JARVIS','ASTRA','AERIS','IRIS'}else name(store));other='(?:'+'|'.join(value for value in ['JARVIS','ASTRA','AERIS','IRIS'] if value!=target)+')'
+    target=({'IRIS':'AERIS'}.get(identity.upper(),identity.upper())if isinstance(identity,str)and identity.upper()in {'JARVIS','ASTRA','AERIS','IRIS'}else name(store));other='(?:'+'|'.join(value for value in ['JARVIS','ASTRA','AERIS','IRIS'] if value!=target)+')'
     if not re.search(r'(?:schreib|verfass|formulier|übersetz|zitier).*(?:astrid|astra|jarvis|astda|aeris|iris)',user_text,re.I):
         greeting_name=store.settings().get('user_address') or store.settings().get('user_name') or 'Master'
         text=re.sub(r'(?i)^(\s*(?:hallo|hi|hey|guten (?:tag|morgen|abend))[, ]+)\s*(?:astra|astrid|astda|jarvis|aeris|iris)\b',lambda match:match[1]+greeting_name,text)

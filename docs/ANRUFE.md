@@ -1,10 +1,14 @@
 # Anrufe und Gesprächsmenü
 
-Öffne „Anrufen“ in Jarvis am Mac, iPad oder Handy. Für normale Telefonnummern wählst du einen Kontakt oder gibst eine Nummer ein und bestätigst die Übergabe an Telefon/FaceTime. Jarvis behauptet dabei keine bestehende Verbindung. Die Web-App kann normale Apple-Telefonate weder abhören noch ihren Ton ersetzen. Apple kann eigene Anruflisten führen.
+Öffne „Jarvis Apps“ und dann „Telefon“ in Jarvis am Mac, iPad oder Handy. Im selben App-Menü findest du Techniklabor und Aeris. Für normale Telefonnummern wählst du einen Kontakt oder gibst eine Nummer ein und bestätigst die Übergabe an Telefon/FaceTime. Es wird kein Anruflink benötigt. Der Browser öffnet direkt den lokalen Telefon-Link; die gewählte Nummer wird dabei nicht an den Jarvis-Server oder die KI geschickt. Kontaktauswahl aus Apple Kontakte ist eine gesonderte, ausdrücklich ausgelöste Abfrage am Mac. Jarvis behauptet dabei keine bestehende Verbindung. Die Web-App kann normale Apple-Telefonate weder abhören noch ihren Ton ersetzen. Apple kann eigene Anruflisten führen.
+
+## Gespräch mit KI vorbereiten
+
+Schreibe in „Was möchtest du sagen?“ kurz dein Ziel und tippe „Formulierung mit KI vorbereiten“. Nur dieser Text wird an die bereits eingerichtete KI übergeben; Kontaktname und Nummer aus den Kontaktfeldern werden nicht mitgesendet. Ein neuer Gesprächsverlauf wird dafür nicht gespeichert. Der Entwurf bleibt editierbar im Telefonfenster und wird beim Schließen verworfen. Diese Vorbereitung ist kein autonomer Telefonanruf: Beim normalen Telefonat sprichst du selbst. Ein bereits konfigurierter externer KI-Anbieter wird durch das Update nicht automatisch lokal.
 
 ## Web-Anruf mit Jarvis
 
-Im Anrufmenü führt „Web-Anruf mit Jarvis · Gesprächsmodi öffnen“ zu `/web-call`. Dies ist ein eigener Anruf zwischen zwei Browsern, kein Anruf zu einer Telefonnummer. Beide müssen diese Seite öffnen können. Kamera oder Kontakte sind dafür nicht nötig. Das Mikrofon wird erst nach deiner Freigabe angefragt.
+Unter „Einrichtung & optionale Web-Gespräche“ führt der optionale Browser-Anruf zu `/web-call`. Dies ist ein eigener Anruf zwischen zwei Browsern, kein Anruf zu einer Telefonnummer. Beide müssen diese Seite öffnen können. Kamera oder Kontakte sind dafür nicht nötig. Das Mikrofon wird erst nach deiner Freigabe angefragt.
 
 1. Mikrofon erlauben und Einladung erstellen. Code oder Einladungslink nur an die gewünschte Person geben.
 2. Die andere Person öffnet denselben erreichbaren Jarvis-Zugang, erlaubt ihr Mikrofon und übernimmt den Einladungscode. Sie schickt ihren Antwortcode zurück.

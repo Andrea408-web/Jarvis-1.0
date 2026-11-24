@@ -26,7 +26,7 @@ with tempfile.TemporaryDirectory() as folder:
             page.locator('.agent-job[data-role=planner][data-completed=true]').wait_for(timeout=10000);page.wait_for_function('()=>window.recognitions.length>=3',timeout=20000)
             page.locator('#office-dialog').get_by_role('button',name='Gespräch beenden',exact=True).click();assert page.evaluate('()=>window.JarvisConversation.active()') is False
             page.locator('#office-dialog').get_by_role('button',name='Schließen',exact=True).click()
-            page.locator('#clap-enabled').check();page.get_by_text('Mikrofon an: zweimal kurz klatschen startet oder beendet das Gespräch. Auswertung erfolgt lokal. Beim Sprechen schaltet Doppelklatschen auf leise; Aufträge laufen weiter.',exact=True).wait_for()
+            page.locator('#hud-settings>summary').click();page.locator('#clap-enabled').check();page.locator('#hud-settings').evaluate('e=>e.open=false');page.get_by_text('Mikrofon an: zweimal kurz klatschen startet oder beendet das Gespräch. Auswertung erfolgt lokal. Beim Sprechen schaltet Doppelklatschen auf leise; Aufträge laufen weiter.',exact=True).wait_for(state='attached')
             page.evaluate('''()=>{window.clapMic=window.microphones.at(-1);const {context,gain}=window.clapMic;const now=context.currentTime;for(const delay of [.2,.5]){gain.gain.setValueAtTime(.9,now+delay);gain.gain.setValueAtTime(0,now+delay+.06);}}''')
             page.wait_for_function('()=>window.JarvisConversation.active()',timeout=6000)
             page.evaluate('()=>{window.testPlaybackSpeed=1;}')

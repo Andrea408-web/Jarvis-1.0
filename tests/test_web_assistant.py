@@ -11,7 +11,7 @@ def event(name,age,time='20:00',date='2026-11-05'):
  return {'@type':'ScreeningEvent','workPresented':{'name':name,'contentRating':'FSK '+str(age)},'startDate':date+'T'+time+':00+01:00','location':{'name':'Cineplex Neufahrn'}}
 
 class WebTests(unittest.TestCase):
- def setUp(self):self.temp=tempfile.TemporaryDirectory();self.app=Application(self.temp.name);self.app.web.clock=lambda:NOW;self.app.selected_client=Mock(side_effect=AssertionError('Web facts must not be invented by the model'))
+ def setUp(self):self.temp=tempfile.TemporaryDirectory();self.app=Application(self.temp.name);self.app.web.clock=lambda:NOW;self.app.store.update_settings({'ai_provider':'gemini'});self.app.selected_client=Mock(side_effect=AssertionError('Retrieval fixtures must not invoke models'))
  def tearDown(self):self.app.office.stop();self.temp.cleanup()
  def reader(self,url):
   if url.startswith(SEARCH):return '',url

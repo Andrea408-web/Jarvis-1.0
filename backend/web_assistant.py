@@ -14,6 +14,7 @@ from datetime import datetime,timedelta
 from html.parser import HTMLParser
 from urllib.parse import parse_qs, quote_plus, unquote, urljoin, urlsplit
 from zoneinfo import ZoneInfo
+from .providers import ProviderError
 
 SEARCH='https://html.duckduckgo.com/html/?q='
 CINEMA='https://www.cineplex.de/kinoprogramm/neufahrn/'
@@ -270,7 +271,7 @@ class WebAssistant:
                 reply+='\nFSK ist keine Garantie für den Einlass; Begleitung, Jugendschutz und freie Plätze bitte beim Kino prüfen.'
             else:reply=f"Sir, das Programm für {data['place']} ist gerade nicht mit lesbaren Spielzeiten und FSK-Angaben verfügbar. Ich habe dir den Zugang zum Kinoprogramm im Ergebnisfenster bereitgelegt. Dort kannst du die Vorstellungen für {on_date:%d.%m.%Y} prüfen."
         else:
-            rows=[]
+            rows=[];evidence=[]
             for source,page in pages:
                 if kind=='food' and page:
                     businesses=restaurant_rows(page.schemas,now,data['people'],data['budget'])
@@ -288,10 +289,20 @@ class WebAssistant:
                 if page and kind=='food':
                     relevant=[p.strip() for p in page.text if re.search(r'€|euro|öffnungs|geöffnet|speisekarte|preis',p,re.I) and 15<len(p.strip())<400]
                     if relevant:excerpt=' '.join(relevant[:2])[:450]
-                if excerpt:rows.append(source['title']+': '+excerpt)
+                if excerpt:
+                    rows.append(source['title']+': '+excerpt)
+                    evidence.append({'title':source['title'],'text':excerpt,'url':source['url']})
             if rows:
                 reply=('Sir, hier sind passende Quellenauszüge. Das sind Webseitenangaben, keine unabhängig geprüften Fakten:\n' if kind=='web' else 'Sir, ich habe dazu folgende öffentlichen Angaben gefunden:\n')+'\n'.join('• '+row for row in rows[:3])
                 if kind=='food':reply+=f"\nGesucht für {data['people']} Personen in {data['place']}, Budget: {data['budget']}. Ob gerade geöffnet ist und ihr innerhalb des Budgets satt werdet, ist durch diese Angaben nicht sicher bestätigt."
             else:reply='Sir, die aktuellen Angaben konnte ich nicht zuverlässig aus den öffentlichen Seiten lesen. Ich kann dir die passende Website bzw. Websuche öffnen; Preise und Öffnungszeiten erfinde ich nicht.'
+        if kind=='web' and evidence and self.app.store.settings().get('ai_provider') in {'llamacpp','ollama'}:
+            try:
+                summary=self.app.selected_client().summarize_sources(data['query'],evidence)
+            except (ProviderError,ValueError,OSError,TimeoutError):summary=None
+            if isinstance(summary,str) and summary.strip():
+                reply='Sir, hier ist die lokale KI-Zusammenfassung der gefundenen Quellen:\n'+summary+'\nQuellen: '+'; '.join('['+str(i+1)+'] '+row['title'] for i,row in enumerate(evidence))
+                sources=[{'title':row['title'],'url':row['url'],'snippet':row['text'],'kind':'website'} for row in evidence]
+            else:reply+='\nDie lokale KI konnte daraus keine Zusammenfassung mit gültigen Quellenverweisen liefern. Die lesbaren Auszüge bleiben verfügbar.'
         reply+=f'\nAbruf: {now:%d.%m.%Y %H:%M} (Europe/Berlin).'
         return {'reply':reply,'view':'discover','category':kind,'title':'Kinoprogramm' if kind=='cinema' else 'Ergebnisse zu deiner Frage','cards':[],'sources':[{'title':s['title'][:180],'url':s['url'],'kind':s.get('kind','website'),'snippet':str(s.get('snippet',''))[:450]} for s in sources]}

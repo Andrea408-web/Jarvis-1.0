@@ -15,7 +15,7 @@ class TestHandler(Handler):
   if path=='/vendor/three/RoomEnvironment.js':self._json({'error':'Optional test asset unavailable'},404);return
   if fail_core and path=='/device-style.css':self._json({'error':'Core test asset unavailable'},503);return
   if new_worker and path=='/aeris-sw.js':
-   body=(FRONTEND/'aeris-sw.js').read_text().replace('aeris-workspace-v56','aeris-workspace-v57-test').encode();self._headers(200,'text/javascript',len(body));self.wfile.write(body);return
+   body=(FRONTEND/'aeris-sw.js').read_text().replace('aeris-workspace-v57','aeris-workspace-v58-test').encode();self._headers(200,'text/javascript',len(body));self.wfile.write(body);return
   return super()._dispatch()
 def choose_layout(page,value):
  if not page.locator('#hud-settings').evaluate('e=>e.open'):page.locator('#hud-settings>summary').click()
@@ -29,11 +29,11 @@ with tempfile.TemporaryDirectory()as folder:
    context=pw.chromium.launch_persistent_context(profile,**opts);page=context.pages[0];page.on('pageerror',lambda e:errors.append(str(e)));page.goto(url+'/');page.locator('[data-device-app]').wait_for();page.locator('#offline-ready[data-ready=true]').wait_for(state='attached',timeout=25000);page.wait_for_function('()=>!!navigator.serviceWorker.controller');assert page.locator('#device-layout-select').input_value()=='phone';assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1');rail=page.locator('.rail').bounding_box();assert rail['height']<115 and rail['width']<=321,rail
    page.locator('.rail [data-view=notes]').click();page.locator('#note-title').fill('Ohne Mac behalten');page.locator('#note-body').fill('Meine Notiz bleibt auf dem Handy.');page.locator('#note-form button').click();page.wait_for_function("async()=>(await DeviceStore.get('workspace'))?.notes.some(n=>n.title==='Ohne Mac behalten')");page.evaluate("async()=>{await DeviceStore.chunk('offline-sentinel',new Blob(['keep']));const c=await caches.open('jarvis-device-runtime-3.13.0');await c.put('/device-runtime/3.13.0/test-sentinel',new Response('keep'));}")
    # A broken optional 3D asset must not prevent the actual phone shell installing.
-   cache=page.evaluate('async()=>await caches.keys()');assert 'aeris-workspace-v56'in cache
+   cache=page.evaluate('async()=>await caches.keys()');assert 'aeris-workspace-v57'in cache
    slow_docs=True;start=time.monotonic();page.goto(url+'/',wait_until='domcontentloaded');page.locator('[data-device-app]').wait_for();assert time.monotonic()-start<3.8;slow_docs=False
    new_worker=True;fail_core=True
    result=page.evaluate("""async()=>{const r=await navigator.serviceWorker.getRegistration();await r.update();const w=r.installing;if(w&&w.state!=='redundant'&&w.state!=='activated')await new Promise(resolve=>{w.addEventListener('statechange',()=>{if(['redundant','activated'].includes(w.state))resolve()});setTimeout(resolve,12000)});return {state:w?.state,keys:await caches.keys()};}""")
-   assert result['state']=='redundant',result;assert 'aeris-workspace-v56'in result['keys'];assert 'aeris-workspace-v57-test'not in result['keys'];assert 'jarvis-device-runtime-3.13.0'in result['keys'];assert page.evaluate("async()=>(await DeviceStore.chunk('offline-sentinel')).text()")=='keep'
+   assert result['state']=='redundant',result;assert 'aeris-workspace-v57'in result['keys'];assert 'aeris-workspace-v58-test'not in result['keys'];assert 'jarvis-device-runtime-3.13.0'in result['keys'];assert page.evaluate("async()=>(await DeviceStore.chunk('offline-sentinel')).text()")=='keep'
    server.shutdown();server.server_close();thread.join(3);server_stopped=True
    for path in ['/tablet?layout=phone','/','/mobile','/index.html','/brands#business']:
     page.goto(url+path,wait_until='domcontentloaded',timeout=12000);page.locator('[data-device-app]').wait_for();page.locator('#offline-ready[data-ready=true]').wait_for(state='attached',timeout=12000);page.locator('#connection-badge').filter(has_text='OHNE MAC').wait_for(timeout=12000);assert page.evaluate('window.JarvisDeviceShellReady===true');assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1')

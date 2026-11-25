@@ -3,3 +3,5 @@
 #mp-stage[data-kind=audio]{aspect-ratio:auto;min-height:255px} @media(max-width:650px){#mp-stage[data-kind=audio]{min-height:185px}}
 
 #mp-results button{min-width:0;overflow-wrap:anywhere}
+
+#mp-stage[data-kind=spotify]{min-height:352px;aspect-ratio:auto}#mp-stage[data-kind=spotify] .mp-idle,#mp-stage[data-kind=spotify] .mp-orbit{display:none}#mp-spotify{width:100%;height:352px;border:0;display:block}#mp-stage[data-kind=spotify] #mp-spotify{position:absolute;inset:0}#jarvis-media button:disabled{opacity:.45;cursor:default}

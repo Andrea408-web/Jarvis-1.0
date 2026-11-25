@@ -30,7 +30,7 @@ def public_url(value):
     except (ValueError,TypeError):return False
 
 
-def fetch_public(url):
+def fetch_public(url, max_bytes=1500000):
     """Verified TLS, globally routable DNS addresses pinned for each redirect."""
     for _ in range(4):
         if not public_url(url):raise ValueError('Keine öffentliche HTTPS-Quelle.')
@@ -39,11 +39,11 @@ def fetch_public(url):
         address=sorted(addresses,key=lambda v:':' in v)[0]
         if sys.platform=='darwin':
             pinned='['+address+']' if ':' in address else address
-            command=['/usr/bin/curl','--disable','--silent','--show-error','--include','--noproxy','*','--proto','=https','--connect-timeout','4','--max-time','8','--max-filesize','1500000','--resolve',p.hostname+':443:'+pinned,'--user-agent','JARVIS-Web/1.0',url]
+            command=['/usr/bin/curl','--disable','--silent','--show-error','--include','--noproxy','*','--proto','=https','--connect-timeout','4','--max-time','8','--max-filesize',str(max_bytes),'--resolve',p.hostname+':443:'+pinned,'--user-agent','JARVIS-Web/1.0',url]
             process=subprocess.Popen(command,stdout=subprocess.PIPE,stderr=subprocess.DEVNULL)
             try:
-                raw=process.stdout.read(1500001)
-                if len(raw)>1500000 or process.wait(timeout=9):raise ValueError('Webseite nicht frei erreichbar.')
+                raw=process.stdout.read(max_bytes+1)
+                if len(raw)>max_bytes or process.wait(timeout=9):raise ValueError('Webseite nicht frei erreichbar.')
             finally:
                 if process.poll() is None:process.kill();process.wait()
                 process.stdout.close()
@@ -62,8 +62,8 @@ def fetch_public(url):
             connection=Pinned(p.hostname,timeout=8)
             try:
                 connection.request('GET',(p.path or '/')+('?' +p.query if p.query else ''),headers={'User-Agent':'JARVIS-Web/1.0','Accept':'text/html,application/ld+json'})
-                response=connection.getresponse();status=response.status;headers={k.lower():v for k,v in response.getheaders()};body=response.read(1500001)
-                if len(body)>1500000:raise ValueError('Webseite ist zu groß.')
+                response=connection.getresponse();status=response.status;headers={k.lower():v for k,v in response.getheaders()};body=response.read(max_bytes+1)
+                if len(body)>max_bytes:raise ValueError('Webseite ist zu groß.')
             finally:connection.close()
         if status in {301,302,303,307,308}:url=urljoin(url,headers.get('location',''));continue
         if status!=200:raise ValueError('Webseite ist nicht frei erreichbar.')

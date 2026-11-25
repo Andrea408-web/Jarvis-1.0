@@ -18,3 +18,15 @@ class MediaTests(unittest.TestCase):
  def test_invalid_queries_never_fetch(self):
   for body in [{},{'query':''},{'query':'x'*181},{'query':'ok','url':'https://127.0.0.1'},None,{'query':True}]:
    with self.subTest(body=body),self.assertRaises(ValueError):search(body,lambda url:self.fail('must not fetch'))
+ def test_youtube_page_fallback_when_public_search_has_no_matches(self):
+  import json
+  payload={'contents':{'items':[{'videoRenderer':{'videoId':'AbC123_efGh','title':{'runs':[{'text':'Originales YouTube-Ergebnis'}]}}}]}}
+  calls=[]
+  def read(url):
+   calls.append(url)
+   return ('<html>Keine Treffer / Suchdienst blockiert</html>'if len(calls)==1 else'<script>var ytInitialData = '+json.dumps(payload)+';</script>',url)
+  data=search({'query':'Weltraum'},read);self.assertEqual(len(calls),2);self.assertEqual(data['source'],'YouTube-Suche');self.assertEqual(data['items'][0]['title'],'Originales YouTube-Ergebnis');self.assertTrue(calls[-1].startswith('https://www.youtube.com/results?search_query='))
+ def test_youtube_page_parser_never_executes_scripts_or_accepts_invalid_ids(self):
+  from backend.media import youtube_results
+  self.assertEqual(youtube_results('<script>var ytInitialData = alert(1);</script>'),[])
+  self.assertEqual(youtube_results('<script>var ytInitialData = {"videoRenderer":{"videoId":"bad","title":{"simpleText":"Fake"}}};</script>'),[])

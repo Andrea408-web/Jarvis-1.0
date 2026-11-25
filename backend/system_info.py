@@ -35,10 +35,14 @@ def _linux_metrics() -> dict:
         values = [int(value) for value in line.split()[1:]]
         # guest/guest_nice are included in user/nice; count first eight fields.
         total, idle = sum(values[:8]), values[3] + values[4]
+        user, kernel = sum(values[:2]), values[2] + values[5] + values[6]
         with _sample_lock:
-            previous, _previous_cpu = _previous_cpu, (total, idle)
+            previous, _previous_cpu = _previous_cpu, (total, idle, user, kernel)
         if previous and total > previous[0]:
             result["cpu_percent"] = round(100 * (1 - (idle-previous[1]) / (total-previous[0])), 1)
+            result["cpu_idle_percent"] = round(100 * (idle-previous[1])/(total-previous[0]),1)
+            result["cpu_user_percent"] = round(100 * (user-previous[2])/(total-previous[0]),1)
+            result["cpu_system_percent"] = round(100 * (kernel-previous[3])/(total-previous[0]),1)
     except (OSError, ValueError, IndexError):
         pass
     try:
@@ -49,7 +53,7 @@ def _linux_metrics() -> dict:
         total = memory["MemTotal"]
         used = total - memory["MemAvailable"]
         result.update(memory_total_bytes=total, memory_used_bytes=used,
-                      memory_percent=round(used/total * 100, 1))
+                      memory_percent=round(used/total * 100, 1), memory_available_bytes=memory["MemAvailable"], memory_free_bytes=memory.get("MemFree"))
     except (OSError, KeyError, ValueError):
         pass
     try:
@@ -97,7 +101,7 @@ def _mac_metrics() -> dict:
                                 ["Pages free", "Pages inactive", "Pages speculative"]) * page_size
                 used = max(0, total - available)
                 result.update(memory_used_bytes=used, memory_percent=round(used/total * 100, 1),
-                              memory_measurement="estimated from vm_stat")
+                              memory_measurement="estimated from vm_stat", memory_available_bytes=available, memory_free_bytes=(pages["Pages free"]+pages.get("Pages speculative",0))*page_size if "Pages free" in pages else None, memory_compressed_bytes=pages["Pages occupied by compressor"]*page_size if "Pages occupied by compressor" in pages else None, memory_wired_bytes=pages["Pages wired down"]*page_size if "Pages wired down" in pages else None)
     except ValueError:
         pass
     boot = _command(["/usr/sbin/sysctl", "-n", "kern.boottime"])
@@ -107,11 +111,12 @@ def _mac_metrics() -> dict:
             result["uptime_seconds"] = max(0, int(time.time()-int(match.group(1))))
     # top reports a real instantaneous sample; using one bounded native call
     # avoids kernel/private APIs and any third-party dependency.
-    top = _command(["/usr/bin/top", "-l", "1", "-n", "0"])
+    top = _command(["/usr/bin/top", "-l", "2", "-s", "1", "-n", "0"])
     if top:
-        match = re.search(r"CPU usage:\s*([\d.]+)% user,\s*([\d.]+)% sys", top)
-        if match:
-            result["cpu_percent"] = round(float(match.group(1))+float(match.group(2)), 1)
+        samples = re.findall(r"CPU usage:\s*([\d.]+)% user,\s*([\d.]+)% sys,\s*([\d.]+)% idle", top)
+        if samples:
+            user, kernel, idle = map(float,samples[-1])
+            result.update(cpu_percent=round(user+kernel,1),cpu_user_percent=user,cpu_system_percent=kernel,cpu_idle_percent=idle)
     return result
 
 
@@ -123,7 +128,8 @@ def snapshot(data_dir: str | Path | None = None) -> dict:
         "python_version": platform.python_version(), "hostname": platform.node(),
         "is_macos": system == "Darwin", "macos_version": platform.mac_ver()[0] or None,
         "cpu_name": platform.processor() or None, "cpu_count": os.cpu_count(),
-        "cpu_percent": None, "load_average": None,
+        "cpu_percent": None, "cpu_user_percent": None, "cpu_system_percent": None, "cpu_idle_percent": None, "load_average": None,
+        "memory_free_bytes": None, "memory_available_bytes": None, "memory_compressed_bytes": None, "memory_wired_bytes": None,
         "memory_total_bytes": None, "memory_used_bytes": None, "memory_percent": None,
         "disk_total_bytes": None, "disk_free_bytes": None, "disk_percent": None,
         "uptime_seconds": None,

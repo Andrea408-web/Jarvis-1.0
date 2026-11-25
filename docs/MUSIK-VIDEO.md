@@ -25,3 +25,11 @@ Beim Öffnen pausiert Jarvis seine bisherige Mikrofon- und Klatschsteuerung, dam
 ## Prüfung
 
 Lokales Audio und Video, Warteschlange, Pause, Fortsetzen, Verkleinern, Stoppen sowie die Befehlswege werden im echten Browser mit erzeugten Testdateien geprüft. Externe Radio- und YouTube-Antworten sowie Suchergebnisse werden in den Tests kontrolliert simuliert. Eine erfolgreiche echte Senderverbindung oder Wiedergabe jedes YouTube-Videos wird dadurch nicht belegt.
+
+## Überarbeitete YouTube-Anbindung
+
+Der eingebettete Player nutzt nun die offizielle YouTube-IFrame-API für Start, Pause, Zustands- und Fehlermeldungen. Die Einbettung erhält ausdrücklich die Referrer-Richtlinie strict-origin-when-cross-origin, die eigene Origin und einen widget_referrer. Die zusätzlichen YouTube-Skripte werden erst nach Auswahl eines Videos geladen; Dateien und Radio benötigen sie nicht.
+
+Wenn die öffentliche Websuche keine Treffer liefert oder blockiert, wird zusätzlich die öffentliche YouTube-Ergebnisseite gelesen. Dabei werden ausschließlich Video-IDs und Titel aus deren Datenstruktur ausgewertet, keine Seiten-Skripte ausgeführt und keine Streams extrahiert. Seitenzugriffe bleiben auf 5 MB begrenzt; TLS-Prüfung und Schutz vor privaten Netzwerkzielen bleiben aktiv. Beide Suchwege können vom Anbieter blockiert werden und liefern dann einen sichtbaren Hinweis statt erfundener Treffer.
+
+Fehler 100 bedeutet unter anderem privat oder entfernt; 101/150 verweigern die Einbettung. Fehler 153 betrifft die Identifizierung/Player-Konfiguration und kann auch durch Inhaltsblocker entstehen. Der Player zeigt diese Codes ausdrücklich, bietet „Video neu laden“ und den direkten YouTube-Link. Eine Einbettungsverweigerung wird nicht umgangen. Browser-Autoplay-Sperren werden als solche angezeigt. Die offizielle API-Einbindung, Fehleranzeigen und erneutes Laden wurden mit kontrollierten Anbieterantworten getestet; echte YouTube-Verfügbarkeit und die konkrete Installation auf deinem Mac sind damit nicht bestätigt.

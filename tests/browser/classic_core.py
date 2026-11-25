@@ -1,0 +1,19 @@
+"""Classic system/core/chat layout, actual telemetry fields and persistent personalized entry."""
+import sys,tempfile,threading
+from pathlib import Path
+sys.path.insert(0,str(Path(__file__).resolve().parents[2]))
+from backend.server import Application,JarvisServer
+from playwright.sync_api import sync_playwright
+ROOT=Path(__file__).resolve().parents[2]
+with tempfile.TemporaryDirectory()as folder:
+ app=Application(folder);app.store.update_settings({'voice_enabled':False,'ai_provider':'llamacpp'});server=JarvisServer(('127.0.0.1',0),app);thread=threading.Thread(target=server.serve_forever,daemon=True);thread.start();base='http://127.0.0.1:'+str(server.server_port)
+ try:
+  with sync_playwright()as p:
+   browser=p.chromium.launch(executable_path='/usr/bin/chromium',args=['--no-sandbox']);page=browser.new_page(viewport={'width':1440,'height':960},reduced_motion='no-preference');errors=[];page.on('pageerror',lambda e:errors.append(str(e)));page.add_init_script("window.coreMicStarts=0;window.SpeechRecognition=class{start(){coreMicStarts++;}abort(){}};")
+   page.goto(base+'/index.html');page.wait_for_function('()=>!!window.JarvisCore&&!!window.JarvisMemory&&!!window.JarvisBridge');page.evaluate("async()=>{await JarvisMemory.ready;await JarvisMemory.save({...JarvisMemory.EMPTY,name:'Alex'});await JarvisBridge.refreshStatus();await JarvisBridge.refreshStatus();}")
+   boxes=[page.locator(s).bounding_box()for s in ['.telemetry-column','#reactor','#conversation-panel']];assert boxes[0]['x']+boxes[0]['width']<boxes[1]['x']and boxes[1]['x']+boxes[1]['width']<boxes[2]['x'];assert page.locator('#cpu-user').inner_text()!='—';assert page.locator('#cpu-cores').inner_text()!='—';assert page.locator('#ram-available').inner_text()!='—';assert page.evaluate('document.documentElement.scrollWidth<=innerWidth+1');page.screenshot(path=str(ROOT/'artifacts/jarvis-klassisch-system.png'))
+   page.locator('#reactor').click();page.locator('#core-entry').wait_for();page.locator('#entry-name').get_by_text('ALEX',exact=True).wait_for();page.wait_for_timeout(3300);assert page.locator('#core-entry').is_visible();assert page.evaluate('coreMicStarts')==0;assert page.locator('#entry-cpu').inner_text()!='—';page.screenshot(path=str(ROOT/'artifacts/jarvis-kern-start.png'));page.locator('#entry-continue').click();assert page.locator('#core-entry').is_hidden();assert page.evaluate('coreMicStarts')==0
+   # Saved profile changes propagate without adding another profile store.
+   page.evaluate("async()=>{await JarvisMemory.save({...JarvisMemory.current.profile,name:'Sam'});}");page.locator('#reactor').press('Enter');page.locator('#entry-name').get_by_text('SAM',exact=True).wait_for();page.keyboard.press('Escape');page.locator('#core-entry').wait_for(state='hidden');assert app.store.history()==[]
+   page.set_viewport_size({'width':390,'height':844});page.goto(base+'/tablet?layout=phone');page.wait_for_function('()=>!!window.JarvisCore&&!!window.JarvisDeviceShellReady');page.locator('#device-orb').click();page.locator('#core-entry').wait_for();assert page.locator('#core-entry').evaluate('e=>e.scrollWidth<=e.clientWidth+1');page.emulate_media(reduced_motion='reduce');page.screenshot(path=str(ROOT/'artifacts/jarvis-kern-handy.png'));page.locator('#entry-continue').click();assert not errors,errors;browser.close();print('PASS: classic three columns and expanded real host telemetry, saved profile name, actual zoom animation holds beyond its duration, Continue/Escape, no microphone activation, profile updates, phone core and reduced-motion path. Screenshots show cloud host metrics and example profiles, not a physical Mac test.')
+ finally:app.office.stop();app.workshop.stop();app.desktop.stop();server.shutdown();server.server_close();thread.join(2)

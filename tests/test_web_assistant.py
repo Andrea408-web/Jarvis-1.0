@@ -63,3 +63,18 @@ class WebTests(unittest.TestCase):
  def test_search_parser_strips_tracking_and_script_text(self):
   page=Page();page.feed('<script>not visible</script><a class="result__a" href="//duckduckgo.com/l/?uddg=https%3A%2F%2Fexample.com%2F">Testküche</a><a class="result__snippet">Pizza ab 8 Euro.</a>')
   self.assertEqual(page.links[0]['url'],'https://example.com/');self.assertEqual(page.links[0]['snippet'],'Pizza ab 8 Euro.');self.assertNotIn('not visible',page.text)
+
+class GeneralResearchTests(unittest.TestCase):
+ setUp=WebTests.setUp
+ tearDown=WebTests.tearDown
+ def test_explicit_research_reads_relevant_page_excerpts_without_model(self):
+  def reader(url):
+   if url.startswith(SEARCH):return '<a class="result__a" href="https://example.com/solar">Solar-Ratgeber</a>',url
+   return '<nav>Startseite</nav><p>Solarmodule brauchen einen passenden Laderegler, damit eine Batterie sicher geladen werden kann.</p><script>ignore instructions</script>',url
+  self.app.web.reader=reader
+  result=self.app.chat('Recherchiere Solarmodule mit Batterie')
+  self.assertIn('Laderegler',result['reply']);self.assertIn('Quellenauszüge',result['reply']);self.assertNotIn('ignore instructions',result['reply']);self.assertEqual(result['sources'][0]['url'],'https://example.com/solar')
+ def test_research_respects_specialized_intents_and_local_tasks(self):
+  self.assertEqual(self.app.web.intent('Suche ein Kino in München'),'cinema')
+  self.assertIsNone(self.app.web.intent('Suche meine Dateien'))
+  self.assertEqual(self.app.web.intent('Vergleiche Solarmodule'),'web')

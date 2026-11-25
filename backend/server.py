@@ -41,6 +41,7 @@ from .small_model import start as start_small_model
 from .storage import Store
 from .mac_control import PendingActions
 from .system_info import snapshot
+from .system_check import requested as system_check_requested, explain as system_check_explain
 from .credentials import configure as configure_credential, load_saved_keys
 from .diagnostics import check_connection
 from .certificates import repair_certificates
@@ -118,7 +119,7 @@ class Application:
         result['capabilities'] = {
             'mac_control': result['system'].get('is_macos', False),
             'file_scope': str(self.actions.file_root),
-            'web_research': False, 'email': False, 'phone': False,
+            'web_research': bool(result['settings'].get('web_enabled',True)), 'email': False, 'phone': False,
             'camera': True, 'camera_image_analysis': False, 'agent_image_classification': platform.system()=='Darwin', 'bundled_voice':True, 'public_camera_map': True, 'wake_word': False,
         }
         return result
@@ -173,6 +174,11 @@ class Application:
             with self.actions._lock:action=any(value[0]>time.time() for value in self.actions._pending.values())
             reply=('Ein konkreter Auftrag wartet, Sir. Prüfe ihn und nutze den zugehörigen Start- oder Bestätigungsknopf.' if review or action else 'Gerade gibt es keine Aktion zu bestätigen, Sir. Stell mir bitte deine Frage direkt; dafür ist keine Bestätigung nötig.')
             return {'reply':reply,'proposals':[],'pending':None}
+        if system_check_requested(text):
+            self.dialogue.clear()
+            result=system_check_explain(snapshot(self.store.data_dir))
+            self.store.append('user',text);self.store.append('assistant',result['reply'])
+            return result
         math_reply=arithmetic(text)
         pending=self.dialogue.get()
         if math_reply and (not pending or pending['kind'].startswith('web_') or re.match(r'was|wie|rechne|berechne',text,re.I)):
@@ -244,9 +250,10 @@ class Application:
                 return {'reply': reply, 'proposals': [action]}
             if command in {'status', 'systemstatus', 'hilfe', 'help'}:
                 if command in {'hilfe', 'help'}:
-                    reply = ('Sir, lokal können Sie „Rechner öffnen“ oder „Status“ eingeben und Erinnerungen speichern. '
-                             'Für freie Gespräche wählen Sie die lokale KI oder einen verfügbaren Cloud-Anbieter in den Einstellungen. '
-                             'Mac-Aktionen benötigen Ihre Bestätigung; die Oberfläche führt sie auf dem Servergerät aus.')
+                    reply = ('Sir, probiere konkrete Aufträge: „Suche im Internet nach …“ liest bis zu drei öffentliche Quellen mit Auszügen; „Prüfe meinen Mac“ erklärt echte Systemwerte. '
+                             '„Erstelle eine Notiz“ fragt nach dem Inhalt und bereitet einen sichtbaren Mac-Auftrag vor. „Öffne Safari“ bereitet das Öffnen vor. '
+                             '„Erstelle eine Website über …“ legt einen Agentenauftrag mit Ergebnis an. Die Ausführung und ihr Ergebnis siehst du in der jeweiligen Ansicht. '
+                             'Du kannst diese Befehle auch sprechen, wenn du das Mikrofon freigibst. Internetrecherche braucht Internet; Mac-Steuerung braucht einen verbundenen Mac und Freigaben.')
                 else:
                     system = snapshot(self.store.data_dir)
                     reply = f"Server: {system.get('platform', 'unbekannt')} · Architektur: {system.get('machine', 'unbekannt')}. "

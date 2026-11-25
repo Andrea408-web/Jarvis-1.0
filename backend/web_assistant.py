@@ -183,6 +183,7 @@ class WebAssistant:
     def intent(self,text):
         if re.search(r'kino|cineplex|(?:welche|was für).*filme.*(?:heute|jetzt|laufen|angucken|anschauen)',text,re.I):return 'cinema'
         if re.search(r'(?:wo|restaurant|imbiss|in der nähe).*(?:essen|pizza|döner|sushi|burger|restaurant)|(?:essen|pizza|döner|sushi|burger).*(?:wo|jetzt|heute|geöffnet|billig|günstig)',text,re.I):return 'food'
+        if re.match(r'^(?:(?:jarvis|astra|aeris)[,: ]+)?(?:(?:bitte|kannst du|könntest du)\s+)*(?:recherchier(?:e)?|such(?:e)?|such mal|finde|vergleich(?:e)?)\b',text,re.I) and not re.search(r'\b(?:datei|dateien|ordner|kontakt|kontakte|notiz|notizen)\b',text,re.I):return 'web'
         if re.search(r'(?:wo|welche).*(?:kaufen|bestellen|reservieren|geöffnet|tickets)|was kostet|wie teuer|öffnungszeiten|(?:aktuell|heute|jetzt).*(?:wetter|preis|kostet|veranstaltung|zug|bahn)|(?:webseite|website|im internet|im web).*(?:such|find|inform)|(?:such|find).*(?:im internet|im web|webseite)',text,re.I):return 'web'
         return None
     def slots(self,text,kind,old=None,field=None):
@@ -278,12 +279,18 @@ class WebAssistant:
                         if not any(opened is not False for opened,_ in businesses):rows.append(source['title']+': aktuell laut regulären Webangaben geschlossen.')
                         continue
                 excerpt=source.get('snippet','')
-                if page:
+                if page and kind=='web':
+                    terms=set(re.findall(r'[a-zäöüß]{4,}',query.casefold())[:40])-{'suche','such','bitte','internet','recherchiere','finde','vergleiche','jarvis','kannst'}
+                    fragments=[' '.join(p.split()) for p in page.text[:2000] if 45<len(' '.join(p.split()))<1200][:500]
+                    ranked=sorted(enumerate(fragments),key=lambda item:(-sum(term in item[1].casefold() for term in terms),item[0]))
+                    selected=sorted(ranked[:2],key=lambda item:item[0])
+                    if selected:excerpt=' '.join(part for _,part in selected)[:650]
+                if page and kind=='food':
                     relevant=[p.strip() for p in page.text if re.search(r'€|euro|öffnungs|geöffnet|speisekarte|preis',p,re.I) and 15<len(p.strip())<400]
                     if relevant:excerpt=' '.join(relevant[:2])[:450]
                 if excerpt:rows.append(source['title']+': '+excerpt)
             if rows:
-                reply='Sir, ich habe dazu folgende öffentlichen Angaben gefunden:\n'+'\n'.join('• '+row for row in rows[:3])
+                reply=('Sir, hier sind passende Quellenauszüge. Das sind Webseitenangaben, keine unabhängig geprüften Fakten:\n' if kind=='web' else 'Sir, ich habe dazu folgende öffentlichen Angaben gefunden:\n')+'\n'.join('• '+row for row in rows[:3])
                 if kind=='food':reply+=f"\nGesucht für {data['people']} Personen in {data['place']}, Budget: {data['budget']}. Ob gerade geöffnet ist und ihr innerhalb des Budgets satt werdet, ist durch diese Angaben nicht sicher bestätigt."
             else:reply='Sir, die aktuellen Angaben konnte ich nicht zuverlässig aus den öffentlichen Seiten lesen. Ich kann dir die passende Website bzw. Websuche öffnen; Preise und Öffnungszeiten erfinde ich nicht.'
         reply+=f'\nAbruf: {now:%d.%m.%Y %H:%M} (Europe/Berlin).'

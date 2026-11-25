@@ -17,3 +17,7 @@ Ein Tipp oder Enter auf dem Kern öffnet eine eigene bildschirmfüllende Kernans
 Der persönliche Name stammt ausschließlich aus dem gespeicherten Profil unter „Über mich“. Ändere dort den Namen und speichere ihn; die Kernansicht übernimmt ihn. Ohne gespeicherten Namen erscheint „Dein Kontrollzentrum“. Es wird kein zusätzlicher Profilspeicher angelegt. Die Animation ist eine visuelle Oberfläche und schaltet kein größeres KI-Modell oder einen schnelleren Rechner frei.
 
 Die neue, etwa fünf Sekunden lange Startsequenz zeigt einen Lichtimpuls, auseinanderfahrende Blenden, Partikelflug durch den Kern und den sich aufbauenden persönlichen Titel. Danach bleibt die Ansicht offen. Bei reduzierter Bewegung entfällt die Sequenz.
+
+CPU und RAM zeigen zunächst nur ihre Hauptwerte. Antippen oder Enter öffnet die einzelnen Details; erneutes Antippen schließt sie. „Prüfe meinen Mac“ im Chat erklärt echte Messwerte und schlägt passende nächste Prüfschritte vor. Es werden keine Dateien gelöscht oder Einstellungen geändert.
+
+„Suche nach …“, „Recherchiere …“ oder „Vergleiche …“ startet eine öffentliche Internetrecherche. Jarvis liest bis zu drei Treffer und zeigt passende Textauszüge und anklickbare Quellen. Das benötigt Internet; gesperrte Seiten und fehlende Angaben werden benannt. Die Auszüge sind keine unabhängig verifizierte Zusammenfassung. Die Suchanfrage wird an den öffentlichen Suchdienst geschickt; ein KI-Konto ist dafür nicht nötig.

@@ -135,3 +135,8 @@ body.iris-app {
   .iris-app .iris-notes-dialog { padding: 19px; }
 }
 @media (prefers-reduced-motion: reduce) { .iris-app *, .iris-app *::before, .iris-app *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
+
+#iris-tracking-dialog{width:min(1440px,98vw);height:94dvh;max-width:98vw;max-height:96dvh;border:1px solid #d8c07166;border-radius:12px;background:#0b100c;color:#eee8ca;padding:12px;overflow:hidden}#iris-tracking-dialog::backdrop{background:#030703dc}#iris-tracking-dialog header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:6px}#iris-tracking-dialog strong{font:11px monospace;letter-spacing:.1em;color:#dfd189}#iris-tracking-dialog p{font:11px/1.5 system-ui;color:#b9bd9c;margin:7px 0}#iris-tracking-dialog iframe{display:block;width:100%;height:calc(100% - 100px);border:0;border-radius:7px;background:#090c08}@media(max-width:600px){#iris-tracking-dialog{padding:8px}#iris-tracking-dialog p{font-size:10px}#iris-tracking-dialog header button{font-size:11px;padding:8px;min-height:34px}}
+
+.iris-app .iris-quick-actions>button{grid-template-columns:22px minmax(0,1fr);min-width:0}.iris-app .iris-quick-actions strong,.iris-app .iris-quick-actions small{overflow-wrap:anywhere}
+@media(max-width:790px){.iris-app .iris-header{display:grid;grid-template-columns:minmax(0,1fr) auto;height:auto;padding:12px 0;gap:10px}.iris-app .iris-brand{grid-column:1;grid-row:1;min-width:0}.iris-app #jarvis-app-open{grid-column:2;grid-row:1}.iris-app .iris-modes{grid-column:1/-1;grid-row:2;justify-self:start;max-width:100%;flex-wrap:wrap}}

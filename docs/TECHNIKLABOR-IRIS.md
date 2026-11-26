@@ -19,3 +19,9 @@ Aeris hat einen eigenen Energiekern, normales Gespräch, Thorsten-Ausgabe, ausdr
 Aktiviere die Freigabe für Browser-Spracherkennung und tippe auf „Mit Aeris sprechen“ beziehungsweise „Mit Jarvis sprechen“. Erkannte Sprache wird dann automatisch als Nachricht gesendet. Der Sprachdienst des Browsers kann Internet verwenden. Thorsten benötigt die vorhandene Einrichtung auf dem verbundenen Rechner; es wird keine Roboter-Ersatzstimme gewählt.
 
 Gespräche in diesen beiden neuen Bereichen bleiben im Arbeitsspeicher. „Chat löschen“, Stoppen und Schließen beenden die entsprechenden laufenden Anfragen beziehungsweise Spracheingaben. Nur ausdrücklich gespeicherte Aeris-Notizen bleiben in diesem Browser erhalten und können dort gelöscht werden. Die neue Oberfläche verbessert nicht automatisch die Leistungsfähigkeit des vorhandenen kleinen Sprachmodells.
+
+## Aeris Handtracking wieder erreichbar
+
+Aeris hat einen eigenen Handtracking-Knopf und versteht „Öffne Handtracking“. Die bestehende räumliche Kamera-/Gestenansicht öffnet sich darin, ohne den laufenden Aeris-Chat zu verwerfen. Kamera und Tracking werden erst über ihre ausdrücklichen Startknöpfe eingeschaltet. Beim Schließen wird die Unteransicht entladen und gibt Kamera/Tracking frei. Die Erkennung nutzt die vorhandene Mac-Vision-Anbindung; ohne erreichbaren geeigneten Mac ist diese Fingererkennung nicht verfügbar.
+
+Verbundenes Aeris sowie Handy-/iPad-Chat können allgemeine Web-Recherche und den schreibgeschützten Systemcheck jetzt direkt über ihre bisherige Chat-Schnittstelle anfordern. Es werden keine Mac-Steuerungsrechte erweitert und keine Geräte-Chatverläufe am Server neu gespeichert. Quellen sind in der Antwort anklickbar. Ohne Mac-Verbindung steht dieser Rechercheweg nicht zur Verfügung.

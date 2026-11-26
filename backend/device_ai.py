@@ -72,3 +72,23 @@ class DeviceAI:
   path=self.root/name
   if not path.is_file() or path.stat().st_size!=FILES[name]['size']:raise ValueError('Browser-Laufzeit zuerst ausdrücklich vorbereiten.')
   return path,('application/wasm' if name.endswith('.wasm') else 'text/javascript' if name.endswith('.js') else 'text/plain')
+
+
+def local_tool_answer(app, body):
+ """Read-only tools for device chats; no desktop actions or server chat history."""
+ from .system_check import requested,explain
+ import re
+ text=body.get('text')
+ if not isinstance(text,str) or not 1<=len(text.strip())<=2000:return None
+ text=re.sub(r'^(?:jarvis|astra|aeris)[,: ]+','',text.strip(),flags=re.I)
+ web=app.web.intent(text)=='web'
+ if not requested(text) and not web:return None
+ history=body.get('history',[])
+ if not isinstance(history,list) or len(history)>6:raise ValueError('Ungültiger Gesprächskontext.')
+ for entry in history:
+  if not isinstance(entry,dict) or set(entry)!={'role','content'} or entry['role'] not in {'user','assistant'} or not isinstance(entry['content'],str) or len(entry['content'])>2000:raise ValueError('Ungültiger Gesprächskontext.')
+ if requested(text):
+  from .system_info import snapshot
+  return explain(snapshot(app.store.data_dir))
+ if not app.store.settings().get('web_enabled',True):return {'reply':'Die öffentliche Websuche ist ausgeschaltet, Sir. Du kannst sie am Jarvis-Rechner in den Einstellungen einschalten.','sources':[]}
+ return app.web.answer({'kind':'web','query':text})

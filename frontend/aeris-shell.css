@@ -12,3 +12,6 @@ body.mirror-camera #camera{transform:scaleX(-1)}.object-tools{flex-wrap:wrap}.ca
 @media(max-height:650px){.core-engine{padding-top:0}#aeris-core{width:28vh}.aeris-actions{display:none}.core-view{padding-bottom:35px}.aeris-readout .hud-caption{margin-bottom:10px}.aeris-readout p{display:none}.core-engine h1{font-size:17px}.core-subtitle{margin-bottom:10px}}
 
 body[data-headset-window] a[href="/tablet"],body[data-headset-window] a[href="/brands"]{display:none!important}
+
+/* Aeris camera workspace inside its assistant; omit unrelated navigation and setup rails. */
+body[data-embedded-tracking] .topbar,body[data-embedded-tracking] .rail,body[data-embedded-tracking] #offline-ready,body[data-embedded-tracking] #quick-open,body[data-embedded-tracking] #quick-bar{display:none!important}body[data-embedded-tracking] .studio{display:block;width:100%;height:100dvh}body[data-embedded-tracking] .viewport{width:100%;height:100%}body[data-embedded-tracking] .stage{min-height:0}body[data-embedded-tracking] .camera-toolbar{flex-wrap:wrap}

@@ -337,9 +337,9 @@ class Handler(BaseHTTPRequestHandler):
         self.send_header('Cache-Control', 'no-store')
         self.send_header('X-Content-Type-Options', 'nosniff')
         self.send_header('Referrer-Policy', 'no-referrer')
-        contact_panel=urlsplit(self.path).path=='/contacts-panel'
-        self.send_header('X-Frame-Options', 'SAMEORIGIN' if contact_panel else 'DENY')
-        ancestors="'self'" if contact_panel else "'none'"
+        same_origin_panel=urlsplit(self.path).path in {'/contacts-panel','/quest'}
+        self.send_header('X-Frame-Options', 'SAMEORIGIN' if same_origin_panel else 'DENY')
+        ancestors="'self'" if same_origin_panel else "'none'"
         self.send_header('Permissions-Policy', 'camera=(self), microphone=(self), xr-spatial-tracking=(self), geolocation=()')
         device= urlsplit(self.path).path in {'/tablet','/brands'} or urlsplit(self.path).path=='/' and (self.server.device_auth or re.search(r'iPhone|iPad|iPod|Macintosh.*Mobile',self.headers.get('User-Agent',''),re.I))
         script_policy="'self' 'wasm-unsafe-eval'" if device else "'self'"
@@ -749,7 +749,10 @@ class Handler(BaseHTTPRequestHandler):
                 personal=validate_profile(body['profile']) if 'profile' in body else None
                 payload={k:v for k,v in body.items() if k not in {'mode','profile'}}
                 if not app.chat_lock.acquire(blocking=False):raise ProviderError('Eine lokale KI-Anfrage läuft bereits.',409)
-                try:return self._json(answer(app,payload,identity=mode,text_only=True,personal_profile=personal))
+                try:
+                    from .device_ai import local_tool_answer
+                    tool=local_tool_answer(app,payload)
+                    return self._json(tool if tool is not None else answer(app,payload,identity=mode,text_only=True,personal_profile=personal))
                 finally:app.chat_lock.release()
             if method=='POST' and path=='/api/device-ai/prepare':
                 if body:raise ValueError('Keine Parameter für die Geräte-Einrichtung erforderlich.')

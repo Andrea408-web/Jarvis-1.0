@@ -25,3 +25,11 @@ Gespräche in diesen beiden neuen Bereichen bleiben im Arbeitsspeicher. „Chat 
 Aeris hat einen eigenen Handtracking-Knopf und versteht „Öffne Handtracking“. Die bestehende räumliche Kamera-/Gestenansicht öffnet sich darin, ohne den laufenden Aeris-Chat zu verwerfen. Kamera und Tracking werden erst über ihre ausdrücklichen Startknöpfe eingeschaltet. Beim Schließen wird die Unteransicht entladen und gibt Kamera/Tracking frei. Die Erkennung nutzt die vorhandene Mac-Vision-Anbindung; ohne erreichbaren geeigneten Mac ist diese Fingererkennung nicht verfügbar.
 
 Verbundenes Aeris sowie Handy-/iPad-Chat können allgemeine Web-Recherche und den schreibgeschützten Systemcheck jetzt direkt über ihre bisherige Chat-Schnittstelle anfordern. Es werden keine Mac-Steuerungsrechte erweitert und keine Geräte-Chatverläufe am Server neu gespeichert. Quellen sind in der Antwort anklickbar. Ohne Mac-Verbindung steht dieser Rechercheweg nicht zur Verfügung.
+
+## Farbmodi und Holokern
+
+Jarvis ist gelb, Astra bleibt blau und Aeris ist grün. Im eingebetteten Aeris-Handtracking ist „Holokern steuern“ eingeschaltet: offene Hand vergrößert den Kern, geschlossene Hand/Pinch verkleinert ihn. Näher an die Kamera gehaltene offene Hände vergrößern ihn weiter. Die Größe ist geglättet und begrenzt; bei verlorener oder zu unsicherer Handerkennung verschwindet die Steuerung. Zum Verwenden der bisherigen Handgesten (Dialog/Schnee/Studio) den Holokern-Schalter ausschalten. Es werden ausschließlich virtuelle Inhalte gesteuert.
+
+Die bestehende Mac-Vision-Erkennung bleibt erhalten, kein weiteres Modell wird geladen. Kleine Landmarken-Schwankungen werden gedämpft; Handdetektionen mit einer gemeldeten Konfidenz unter 0,4 werden nicht verwendet. Die echte Erkennungsqualität hängt weiterhin von Licht, Sichtbarkeit der Finger und der Mac-Kamera ab.
+
+Recherche: Die allgemeine Websuche wurde hier vom Netzwerk mit HTTP 403 blockiert. Als direkt zugängliche offizielle Quelle wurde die [HandLandmarker-Implementierung von Google](https://github.com/google-ai-edge/mediapipe/blob/master/mediapipe/tasks/web/vision/hand_landmarker/hand_landmarker.ts) gelesen (Erkennungs-, Anwesenheits- und Tracking-Schwellen). MediaPipe wird nicht installiert; die Quelle ist keine Bestätigung der Qualität der vorhandenen Apple-Vision-Erkennung.

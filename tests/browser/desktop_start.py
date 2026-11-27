@@ -19,6 +19,7 @@ with tempfile.TemporaryDirectory() as folder:
    goal.fill('Öffne Spotify');start.click();page.wait_for_function("()=>document.getElementById('astra-desktop-status').textContent.startsWith('done')");assert events==[{'type':'open','app':'Spotify'}];assert start.is_disabled()
    # Editing after completion must re-enable the same button and prepare the NEW goal.
    goal.fill('Öffne youtube.com');assert start.is_enabled();start.click();page.wait_for_function("()=>document.getElementById('astra-desktop-status').textContent.startsWith('done')");assert events[-1]=={'type':'website','url':'https://youtube.com'}
+   original_snapshot=app.desktop.snapshot;app.desktop.snapshot=lambda:{**original_snapshot(),'supported':True};page.evaluate("()=>JarvisBridge.sendMessage('Öffne Safari und Notizen')");page.wait_for_function("()=>document.getElementById('astra-desktop-status').textContent.startsWith('done')");assert events[-2:]==[{'type':'open','app':'Safari'},{'type':'open','app':'Notizen'}];app.desktop.snapshot=original_snapshot
    # Failed start must show an error and remain usable (without a refresh or a new prepare click).
    class Failing:
     def __init__(self):raise ValueError('Test: macOS-Berechtigung fehlt')
@@ -27,7 +28,7 @@ with tempfile.TemporaryDirectory() as folder:
    # Expired reviews are rebuilt by the same click, rather than failing forever.
    app.desktop.prepare({'goal':'Öffne Rechner'});app.desktop.plan['expires']=0
    page.evaluate('()=>JarvisAstra.open()');start.click();page.wait_for_function("()=>document.getElementById('astra-desktop-status').textContent.startsWith('done')");assert events[-1]=={'type':'open','app':'Rechner'}
-   assert len(events)==4
-   print('PASS: start without a plan, empty input guidance, edited completed goal, visible failure and retry; controlled driver, no native Mac actions.')
+   assert events==[{'type':'open','app':'Spotify'},{'type':'website','url':'https://youtube.com'},{'type':'open','app':'Safari'},{'type':'open','app':'Notizen'},{'type':'open','app':'Finder'},{'type':'open','app':'Rechner'}]
+   print('PASS: start without a plan, empty input guidance, edited completed goal, explicit multi-app automatic start, visible failure and retry; controlled driver, no native Mac actions.')
    browser.close()
  finally:app.desktop.stop();app.office.stop();server.shutdown();server.server_close();thread.join(3)

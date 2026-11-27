@@ -186,6 +186,7 @@ class Desktop:
     def prepare(self,body):
         if set(body)-{'goal','steps','scene','render'}:raise ValueError('Unbekannte Desktop-Felder.')
         if 'render' in body and type(body['render']) is not bool:raise ValueError('Ungültige Render-Option.')
+        explicit_multi=False
         goal=body.get('goal','')
         if not isinstance(goal,str) or not 1<=len(goal.strip())<=3000:raise ValueError('Bitte einen konkreten Desktop-Auftrag eingeben.')
         click_label=re.fullmatch(r'(?:klicke?|drücke|betätige)\s+(?:auf\s+)?[„"“]?(.+?)[“"”]?\s+in\s+(.+?)[.!]?$',goal.strip(),re.I)
@@ -210,6 +211,14 @@ class Desktop:
                 self.plan={'id':secrets.token_hex(16),'goal':goal.strip(),'kind':'model','template':template,'render':body.get('render',False),'scene':scene,'steps':[{'type':'model','object':p['name'],'shape':p['shape']} for p in scene['parts']],'state':'review','completed':0,'message':'Vereinfachter Grundkörper-Entwurf, kein exakter Fahrzeugnachbau. Echte 3D-Grundkörper in Blender aufbauen. Eigene neue Szene; vorhandene Dateien werden nicht überschrieben.','expires':time.time()+600}
                 return self.snapshot()
         steps=body.get('steps')
+        if steps is None:
+            multi=re.fullmatch(r'(?:(?:kannst|könntest) du )?(?:bitte )?(?:öffne|starte)\s+(.+)',goal.strip().rstrip('.!?'),re.I)
+            names=re.split(r'\s+und\s+|,\s*',multi[1],flags=re.I) if multi else []
+            if len(names)>4:raise ValueError('Bitte höchstens vier Apps in einem Öffnen-Auftrag angeben.')
+            if len(names)>=2:
+                apps=[resolve_app(name.strip()) for name in names]
+                explicit_multi=True
+                steps=[{'type':'open','app':app['name']} for app in apps]
         if steps is None:
             move=re.fullmatch(r'(?:bewege|beweg)\s+(?:die\s+)?(?:maus|mauszeiger)\s+(?:nach\s+|zur\s+)?(links|rechts|mitte|oben|unten)\s+in\s+(.+?)[.!?]?',goal.strip(),re.I)
             typing=re.fullmatch(r'(?:tippe|schreibe)\s+["“]?(.*?)["”]?\s+in\s+(.+?)[.!?]?',goal.strip(),re.I)
@@ -246,7 +255,7 @@ class Desktop:
         steps=validate_steps(steps)
         with self.lock:
             if self.thread and self.thread.is_alive():raise ProviderError('Ein Desktop-Ablauf läuft bereits.',409)
-            self.plan={'id':secrets.token_hex(16),'goal':goal.strip(),'steps':steps,'state':'review','completed':0,'message':'Ablauf prüfen. Er sieht den Bildschirm nicht und bestätigt kein fertiges Arbeitsergebnis.','expires':time.time()+600}
+            self.plan={'id':secrets.token_hex(16),'goal':goal.strip(),'steps':steps,'explicit_multi':explicit_multi,'state':'review','completed':0,'message':'Ablauf prüfen. Er sieht den Bildschirm nicht und bestätigt kein fertiges Arbeitsergebnis.','expires':time.time()+600}
             return self.snapshot()
     def start(self,ident):
         with self.lock:

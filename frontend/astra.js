@@ -53,7 +53,7 @@
   finally{preparing=false;updateStart();}
   render(data);
   if(!autoStart)return false;
-  if(data.plan?.steps.length===1&&['open','website'].includes(data.plan.steps[0].type)){await runPlan();return 'opening';}
+  if(data.plan?.steps.length===1&&['open','website'].includes(data.plan.steps[0].type)||data.supported&&data.plan?.explicit_multi===true){await runPlan();return 'opening';}
   if(data.supported&&data.plan?.kind==='note'){await runPlan();return 'note';}
   if(data.supported&&data.plan?.kind==='model'&&data.plan.template){await runPlan();return 'modeling';}
   return false;

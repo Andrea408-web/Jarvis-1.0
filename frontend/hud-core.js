@@ -2,7 +2,7 @@
 'use strict';
 window.HUDCore={draw(canvas,time=0,{mode='jarvis',working=false,speaking=false}={}){
  const c=canvas.getContext('2d');if(!c)return;const w=canvas.width,h=canvas.height,s=Math.min(w,h)/800,t=matchMedia('(prefers-reduced-motion:reduce)').matches?0:time;
- const rgb=mode==='astra'?'100,202,255':mode==='aeris'?'255,207,79':'215,220,136';const ink=(a=1)=>`rgba(${rgb},${a})`;
+ const rgb=mode==='astra'?'100,202,255':mode==='aeris'?'92,225,155':'255,212,78';const ink=(a=1)=>`rgba(${rgb},${a})`;
  c.clearRect(0,0,w,h);c.save();c.translate(w/2,h/2);c.scale(s,s);
  const halo=c.createRadialGradient(0,0,10,0,0,380);halo.addColorStop(0,ink(.18));halo.addColorStop(.55,ink(.035));halo.addColorStop(1,ink(0));c.fillStyle=halo;c.fillRect(-400,-400,800,800);
  function ring(r,a,b,line=1,alpha=.5){c.beginPath();c.arc(0,0,r,a,b);c.strokeStyle=ink(alpha);c.lineWidth=line;c.stroke();}
@@ -10,7 +10,7 @@ window.HUDCore={draw(canvas,time=0,{mode='jarvis',working=false,speaking=false}=
  for(let i=0;i<144;i++){const a=i*Math.PI/72,r=i%6===0?313:322;c.beginPath();c.moveTo(Math.cos(a)*r,Math.sin(a)*r);c.lineTo(Math.cos(a)*330,Math.sin(a)*330);c.strokeStyle=ink(i%6===0?.8:.27);c.lineWidth=i%6===0?2:1;c.stroke();}
  for(let i=0;i<4;i++){const a=i*Math.PI/2+t*.00006;ring(295,a,a+1.02,5,.65);ring(277,-a,-a+.72,1,.5);ring(251,a*1.7,a*1.7+.42,9,i%2?.3:.9);}ring(230,0,Math.PI*2,1,.36);
  if(mode==='aeris'){
-  // Aether: three amber orbital ribbons around a bright energy seed.
+  // Aether: three green orbital ribbons around a bright energy seed.
   for(let k=0;k<3;k++){c.save();c.rotate(k*Math.PI/3+t*.00012);c.scale(1,.37);c.strokeStyle=ink(.72);c.lineWidth=4;c.shadowColor=ink();c.shadowBlur=15;c.beginPath();c.arc(0,0,153,0,Math.PI*2);c.stroke();c.strokeStyle=ink(.26);c.lineWidth=1;c.beginPath();c.arc(0,0,175,0,Math.PI*2);c.stroke();const a=t*.0008+k*2;c.fillStyle='#fff5ce';c.beginPath();c.ellipse(Math.cos(a)*153,Math.sin(a)*153,4,9,0,0,Math.PI*2);c.fill();c.restore();}ring(58,0,Math.PI*2,1,.55);
  }else if(mode==='astra'){
   for(let k=0;k<3;k++){c.save();c.rotate(k*Math.PI*2/3+t*.0002);c.strokeStyle=ink(.8);c.lineWidth=3;c.shadowColor=ink();c.shadowBlur=15;c.beginPath();c.moveTo(0,-18);c.bezierCurveTo(170,-150,160,80,25,16);c.stroke();c.restore();}

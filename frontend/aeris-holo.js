@@ -1,0 +1,8 @@
+/* Local visual control from detected landmarks. No camera, network or OS actions. */
+(()=>{
+ const stage=document.getElementById('stage'),canvas=document.createElement('canvas'),label=document.createElement('span');canvas.id='aeris-holo-core';canvas.width=canvas.height=600;canvas.hidden=true;canvas.setAttribute('aria-hidden','true');label.id='aeris-holo-label';label.hidden=true;stage.append(canvas,label);
+ const control=document.createElement('label');control.className='holo-control';control.innerHTML='<input id="aeris-holo-enabled" type="checkbox"> Holokern steuern';document.querySelector('.camera-toolbar').append(control);const input=control.querySelector('input');input.checked=window.parent!==window&&location.hash==='#camera';let size=1;
+ function reset(){size=1;canvas.hidden=label.hidden=true;}
+ function update(j,state){if(!input.checked||!j?.wrist||!j.middleMCP){reset();return;}const reach=Math.hypot(j.wrist.x-j.middleMCP.x,j.wrist.y-j.middleMCP.y);const target=state.gesture==='palm'?Math.max(1.3,Math.min(2.15,.9+reach*2.6)):['fist','pinch'].includes(state.gesture)?.72:1;size+=Math.max(-.2,Math.min(.2,(target-size)*.35));canvas.hidden=label.hidden=false;canvas.style.setProperty('--holo-size',size.toFixed(3));window.HUDCore.draw(canvas,performance.now(),{mode:window.QuestAssistant?.mode||'aeris',working:true});label.textContent='HOLOKERN '+Math.round(size*100)+' % · Hand öffnen: größer · schließen: kleiner';}
+ input.onchange=()=>{reset();window.AerisGestures?.reset();};window.AerisHolo={update,reset,get enabled(){return input.checked;},get scale(){return size;}};
+})();

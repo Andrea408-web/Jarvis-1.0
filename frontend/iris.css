@@ -1,23 +1,23 @@
 /* Iris: a warm, quiet assistant. Scoped to this page. */
 body.iris-app {
   --iris-bg: #101210; --iris-panel: #181d19; --iris-ink: #f3efe2;
-  --iris-muted: #b4baad; --iris-gold: #e1c48b; --iris-line: #c9ba8c30;
+  --iris-muted: #b4baad; --iris-gold: #7ee5ac; --iris-line: #74c99b30;
   margin: 0; min-height: 100vh; min-height: 100dvh; color-scheme: dark;
-  background: radial-gradient(ellipse at 18% 44%, #86652e17, transparent 43%), radial-gradient(ellipse at 90% 15%, #47705b12, transparent 50%), var(--iris-bg);
+  background: radial-gradient(ellipse at 18% 44%, #2b8e5c17, transparent 43%), radial-gradient(ellipse at 90% 15%, #47705b12, transparent 50%), var(--iris-bg);
   color: var(--iris-ink); font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 .iris-app * { box-sizing: border-box; }
 .iris-app [hidden] { display: none !important; }
 .iris-app button, .iris-app input, .iris-app textarea { font: inherit; }
-.iris-app :focus-visible { outline: 2px solid #f6d99b; outline-offset: 4px; }
+.iris-app :focus-visible { outline: 2px solid #a8f3cb; outline-offset: 4px; }
 .iris-app button { min-height: 44px; padding: 10px 15px; border: 1px solid var(--iris-line); border-radius: 10px; color: var(--iris-ink); background: #ffffff03; cursor: pointer; transition: background .16s, border-color .16s; }
-.iris-app button:hover { border-color: #e1c48b80; background: #e1c48b12; }
+.iris-app button:hover { border-color: #7ee5ac80; background: #7ee5ac12; }
 .iris-app button:disabled { opacity: .45; cursor: default; }
 .iris-app a { color: var(--iris-gold); text-underline-offset: 4px; }
 .iris-app p, .iris-app h1, .iris-app h2 { margin-top: 0; }
 .iris-app h2 { font-size: 21px; font-weight: 500; letter-spacing: -.025em; }
 .iris-app small { font-size: 11px; color: var(--iris-muted); }
-.iris-app textarea { width: 100%; min-width: 0; border: 1px solid #c9ba8c4d; border-radius: 10px; background: #101510; color: var(--iris-ink); padding: 12px 14px; resize: vertical; }
+.iris-app textarea { width: 100%; min-width: 0; border: 1px solid #74c99b4d; border-radius: 10px; background: #101510; color: var(--iris-ink); padding: 12px 14px; resize: vertical; }
 .iris-app textarea::placeholder { color: #969f91; }
 .iris-app label { color: var(--iris-muted); font-size: 12px; }
 .iris-app input[type=checkbox] { width: 17px; height: 17px; flex-shrink: 0; margin: 0; accent-color: var(--iris-gold); }
@@ -28,7 +28,7 @@ body.iris-app {
 .iris-app .iris-brand small { display: block; margin-top: 2px; letter-spacing: .15em; font-size: 9px; }
 .iris-app .iris-modes { display: flex; align-items: center; gap: 4px; padding: 4px; border: 1px solid var(--iris-line); border-radius: 12px; }
 .iris-app .iris-modes button, .iris-app .iris-modes [aria-current] { min-height: 36px; padding: 7px 16px; border: 0; font-size: 12px; border-radius: 8px; }
-.iris-app .iris-modes [aria-current] { background: #e1c48b17; color: var(--iris-gold); }
+.iris-app .iris-modes [aria-current] { background: #7ee5ac17; color: var(--iris-gold); }
 .iris-app .iris-status { display: flex; align-items: center; gap: 8px; color: var(--iris-muted); font-size: 11px; line-height: 1.55; overflow-wrap: anywhere; }
 .iris-app .iris-status::before { content: ""; width: 5px; height: 5px; border-radius: 50%; background: #c7c89e; flex-shrink: 0; }
 .iris-app .iris-header > .iris-status { max-width: 245px; margin: 0; }
@@ -40,9 +40,9 @@ body.iris-app {
 .iris-app .iris-intro p { max-width: 355px; margin: 0 auto; color: var(--iris-muted); font-size: 14px; }
 .iris-app .iris-core-shell { width: 100%; display: grid; place-items: center; }
 .iris-app .iris-core-button { position: relative; display: block; flex: 0 0 auto; width: min(340px, 100%); height: auto; aspect-ratio: 1; padding: 0; margin: 6px auto 0; border: 0; border-radius: 50%; background: transparent; }
-.iris-app .iris-core-button:hover { background: radial-gradient(circle, #e1c48b09, transparent 68%); }
+.iris-app .iris-core-button:hover { background: radial-gradient(circle, #7ee5ac09, transparent 68%); }
 .iris-app #iris-core { display: block; width: 100%; height: 100%; border-radius: 50%; }
-.iris-app .iris-core-label { position: absolute; left: 0; right: 0; bottom: 8%; font-size: 9px; letter-spacing: .3em; color: #e1c48b9e; pointer-events: none; }
+.iris-app .iris-core-label { position: absolute; left: 0; right: 0; bottom: 8%; font-size: 9px; letter-spacing: .3em; color: #7ee5ac9e; pointer-events: none; }
 .iris-app .iris-core-state { min-height: 23px; margin: -2px 0 24px; font-size: 12px; color: var(--iris-gold); }
 .iris-app .iris-quick-actions { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; width: 100%; max-width: 445px; }
 .iris-app .iris-quick-actions > button { display: grid; grid-template-columns: 22px 1fr; align-content: center; column-gap: 9px; min-height: 77px; padding: 13px; text-align: left; background: #ffffff03; }
@@ -55,9 +55,9 @@ body.iris-app {
 .iris-app .iris-conversation-head .iris-caption { margin-bottom: 5px; }
 .iris-app .iris-conversation-head h2 { margin: 0; }
 .iris-app .iris-subtle { min-height: 38px; padding: 7px 9px; color: var(--iris-muted); font-size: 11px; border-color: transparent; white-space: nowrap; }
-.iris-app .iris-messages { height: clamp(200px, 29vh, 330px); min-height: 180px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #c9ba8c55 transparent; padding: 2px 5px 4px 0; overflow-wrap: anywhere; }
-.iris-app .iris-message { white-space: pre-wrap; font-size: 14px; line-height: 1.75; margin: 0 20px 13px 0; padding: 12px 14px; border: 1px solid #e1c48b18; border-radius: 12px; background: #e1c48b06; }
-.iris-app .iris-message.user { margin-left: 30px; margin-right: 0; background: #e1c48b13; border-color: #e1c48b28; }
+.iris-app .iris-messages { height: clamp(200px, 29vh, 330px); min-height: 180px; overflow-y: auto; overscroll-behavior: contain; scrollbar-width: thin; scrollbar-color: #74c99b55 transparent; padding: 2px 5px 4px 0; overflow-wrap: anywhere; }
+.iris-app .iris-message { white-space: pre-wrap; font-size: 14px; line-height: 1.75; margin: 0 20px 13px 0; padding: 12px 14px; border: 1px solid #7ee5ac18; border-radius: 12px; background: #7ee5ac06; }
+.iris-app .iris-message.user { margin-left: 30px; margin-right: 0; background: #7ee5ac13; border-color: #7ee5ac28; }
 .iris-app .iris-message.error { border-color: #d7a08155; color: #f0c9b2; }
 .iris-app .iris-composer { display: flex; flex-direction: column; gap: 8px; }
 .iris-app .iris-composer textarea { min-height: 90px; max-height: 220px; font-size: 14px; }
@@ -68,7 +68,7 @@ body.iris-app {
 .iris-app .iris-primary span { margin-left: 14px; }
 .iris-app .iris-voice { display: flex; flex-direction: column; gap: 10px; border-top: 1px solid var(--iris-line); padding-top: 16px; }
 .iris-app .iris-voice button { font-size: 12px; padding: 8px 11px; }
-.iris-app #iris-talk[aria-pressed=true] { border-color: var(--iris-gold); background: #e1c48b20; }
+.iris-app #iris-talk[aria-pressed=true] { border-color: var(--iris-gold); background: #7ee5ac20; }
 .iris-app .iris-check { display: flex; align-items: center; flex-wrap: wrap; gap: 7px; line-height: 1.55; }
 .iris-app .iris-check small { font-size: 10px; }
 .iris-app .iris-voice-help { margin: -5px 0 0; color: #a7b09e; font-size: 10px; line-height: 1.6; }
@@ -79,7 +79,7 @@ body.iris-app {
 .iris-app .iris-voice-settings p { margin: 10px 0 0; line-height: 1.7; }
 .iris-app .iris-footer { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 8px; border-top: 1px solid var(--iris-line); padding-top: 17px; color: #939d8b; font-size: 10px; letter-spacing: .06em; }
 .iris-app .iris-footer a { color: var(--iris-muted); }
-.iris-app .iris-notes-dialog { width: min(550px, calc(100vw - 32px)); max-height: 85dvh; padding: 25px; overflow: auto; border: 1px solid #c9ba8c70; border-radius: 20px; color: var(--iris-ink); background: #181f19; box-shadow: 0 25px 90px #0008; }
+.iris-app .iris-notes-dialog { width: min(550px, calc(100vw - 32px)); max-height: 85dvh; padding: 25px; overflow: auto; border: 1px solid #74c99b70; border-radius: 20px; color: var(--iris-ink); background: #181f19; box-shadow: 0 25px 90px #0008; }
 .iris-app .iris-notes-dialog::backdrop { background: #060a08c9; backdrop-filter: blur(7px); }
 .iris-app .iris-notes-dialog header { display: flex; align-items: center; justify-content: space-between; gap: 15px; margin-bottom: 18px; }
 .iris-app .iris-notes-dialog header h2 { margin: 0; }
@@ -140,3 +140,5 @@ body.iris-app {
 
 .iris-app .iris-quick-actions>button{grid-template-columns:22px minmax(0,1fr);min-width:0}.iris-app .iris-quick-actions strong,.iris-app .iris-quick-actions small{overflow-wrap:anywhere}
 @media(max-width:790px){.iris-app .iris-header{display:grid;grid-template-columns:minmax(0,1fr) auto;height:auto;padding:12px 0;gap:10px}.iris-app .iris-brand{grid-column:1;grid-row:1;min-width:0}.iris-app #jarvis-app-open{grid-column:2;grid-row:1}.iris-app .iris-modes{grid-column:1/-1;grid-row:2;justify-self:start;max-width:100%;flex-wrap:wrap}}
+
+body.iris-app{--iris-gold:#7ee5ac;--iris-bg:#07110c;--iris-panel:#0c1d13;--iris-line:#70dfa033;background:radial-gradient(ellipse at 30% 35%,#3caf7014,transparent 60%),#07110c}.iris-app .iris-primary{background:#7ee5ac;color:#082414}.iris-app .iris-core-shell{filter:drop-shadow(0 0 24px #54d89518)}

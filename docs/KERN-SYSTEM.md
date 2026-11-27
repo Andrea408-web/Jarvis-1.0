@@ -30,6 +30,6 @@ Die Sequenz dauert nun 18 Sekunden. Der Startcheck fragt die authentifizierte Ja
 
 ## Vollbild-Arbeitsmodus am Mac
 
-Doppelklick auf den Energiekern öffnet den Vollbild-Arbeitsmodus; ein einfacher Klick behält die Startsequenz. „Nur Kern / Vollbild“ in der Startsequenz ist der alternative Knopf. Die Browser-Vollbildfunktion benötigt einen echten Klick und Browserunterstützung; andernfalls wird das Fenster ausgefüllt. Escape und „Beenden“ schließen den Modus; bestehende Aufträge laufen weiter.
+Der separate Knopf „Kern-Vollbild“ direkt am Kern öffnet den Arbeitsmodus mit einem Klick. Ein Klick auf den Kern startet weiterhin die Animation. Doppelklick wird nicht mehr ausgewertet. „Nur Kern / Vollbild“ in der Startsequenz ist der alternative Knopf. Die Browser-Vollbildfunktion benötigt einen echten Klick und Browserunterstützung; andernfalls wird das Fenster ausgefüllt. Escape und „Beenden“ schließen den Modus; bestehende Aufträge laufen weiter.
 
 Der Modus nutzt den normalen Jarvis-Chat und die vorhandenen Werkzeuge. Mikrofon und Browser-Spracherkennung bleiben freigabepflichtig. Er zeigt gemeldete Auftragsstände, bestätigte Desktop-Schritte und vorhandene Website-Dateien in einer geschützten Vorschau. Keine simulierten Mausbewegungen oder frei erfundenen Fortschritts-Prozente. Dateien werden nur durch ausdrücklichen Klick heruntergeladen; abgeschlossene Websites als HTML, vorhandene Textergebnisse als Text. Die kleine KI erhält dadurch keine zusätzlichen Fähigkeiten oder Bildschirmverständnis.

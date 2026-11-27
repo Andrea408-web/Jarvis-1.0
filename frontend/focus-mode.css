@@ -2,3 +2,5 @@
 
 #focus-mode .focus-actions a{display:inline-block;text-decoration:none}#focus-mode a[hidden]{display:none}
 #focus-mode header{position:sticky;top:0;padding:5px 0;background:#090905ed;z-index:5}#focus-form{position:sticky;bottom:0;padding:10px;background:#090905f2;border-radius:10px;box-sizing:border-box;z-index:4}
+
+body.mac-console .core-column{position:relative}#focus-launch{position:absolute;right:12px;top:28px;z-index:4;display:flex;align-items:center;gap:8px;padding:9px 12px;min-height:36px;border:1px solid #d1b75666;border-radius:8px;background:#111007e8;color:var(--gold,#ffd65b);font:11px system-ui;cursor:pointer}#focus-launch svg{width:16px;height:16px}#focus-launch:focus-visible{outline:2px solid currentColor;outline-offset:4px}@media(max-width:700px){#focus-launch{right:8px;top:25px;font-size:10px}}

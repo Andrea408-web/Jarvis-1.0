@@ -84,7 +84,7 @@ class AstraPackageTests(unittest.TestCase):
         for node in ast.parse(source).body:
             if isinstance(node,ast.Assign) and len(node.targets)==1 and isinstance(node.targets[0],ast.Name) and node.targets[0].id in {'PAYLOAD_B64','PAYLOAD_SHA'}:values[node.targets[0].id]=ast.literal_eval(node.value)
         files,manifest=upgrade.payload_files(values['PAYLOAD_B64'],values['PAYLOAD_SHA'])
-        for ref in ['e4bcef0','b635c4e','c8a755f','683e271','966e26c','64067d2','de0678b','472560d','092f6eb','7d7a34e','7c045d5','d26ac7d','3e4d3e4','34f959f','256f8c1','4510dc2','bd17dfd','9bf0a4e','539bd30','a3f3b3c','694bafc','89c5df1','57a5af3']:
+        for ref in ['31602bf','e4bcef0','b635c4e','c8a755f','683e271','966e26c','64067d2','de0678b','472560d','092f6eb','7d7a34e','7c045d5','d26ac7d','3e4d3e4','34f959f','256f8c1','4510dc2','bd17dfd','9bf0a4e','539bd30','a3f3b3c','694bafc','89c5df1','57a5af3']:
             with self.subTest(ref=ref),tempfile.TemporaryDirectory() as folder:
                 target=Path(folder)
                 for name in files:
